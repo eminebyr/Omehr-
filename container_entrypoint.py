@@ -23,6 +23,26 @@ def main() -> int:
         result = subprocess.run([sys.executable, str(ROOT / "main.py")], cwd=ROOT)
         if result.returncode:
             return result.returncode
+
+    # BULUT MOTORU KÖPRÜSÜ (2026-08-16 eklendi): Streamlit dışarıdan gelen
+    # ham HTTP POST isteklerini alamadığı için (yalnız kendi sayfa render
+    # protokolünü sunar), Vercel'deki hafif arayüzün "Canlı motoru çalıştır"
+    # butonunun ulaşabileceği AYRI, küçük bir Flask süreci (webhook_server.py)
+    # arka planda başlatılır. Bu, Streamlit'i (aşağıdaki execvp) HİÇ
+    # ETKİLEMEZ — tamamen bağımsız bir alt süreçtir, ayrı bir portta
+    # (BASDAS_WEBHOOK_PORT, varsayılan 8502) dinler. Yalnız
+    # BASDAS_ENGINE_API_SECRET tanımlıysa başlatılır — tanımlı değilse
+    # (örn. bu özelliği kullanmayan kurulumlarda) gereksiz bir süreç açıp
+    # kaynak tüketmez.
+    if os.getenv("BASDAS_ENGINE_API_SECRET", "").strip():
+        subprocess.Popen(
+            [sys.executable, str(ROOT / "webhook_server.py")],
+            cwd=ROOT,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        print("Bulut motoru köprüsü (webhook_server.py) arka planda başlatıldı.", flush=True)
+
     os.execvp(
         sys.executable,
         [

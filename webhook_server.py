@@ -105,6 +105,50 @@ def health():
     return jsonify({"durum": "calisiyor"}), 200
 
 
+# ============================================================================
+# BULUT MOTORU KÖPRÜSÜ (Vercel entegrasyonu — 2026-08-16 eklendi)
+# ----------------------------------------------------------------------------
+# Vercel'deki hafif arayüz (Next.js), motoru KENDİ İÇİNDE çalıştıramaz —
+# Vercel'in serverless Python fonksiyonları kalıcı dosya sistemine sahip
+# değildir, oysa bu motor (src/engine_core.py) input Excel'i VE referans
+# kontrol dosyalarını (reference/*.xlsx) DİSKTEN okur. Bu ikisi temelden
+# uyumsuzdur (bkz. ilgili konuşma notu).
+#
+# Çözüm: motoru zaten kalıcı dosya sistemine sahip OLAN bu sunucuda (Railway)
+# çalıştırıp SONUCU JSON olarak döndürmek. Vercel yalnızca bu endpoint'e bir
+# HTTP isteği atar — kendi içinde hiçbir Python/pandas kodu ÇALIŞTIRMAZ.
+#
+# GÜVENLİK: bu endpoint dışarıya (internete) açık bir Railway domain'i
+# üzerinden erişilebilir olacağı için, paylaşılan bir gizli anahtar
+# (BASDAS_ENGINE_API_SECRET) ile korunur — yalnız bu anahtarı bilen (Vercel
+# tarafındaki sunucu kodu) motoru tetikleyebilir.
+# ============================================================================
+@app.route("/api/run-engine", methods=["POST"])
+def run_engine_for_cloud():
+    beklenen_sir = os.getenv("BASDAS_ENGINE_API_SECRET", "")
+    gelen_sir = request.headers.get("X-Engine-Secret", "")
+    if not beklenen_sir:
+        LOGGER.error("BASDAS_ENGINE_API_SECRET ayarlanmamış — /api/run-engine reddediliyor.")
+        return jsonify({"error": "sunucu yapılandırması eksik"}), 500
+    if not gelen_sir or gelen_sir != beklenen_sir:
+        LOGGER.warning("/api/run-engine: geçersiz veya eksik X-Engine-Secret.")
+        return jsonify({"error": "yetkisiz"}), 401
+
+    import time
+    from services.cloud_engine_bridge import run_official_engine_summary
+
+    started = time.perf_counter()
+    try:
+        summary = run_official_engine_summary()
+    except Exception as exc:
+        LOGGER.error(f"/api/run-engine: motor çalıştırılamadı: {exc}")
+        return jsonify({"error": "Motor çalıştırılamadı.", "detail": str(exc)[:500]}), 500
+
+    summary["duration_ms"] = int((time.perf_counter() - started) * 1000)
+    summary["status"] = "COMPLETED"
+    return jsonify({"ok": True, "run": summary}), 200
+
+
 if __name__ == "__main__":
     port = int(os.getenv("BASDAS_WEBHOOK_PORT", "8502"))
     app.run(host="0.0.0.0", port=port)
