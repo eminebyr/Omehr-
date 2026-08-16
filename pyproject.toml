@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+markers = [
+    "integration: agir/uctan uca entegrasyon testi (LibreOffice, gercek dosya uretimi gerekir)",
+    "e2e: uctan uca sistem testi",
+]
+

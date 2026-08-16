@@ -1,0 +1,8 @@
+{
+  "tenants": {
+    "BASDAS": {
+      "name": "Başdaş Marketler",
+      "active": true
+    }
+  }
+}

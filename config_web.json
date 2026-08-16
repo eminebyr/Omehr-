@@ -1,0 +1,42 @@
+{
+  "security": {
+    "password_storage": "data/security.db",
+    "algorithm": "PBKDF2-HMAC-SHA256",
+    "iterations": 600000,
+    "lock_policy": "5 hatalı giriş / 15 dakika"
+  },
+  "power_bi": {
+    "enabled": false,
+    "report_url": "",
+    "label": "Power BI Yönetim Raporu"
+  },
+  "notifications": {
+    "critical_deficit_threshold": 5,
+    "teams_webhook_url": "",
+    "smtp": {
+      "enabled": false,
+      "host": "",
+      "port": 587,
+      "username": "",
+      "password": "",
+      "from": "",
+      "to": "",
+      "use_tls": true
+    }
+  },
+  "approval": {
+    "allowed_statuses": [
+      "Beklemede",
+      "Onaylandı",
+      "Reddedildi",
+      "Revizyon İstendi"
+    ]
+  },
+  "company": {
+    "name": "Başdaş Marketler",
+    "logo_path": ""
+  },
+  "backup": {
+    "max_backups": 20
+  }
+}

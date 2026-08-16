@@ -1,0 +1,64 @@
+{
+  "active_company": "BASDAS",
+  "companies": {
+    "BASDAS": {
+      "display_name": "Başdaş Marketler",
+      "input_file": "input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+      "output_dir": "output"
+    }
+  },
+  "obeys": {
+    "enabled": false,
+    "mode": "file",
+    "file_path": "staging/obeys_export.xlsx",
+    "api_url": "",
+    "api_token": "",
+    "target_sheets": [
+      "Günlük Operasyon",
+      "Fire ve İade",
+      "Online"
+    ]
+  },
+  "zirve": {
+    "enabled": false,
+    "mode": "file",
+    "file_path": "staging/zirve_export.xlsx",
+    "api_url": "",
+    "api_token": "",
+    "target_sheets": [
+      "Fact_Mevcut",
+      "İzin",
+      "Fazla Mesai"
+    ]
+  },
+  "pdks": {
+    "enabled": false,
+    "mode": "file",
+    "file_path": "staging/pdks_export.xlsx",
+    "api_url": "",
+    "api_token": "",
+    "target_sheets": [
+      "Devamsızlık",
+      "Fazla Mesai"
+    ]
+  },
+  "notifications": {
+    "teams_enabled": false,
+    "teams_webhook_url": "",
+    "outlook_enabled": false,
+    "smtp_host": "smtp.office365.com",
+    "smtp_port": 587,
+    "smtp_username": "",
+    "smtp_password": "",
+    "from": "",
+    "to": "",
+    "send_pdf": true,
+    "send_excel": true
+  },
+  "api": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 8080,
+    "api_key": ""
+  }
+}

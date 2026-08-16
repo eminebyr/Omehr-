@@ -1,0 +1,110 @@
+"""WEBHOOK SUNUCUSU — Stripe ödeme olaylarını alır (Madde 2).
+
+Streamlit'in KENDİSİ dışarıdan gelen HTTP POST isteklerini (webhook)
+alamaz — yalnız kendi sayfa render protokolünü sunar. Bu YÜZDEN,
+ödeme sağlayıcısının (Stripe) webhook'larını almak için AYRI, küçük
+bir Flask süreci gerekir. Bu süreç web/app.py'den TAMAMEN bağımsız
+çalışır (docker-compose.yml'de ayrı bir servis olarak, farklı bir
+portta).
+
+iyzico kullanmak isterseniz: bu dosyadaki `_stripe_olay_cevir()`
+fonksiyonunun yerine iyzico'nun kendi webhook payload formatını (ve
+imza doğrulama yöntemini) kullanan bir eşdeğerini yazmanız yeterli —
+services/billing.py (iş mantığı) hiç değişmeden kalır, çünkü o
+sağlayıcıdan tamamen bağımsız, iç isimlerle (subscription_created
+vb.) çalışır.
+
+Çalıştırma: python3 webhook_server.py (varsayılan port 8502)
+Ortam değişkenleri:
+  BASDAS_STRIPE_WEBHOOK_SECRET — Stripe Dashboard'dan alınan imza sırrı
+  BASDAS_WEBHOOK_PORT — varsayılan 8502
+"""
+from __future__ import annotations
+
+import os
+
+from flask import Flask, request, jsonify
+
+from services.billing import process_billing_event
+from services.observability import get_logger
+
+LOGGER = get_logger("basdas.webhook")
+app = Flask(__name__)
+
+
+def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
+    """Stripe'ın KENDİ olay isimlerini (customer.subscription.created
+    gibi) bizim iç modelimize (subscription_created gibi) çevirir.
+    (tenant_id, olay_turu, plan) döner — tenant_id, Stripe abonelik/
+    müşteri kaydının 'metadata' alanına YAZILMIŞ olmalıdır (Stripe
+    Dashboard'da müşteri oluştururken ya da Checkout Session'da
+    metadata={'tenant_id': '...'} ile ayarlanır).
+
+    DÜZELTME (bizzat gerçek bir imzalı Stripe payload'ıyla test
+    edilirken bulundu): stripe.Webhook.construct_event() DÜZ bir dict
+    DEĞİL, Stripe'ın kendi StripeObject sınıfını döner — bu sınıf
+    .get() metodunu DESTEKLEMİYOR (yalnız öznitelik erişimi/[]
+    destekliyor). to_dict() ile GÜVENLİ, tip-bağımsız bir dict'e
+    çevrilir (hem gerçek Stripe nesneleriyle hem test amaçlı düz
+    dict'lerle çalışır)."""
+    stripe_olay = stripe_olay.to_dict() if hasattr(stripe_olay, "to_dict") else dict(stripe_olay)
+    tur = stripe_olay.get("type", "")
+    veri = stripe_olay.get("data", {}).get("object", {})
+    if hasattr(veri, "to_dict"):
+        veri = veri.to_dict()
+    metadata = dict(veri.get("metadata") or {})
+    tenant_id = metadata.get("tenant_id")
+    if not tenant_id:
+        LOGGER.warning(f"Stripe olayında tenant_id metadata'sı yok: {tur}")
+        return None
+
+    if tur == "customer.subscription.created":
+        plan = metadata.get("plan", "temel")
+        return tenant_id, "subscription_created", plan
+    if tur == "invoice.paid":
+        return tenant_id, "subscription_renewed", None
+    if tur == "invoice.payment_failed":
+        return tenant_id, "subscription_payment_failed", None
+    if tur == "customer.subscription.deleted":
+        return tenant_id, "subscription_canceled", None
+    return None
+
+
+@app.route("/webhook/stripe", methods=["POST"])
+def stripe_webhook():
+    payload = request.get_data()
+    imza = request.headers.get("Stripe-Signature", "")
+    sir = os.getenv("BASDAS_STRIPE_WEBHOOK_SECRET", "")
+
+    if not sir:
+        LOGGER.error("BASDAS_STRIPE_WEBHOOK_SECRET ayarlanmamış — webhook reddediliyor.")
+        return jsonify({"hata": "sunucu yapılandırması eksik"}), 500
+
+    try:
+        import stripe
+        olay = stripe.Webhook.construct_event(payload, imza, sir)
+    except Exception as exc:
+        LOGGER.warning(f"Stripe webhook imza doğrulama başarısız: {exc}")
+        return jsonify({"hata": "geçersiz imza"}), 400
+
+    cevrilen = _stripe_olay_cevir(olay)
+    if cevrilen is None:
+        return jsonify({"islendi": False, "sebep": "ilgisiz/eşleşmeyen olay türü"}), 200
+
+    tenant_id, olay_turu, plan = cevrilen
+    try:
+        sonuc = process_billing_event(tenant_id, olay_turu, plan=plan)
+        return jsonify(sonuc), 200
+    except Exception as exc:
+        LOGGER.error(f"billing olayı işlenemedi: {tenant_id}/{olay_turu}: {exc}")
+        return jsonify({"hata": str(exc)}), 500
+
+
+@app.route("/webhook/health", methods=["GET"])
+def health():
+    return jsonify({"durum": "calisiyor"}), 200
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("BASDAS_WEBHOOK_PORT", "8502"))
+    app.run(host="0.0.0.0", port=port)

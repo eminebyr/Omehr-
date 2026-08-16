@@ -1,0 +1,8 @@
+# PostgreSQL backend seçeneği (isteğe bağlı — bkz. services/db_backend.py).
+#
+# SQLite varsayılan backend'dir ve bu dosyaya ihtiyaç duymaz. Yalnız
+# BASDAS_DB_BACKEND=postgres ile PostgreSQL'e geçecekseniz kurun:
+#
+#   pip install -r requirements-postgres.txt
+#
+psycopg2-binary>=2.9,<3

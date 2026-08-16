@@ -1,0 +1,60 @@
+# DÜZELTME (SaaS): önceki sürüm uygulama portunu (8501) DOĞRUDAN internete
+# açıyordu ve deploy/nginx.conf hiçbir servise bağlı değildi (yetimdi).
+# Artık: nginx TEK dışa açık kapı (80/443, TLS sonlandırma), uygulama
+# yalnız iç Docker ağında erişilebilir. PostgreSQL de eklendi — gerçek
+# çok kiracılı SaaS kullanımı SQLite ile GÜVENLE ölçeklenemez (eşzamanlı
+# yazma kilitlenmeleri), bkz. services/db_backend.py.
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    environment:
+      BASDAS_INPUT_SOURCE: "db"
+      BASDAS_DB_BACKEND: "postgres"
+      BASDAS_POSTGRES_DSN: "postgresql://basdas:${POSTGRES_PASSWORD}@postgres:5432/basdas"
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./archive:/app/archive
+      - ./backup:/app/backup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # DİKKAT: burada "ports:" YOK — uygulama yalnız Docker ağı içinden
+    # (nginx üzerinden) erişilebilir, doğrudan internete açılmaz.
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: basdas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: basdas
+    volumes:
+      - basdas_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U basdas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/certs:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  basdas_postgres_data:
+  certbot_webroot:

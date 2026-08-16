@@ -1,0 +1,27 @@
+pandas>=2.2,<3.1
+openpyxl>=3.1,<4
+numpy>=1.26,<3
+scipy>=1.14,<2
+scikit-learn>=1.5,<2
+reportlab>=4.2,<5
+pypdf>=5,<7
+# DÜZELTME: streamlit>=1.57 paketin içine streamlit/.agents/skills/... adında
+# ÇOK DERİN (tek başına 115+ karakter) bir örnek şablon klasörü ekliyor —
+# BASDAS bunu HİÇ kullanmıyor ama Windows'ta C:\BASDAS gibi kısa bir kurulum
+# yolunda bile WinError 206 (yol çok uzun) hatasına yol açabiliyor; uzun
+# masaüstü yollarında/klasör ismi yanlışlıkla iki kez iç içe çıkarılmışsa
+# kesin çöküyor. Üst sınır BİLEREK 1.57'nin altında tutulmuştur — gerçek
+# wheel dosyaları indirilip incelenerek doğrulanmıştır (bkz. KURULUM.bat'taki
+# ek temizlik adımı, aynı sorunu ikinci bir savunma katmanıyla ele alır).
+streamlit>=1.40,<1.57
+plotly>=5.24,<7
+requests>=2.32,<3
+pywin32>=306; platform_system=="Windows"
+python-docx>=1.1,<2
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pytest>=8.3,<9
+pymupdf>=1.24,<2
+psycopg2-binary>=2.9,<3
+flask>=3.0,<4
+stripe>=15,<16

@@ -1,0 +1,12 @@
+{
+  "ai_enabled": true,
+  "executive_financial_operational_enabled": true,
+  "operational_kpi_enabled": true,
+  "cost_roi_enabled": true,
+  "demand_forecast_enabled": true,
+  "workload_enabled": true,
+  "transfer_optimization_enabled": true,
+  "model_drift_enabled": true,
+  "data_quality_report_enabled": true,
+  "raw_title_mode_enabled": false
+}

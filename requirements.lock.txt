@@ -1,0 +1,16 @@
+pandas==3.0.3
+openpyxl==3.1.5
+numpy==2.5.1
+scipy==1.18.0
+scikit-learn==1.8.0
+reportlab==4.5.1
+pypdf==6.10.0
+streamlit==1.56.0
+plotly==6.9.0
+requests==2.34.2
+pywin32==312; platform_system=="Windows"
+python-docx==1.2.0
+fastapi==0.139.2
+uvicorn==0.51.0
+pytest==8.4.2
+pymupdf>=1.24,<2

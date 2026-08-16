@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Çalışma zamanı (kullanıcıya/kuruluma özel — koda dahil edilmemeli)
+input/
+ORNEK_TEST_VERISI/
+output/
+data/
+logs/
+backups/
+backup/
+
+# DÜZELTME: 'reference/' TAMAMEN hariç tutulmuştu — ama reference/
+# NORM_KAPSAM_BAZI.json main.py'nin ÇALIŞMASI için ZORUNLU bir dosyadır
+# (build_clean_package.py'nin EXCLUDED_DIRS'inde de reference/ YOKTUR,
+# yalnız İÇİNDEKİ 2 spesifik dosya + lo_profile hariç tutulur — bkz.
+# tools/build_clean_package.py). Aynı, DAHA HASSAS mantık burada da
+# uygulanır: yalnız geliştirme ortamına özgü/hassas dosyalar hariç.
+reference/lo_profile/
+reference/GUNCEL_NORM_KADRO_KONTROL.xlsx
+reference/KONTROL_NORM_KADRO_24_07_2026.xlsx
+
+# Ortam
+.env

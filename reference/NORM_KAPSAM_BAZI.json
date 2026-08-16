@@ -1,0 +1,3279 @@
+{
+  "version": 1,
+  "source": "GÜNCEL NORM KADRO 24.07.2026",
+  "active_total": 611,
+  "norm_total": 606,
+  "deficit_total": 32,
+  "surplus_total": 28,
+  "rows": [
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AKEVLER",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "PARTTIME",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "UNLUMAMULLER",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINEFELER2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINFATIH2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINGIRNE",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYDINMIMARSINAN",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "UNLUMAMULLER",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "AYRANCILAR",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 4,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "MANAVTERAZI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BALCOVA",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BAYRAKLI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BOZYAKA",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCA2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "BUCAFIRAT",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CAMDIBI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 5,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "CIGLI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "DEDEBASI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "PARTTIME",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "ESKIIZMIR",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "MANAVTERAZI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR1",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR3",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR4",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR5",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR6",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GAZIEMIR7",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GEDIZ",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GOZTEPE",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "GUMUSPALA",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "MANAVTERAZI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HARMANDALI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "HATAY",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 6,
+      "BaselineEffective": 6,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 6,
+      "BaselineEffective": 6,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "UNLUMAMULLER",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "IZMIRSPOR",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA1",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "KARSIYAKA3",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MANAVKUYU",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "MENDERES",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "NARLIDERE",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OSMANGAZI",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "OZDERE",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "POLIGON",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 3,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 6,
+      "BaselineEffective": 6,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "UNLUMAMULLER",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SEFERIHISAR",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "SIRINYER2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI1",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "ONLINESOFOR",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "ONLINETOPLAYICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI2",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 3,
+      "BaselineEffective": 3,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI3",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 0,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "KASAPYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 0,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI4",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 3,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 1,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "TORBALI5",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "MANAVYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": false
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YAPICIOGLU",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "BAKLIYAT",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "KASAP",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "KASIYER",
+      "BaselineRaw": 4,
+      "BaselineEffective": 4,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "MANAV",
+      "BaselineRaw": 2,
+      "BaselineEffective": 2,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "REYONGOREVLISI",
+      "BaselineRaw": 2,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "SARKUTERI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "SARKUTERIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "YONETICI",
+      "BaselineRaw": 1,
+      "BaselineEffective": 0,
+      "InScope": true
+    },
+    {
+      "StoreKey": "YESILOVA",
+      "RoleKey": "YONETICIYARDIMCISI",
+      "BaselineRaw": 0,
+      "BaselineEffective": 1,
+      "InScope": true
+    }
+  ]
+}

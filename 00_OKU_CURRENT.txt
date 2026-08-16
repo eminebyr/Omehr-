@@ -1,0 +1,23 @@
+OMEHR NORM KADRO, TRANSFER VE İŞ GÜCÜ OPTİMİZASYON PLATFORMU
+Sürüm: 19.21.29
+
+BAŞLANGIÇ:
+1) input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx dosyasını güncelleyin ve kaydedin.
+2) BASDAS_CURRENT_BASLAT.bat dosyasını çalıştırın.
+3) Web panelinde "Tüm tabloları şimdi yenile" düğmesine basın.
+4) KPI Mutabakat Panelini ve raporları kontrol edin.
+
+GÜNCEL DOĞRULAMA KPI:
+Aktif Mevcut 596 | Toplam Norm 607 | Norm Eksiği 49 | Norm Fazlası 23 | Net İhtiyaç -26
+
+DOKÜMANLAR:
+- KULLANICI_KILAVUZU.docx
+- KULLANICI_KILAVUZU.pdf
+- SURUM_NOTLARI.md
+- DOGRULAMA_RAPORU.md
+
+KURAL DOSYALARI:
+- config_norm_rules.json
+- config_features.json (raw_title_mode_enabled=false)
+
+LibreOffice zorunlu değildir. Web, PDF ve Excel raporları Python/pandas motorundan üretilir.

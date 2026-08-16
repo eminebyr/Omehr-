@@ -1,0 +1,19 @@
+BU DOSYA TAMAMEN UYDURULMUŞ, GÜVENLİ ÖRNEK VERİDİR.
+==========================================
+
+Bu dosyadaki TÜM kişi isimleri, e-posta adresleri, şifreler ve
+telefon numaraları TAMAMEN UYDURMADIR — gerçek hiçbir kişi/şirket
+bilgisi içermez. 596 personel kaydı, gerçek bir şirketin yapısından
+(mağaza/unvan sayıları) türetilmiştir ama İSİMLER otomatik olarak
+üretilmiş, tamamen sahte değerlerle değiştirilmiştir.
+
+Kullanım:
+1. Bu dosyayı ana paketin input/ klasörüne
+   "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx" adıyla kopyalayın
+2. KURULUM.bat / BASDAS_CURRENT_BASLAT.bat çalıştırın
+3. Sistemin çalıştığını (KPI: Aktif Mevcut 596, Toplam Norm 607,
+   Norm Eksiği 49, Norm Fazlası 23) gördükten sonra, bu dosyayı
+   GERÇEK şirket verinizle değiştirin.
+
+Giriş bilgileri (Ayarlar ekranından bulunan örnek kullanıcılar):
+  Kullanıcı adı: demo1  | Şifre: GecTemp2026! | (ilk girişte değişir)

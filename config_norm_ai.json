@@ -1,0 +1,8 @@
+{
+  "version": "11.0",
+  "source_mode": "single_dynamic_excel",
+  "input_glob": "input/*.xlsx",
+  "_not": "expected_control_kpis kasitli olarak kaldirildi (02.08.2026) — hicbir Python dosyasi bu anahtari okumuyordu (grep ile dogrulandi), ama pakette 662/715/89/36/53 gibi COK ESKI bir referans donemin sayilari duruyordu. Kodla baglantisiz oldugu icin gercek bir hataya yol acmiyordu, ama bir yoneticinin bu dosyayi acip guncel KPI (596/607/47/23/-24) ile karsilastirip yanlis alarma girmesi riski vardi. Gercek/guncel KPI degerleri HER ZAMAN calisan input dosyasindan dinamik hesaplanir (src/kpi_engine.py); bu dosyada sabit/statik bir kopyasi TUTULMAZ.",
+  "scenarios": ["Dengeli", "Aynı Unvan", "Aynı Bölge", "Minimum Mesafe"],
+  "web": {"port": 8501, "host": "0.0.0.0"}
+}

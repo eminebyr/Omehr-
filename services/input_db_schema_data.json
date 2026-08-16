@@ -1,0 +1,849 @@
+{
+  "Magaza_Adres": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Adres",
+      "Enlem",
+      "Boylam",
+      "Veri Durumu"
+    ]
+  },
+  "Fact_Norm": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge Sorumlusu",
+      "UnvanID",
+      "Unvan",
+      "Norm Kadro"
+    ]
+  },
+  "Fact_Mevcut": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge Sorumlusu",
+      "UnvanID",
+      "Unvan",
+      "Departman",
+      "Norm fazlası Norm eksiği",
+      "Açıklama",
+      "İsim Soyisim",
+      "İşe Giriş",
+      "İşten Çıkış",
+      "Çıkış Kodu",
+      "CikisNedeniID",
+      "Çıkış Nedeni",
+      "Durum",
+      "Kıdem (Gün)",
+      "Kıdem (Yıl)"
+    ]
+  },
+  "Dim_Unvan": {
+    "header_row": 1,
+    "headers": [
+      "UnvanID",
+      "Unvan"
+    ]
+  },
+  "Dim_Magaza": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge Sorumlusu"
+    ]
+  },
+  "Dim_Tarih": {
+    "header_row": 1,
+    "headers": [
+      "Tarih",
+      "Yıl",
+      "Ay No",
+      "Ay Adı",
+      "Çeyrek",
+      "Hafta No",
+      "Hafta Günü No",
+      "Hafta Günü Adı"
+    ]
+  },
+  "Çarpanlar": {
+    "header_row": 2,
+    "headers": [
+      "Kriter",
+      "Ağırlık",
+      "Ne İçin Kullanılır",
+      "Normalizasyon"
+    ]
+  },
+  "Girdiler": {
+    "header_row": 2,
+    "headers": [
+      "Parametre",
+      "Değer",
+      "Açıklama"
+    ]
+  },
+  "Mağaza Özellikleri": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Bölge",
+      "Tip",
+      "Satış Alanı m²",
+      "Depo Alanı m²",
+      "Kasa Sayısı",
+      "Kasap",
+      "Şarküteri",
+      "Unlu Mamuller",
+      "Manav",
+      "Günlük Açık Saat",
+      "Departman Sayısı"
+    ]
+  },
+  "Departman Matrisi": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Departman",
+      "Durum",
+      "Günlük Hacim",
+      "Öneri Katsayısı"
+    ]
+  },
+  "Günlük Operasyon": {
+    "header_row": 2,
+    "headers": [
+      "Tarih",
+      "MagazaID",
+      "Mağaza",
+      "Bölge",
+      "Fiş Adedi",
+      "Ciro",
+      "Ortalama Sepet",
+      "Müşteri Sayısı"
+    ]
+  },
+  "Saatlik Yoğunluk": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Saat",
+      "Yoğunluk Skoru",
+      "Önerilen Açık Kasa"
+    ]
+  },
+  "Kasa Kullanımı": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Kasa",
+      "Günlük Fiş",
+      "Günlük Ciro",
+      "Kullanım Oranı %"
+    ]
+  },
+  "Online Sipariş": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Günlük Sipariş",
+      "Online Ciro",
+      "Kurye/Toplayıcı İhtiyacı",
+      "Norm Etkisi"
+    ]
+  },
+  "Parametreler": {
+    "header_row": 1,
+    "headers": [
+      "Parametre",
+      "Deger",
+      "Aciklama"
+    ]
+  },
+  "Mal Kabul": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Günlük Mal Kabul",
+      "Koli/Palet",
+      "Hata Sayısı",
+      "Norm Etkisi"
+    ]
+  },
+  "Sevkiyat": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Günlük Sevkiyat",
+      "İade Sevkiyat",
+      "Acil Sevkiyat",
+      "Operasyon Katsayısı"
+    ]
+  },
+  "Fire ve İade": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Fire Oranı %",
+      "Günlük İade İşlem",
+      "İmha İşlem",
+      "İş Yükü Etkisi"
+    ]
+  },
+  "Dim_CikisNedeni": {
+    "header_row": 1,
+    "headers": [
+      "CikisNedeniID",
+      "CikisNedeni",
+      "CikisGrubu",
+      "AnalizKategorisi"
+    ]
+  },
+  "Müşteri Şikayetleri": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Şikayet Adedi",
+      "Kasa Şikayeti",
+      "Reyon Şikayeti",
+      "Memnuniyet Skoru"
+    ]
+  },
+  "Fazla Mesai": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Fazla Mesai Saat",
+      "Fazla Mesai Maliyet",
+      "Yoğunluk Seviyesi"
+    ]
+  },
+  "Devamsızlık": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Devamsızlık Gün",
+      "Rapor Gün",
+      "Fiili Kayıp FTE"
+    ]
+  },
+  "Eğitim": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Eğitim Saat",
+      "Katılımcı",
+      "Eğitim Etki"
+    ]
+  },
+  "İzin": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Yıllık İzin Gün",
+      "Ücretsiz İzin Gün",
+      "Mazeret İzin Gün"
+    ]
+  },
+  "Performans": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Operasyon Puanı",
+      "Yönetici Puanı",
+      "Müşteri Deneyimi"
+    ]
+  },
+  "Personel Maliyeti": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Personel Maliyeti",
+      "Mesai Maliyeti",
+      "Prim/Kesinti"
+    ]
+  },
+  "Devir Riski": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Giriş",
+      "Çıkış",
+      "Devir Oranı %",
+      "Risk Skoru"
+    ]
+  },
+  "Aylık Operasyon KPI": {
+    "header_row": 2,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Aylık Fiş",
+      "Aylık Ciro",
+      "Ort. Sepet",
+      "Online Sipariş",
+      "Mal Kabul"
+    ]
+  },
+  "İş Yükü Endeksi": {
+    "header_row": 2,
+    "headers": [
+      "MagazaID",
+      "Mağaza",
+      "Bölge",
+      "Fiş Puan",
+      "Ciro Puan",
+      "m² Puan",
+      "Risk Puan",
+      "İş Yükü Endeksi",
+      "Seviye"
+    ]
+  },
+  "REFERENTIAL_CONTROL": {
+    "header_row": 1,
+    "headers": [
+      "Kontrol Alanı",
+      "Sonuç",
+      "Bulgu / Düzeltme",
+      "Tablo",
+      "Satır / Aralık",
+      "Not",
+      null,
+      "MağazaID",
+      "UnvanID",
+      "Norm Eksiği Kontrol",
+      "Norm Fazlası Kontrol",
+      "Kontrol Mağaza",
+      "Kontrol Unvan",
+      "Resmi Toplam Eksik",
+      "Resmi Toplam Fazla"
+    ]
+  },
+  "STAR_SCHEMA_REHBER": {
+    "header_row": 1,
+    "headers": [
+      "Tablo",
+      "Tip",
+      "Anahtar Alan",
+      "Power BI İlişki",
+      "Kullanım",
+      "Durum"
+    ]
+  },
+  "KULLANIM_REHBERI": {
+    "header_row": 1,
+    "headers": [
+      "BAŞDAŞ AI İŞ GÜCÜ & KAPASİTE OPTİMİZASYONU – GİRDİ REHBERİ"
+    ]
+  },
+  "Standart_Sure_Kutuphanesi": {
+    "header_row": 1,
+    "headers": [
+      "AktiviteID",
+      "UnvanID",
+      "Unvan",
+      "Aktivite",
+      "Ölçü Birimi",
+      "İş Yükü Tipi",
+      "Frekans",
+      "Standart Süre (Dk)",
+      "Hazırlık Süresi (Dk)",
+      "Kaynak",
+      "Geçerlilik Başlangıcı",
+      "Aktif Mi"
+    ]
+  },
+  "Kapasite_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "UnvanID",
+      "Unvan",
+      "Brüt Vardiya (Dk)",
+      "Mola (Dk)",
+      "Zorunlu Kayıp (Dk)",
+      "Verimlilik Oranı",
+      "Net Üretken Dakika",
+      "FTE Katsayısı",
+      "Veri Durumu"
+    ]
+  },
+  "Gunluk_Aktivite_Hacmi": {
+    "header_row": 1,
+    "headers": [
+      "Tarih",
+      "MağazaID",
+      "Mağaza",
+      "Bölge",
+      "UnvanID",
+      "Unvan",
+      "AktiviteID",
+      "Aktivite",
+      "Aktivite Miktarı",
+      "Standart Süre (Dk)",
+      "Kalibrasyon Katsayısı",
+      "İş Yükü (Dk)",
+      "Veri Kaynağı",
+      "Veri Durumu"
+    ]
+  },
+  "Kalibrasyon": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge",
+      "UnvanID",
+      "Unvan",
+      "Aktivite Kapsamı",
+      "Standart Süre",
+      "Gözlenen Süre",
+      "Kalibrasyon Katsayısı",
+      "Gözlem Sayısı",
+      "Güven Skoru",
+      "Onay Durumu",
+      "Veri Durumu"
+    ]
+  },
+  "Minimum_Kadro_Kurallari": {
+    "header_row": 1,
+    "headers": [
+      "UnvanID",
+      "Unvan",
+      "Minimum Kişi",
+      "Gerekçe",
+      "Kural Türü",
+      "Aktif Mi"
+    ]
+  },
+  "Vardiya_Pik_Saat": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge",
+      "Pik Saat Aralığı",
+      "Pik Hacim Payı",
+      "Pik Katsayısı",
+      "Veri Kaynağı",
+      "Durum"
+    ]
+  },
+  "AI_Norm_Sonuclari": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "Bölge",
+      "UnvanID",
+      "Unvan",
+      "Yönetim Normu",
+      "Aktif Mevcut",
+      "Toplam İş Yükü (Dk)",
+      "Net Üretken Dk",
+      "İş Yükü FTE",
+      "Minimum Kadro",
+      "Pik Katsayısı",
+      "AI Önerilen Norm",
+      "AI-Mevcut Fark",
+      "Kapasite Açığı/Fazlası (Dk)",
+      "Güven Skoru",
+      "Veri Durumu",
+      "İşe Alım Öncelik Puanı",
+      "Öncelik Seviyesi",
+      "Tahmini 90 Günlük Açık",
+      "Transferle Kapatılabilir Açık",
+      "İşe Alım Gerektiren Açık",
+      "Aylık Ek Maliyet",
+      "Boş Kadro Maliyeti",
+      "Net Finansal Etki",
+      "Önerilen Aksiyon",
+      "Yönetici Açıklaması"
+    ]
+  },
+  "Rapor_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "Parametre",
+      "Değer",
+      "Veri Tipi"
+    ]
+  },
+  "Veri_Kalitesi_Log": {
+    "header_row": 1,
+    "headers": [
+      "Kontrol Tarihi",
+      "Sayfa",
+      "Alan",
+      "Seviye",
+      "Bulgu",
+      "Önerilen Aksiyon",
+      "Durum"
+    ]
+  },
+  "Senaryo_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "SenaryoID",
+      "MağazaID",
+      "Mağaza",
+      "Bölge",
+      "UnvanID",
+      "Unvan",
+      "Eklenecek/Azaltılacak Kişi",
+      "Beklenen Verimlilik Değişimi",
+      "Başlangıç Tarihi",
+      "Beklenen Kapasite Değişimi (Dk)",
+      "Senaryo Açıklaması",
+      "Durum",
+      "Veri Durumu"
+    ]
+  },
+  "Transfer_Kisitlari": {
+    "header_row": 1,
+    "headers": [
+      "KuralID",
+      "Kaynak MağazaID",
+      "Kaynak Mağaza",
+      "Hedef MağazaID",
+      "Hedef Mağaza",
+      "UnvanID",
+      "Unvan",
+      "Maksimum Mesafe (Km)",
+      "Tahmini Mesafe (Km)",
+      "Vardiya Uyumu",
+      "Bölge Dışı Uygun",
+      "Çalışan Onayı",
+      "Kaynak Fazla",
+      "Hedef Açık",
+      "Transfer Sonrası Kaynak",
+      "Transfer Sonrası Hedef",
+      "Yetkinlik Kuralı",
+      "Öneri Durumu",
+      "Veri Durumu"
+    ]
+  },
+  "Tahmin_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "Parametre",
+      "Değer",
+      "Veri Tipi",
+      "Açıklama"
+    ]
+  },
+  "Maliyet_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "UnvanID",
+      "Unvan",
+      "Aylık Brüt Maliyet",
+      "Aylık İşveren Maliyeti",
+      "Fazla Mesai Saat Maliyeti",
+      "İşe Alım Maliyeti",
+      "Oryantasyon Maliyeti",
+      "Boş Pozisyon Günlük Maliyeti",
+      "Transfer Maliyeti",
+      "Tahmini Verimlilik Kaybı",
+      "Beklenen Ciro Koruma Etkisi",
+      "Veri Durumu"
+    ]
+  },
+  "Mail_Listesi": {
+    "header_row": 1,
+    "headers": [
+      "Bölge",
+      "Sorumlu",
+      "E-posta",
+      "Aktif",
+      "Gönderim Tipi",
+      "PDF Ekle",
+      "Excel Ekle",
+      "Açıklama",
+      "WhatsApp",
+      "SMS Aktif",
+      "Web Kullanıcı",
+      "Web Şifre",
+      "Rol",
+      "Yetki Kapsamı",
+      "Onay Seviyesi"
+    ]
+  },
+  "Transfer_Talepleri": {
+    "header_row": 1,
+    "headers": [
+      "Talep No",
+      "Talep Tarihi",
+      "Kaynak Mağaza",
+      "Hedef Mağaza",
+      "Personel ID",
+      "Personel",
+      "Unvan",
+      "Hedef Unvan",
+      "Bölge Müdürü",
+      "Kaynak Bölge",
+      "Hedef Bölge",
+      "Durum",
+      "İK Onayı",
+      "İK Notu",
+      "Onay Tarihi",
+      "Fact_Mevcut Durumu",
+      "Fact_Mevcut Kontrol Tarihi",
+      "Tamamlanma Tarihi",
+      "Outlook Gönderildi mi",
+      "Outlook Gönderim Tarihi",
+      "Son Güncelleme"
+    ]
+  },
+  "Sube_Mail_Listesi": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza E-posta",
+      "Mağaza",
+      "Alıcı Adı",
+      "Aktif",
+      "Günlük Gönderim"
+    ]
+  },
+  "Kurumsal_Eposta_Rehberi": {
+    "header_row": 1,
+    "headers": [
+      "Ad Soyad / Birim",
+      "E-posta",
+      "Grup",
+      "Günlük Şube Maili"
+    ]
+  },
+  "Personel_Adresleri": {
+    "header_row": 1,
+    "headers": [
+      "İsim Soyisim",
+      "Mevcut MağazaID",
+      "Mevcut Mağaza",
+      "İl",
+      "İlçe",
+      "Personel Adresi",
+      "Ev Enlem",
+      "Ev Boylam",
+      "Ulaşım Şekli",
+      "Maksimum Tek Yön Yol (dk)",
+      "Transfer Onayı",
+      "Tercih Edilen Mağazalar",
+      "Adres Güncelleme Tarihi",
+      "Veri Durumu",
+      "Açıklama",
+      "Ev-Mevcut Mağaza Mesafesi (km)",
+      "Evine En Yakın Mağaza",
+      "Evine En Yakın Mağaza Mesafesi (km)",
+      "Mevcut Mağaza Evine En Yakın Mı",
+      "Ev-Mevcut Mağaza Google Maps Rota",
+      "Evine En Yakın Mağaza 1",
+      "Evine En Yakın Mağaza 1 Mesafesi (km)",
+      "Evine En Yakın Mağaza 1 Google Maps Rota",
+      "Evine En Yakın Mağaza 2",
+      "Evine En Yakın Mağaza 2 Mesafesi (km)",
+      "Evine En Yakın Mağaza 2 Google Maps Rota",
+      "Evine En Yakın Mağaza 3",
+      "Evine En Yakın Mağaza 3 Mesafesi (km)",
+      "Evine En Yakın Mağaza 3 Google Maps Rota"
+    ]
+  },
+  "Ev_Sube_Rota_Ozeti": {
+    "header_row": 1,
+    "headers": [
+      "İsim Soyisim",
+      "Mevcut Mağaza",
+      "Ev-Mevcut Mağaza Mesafesi (km)",
+      "Ev-Mevcut Mağaza Google Maps Rota",
+      "Mevcut Mağaza Evine En Yakın Mı",
+      "Evine En Yakın Mağaza 1",
+      "Evine En Yakın Mağaza 1 Mesafesi (km)",
+      "Evine En Yakın Mağaza 1 Google Maps Rota",
+      "Evine En Yakın Mağaza 2",
+      "Evine En Yakın Mağaza 2 Mesafesi (km)",
+      "Evine En Yakın Mağaza 2 Google Maps Rota",
+      "Evine En Yakın Mağaza 3",
+      "Evine En Yakın Mağaza 3 Mesafesi (km)",
+      "Evine En Yakın Mağaza 3 Google Maps Rota",
+      "Adres Veri Durumu"
+    ]
+  },
+  "Norm_Bazli_Transfer_Rotalari": {
+    "header_row": 1,
+    "headers": [
+      "Kaynak PersonelID",
+      "Kaynak İsim Soyisim",
+      "Kaynak MağazaID",
+      "Kaynak Mağaza",
+      "Unvan",
+      "Hedef MağazaID",
+      "Hedef Mağaza",
+      "Hedef Eksik Sayısı",
+      "Mağazalar Arası Mesafe (km)",
+      "Mağazalar Arası Google Maps Rota",
+      "Ev-Hedef Mağaza Mesafesi (km)",
+      "Ev-Hedef Mağaza Google Maps Rota"
+    ]
+  },
+  "Personel_Performans_Endeksi": {
+    "header_row": 2,
+    "headers": [
+      "PersonelID",
+      "İsim Soyisim",
+      "MağazaID",
+      "Mağaza",
+      "Unvan",
+      "Devamlılık Puanı (%25)",
+      "Verimlilik Puanı (%31,25)",
+      "Enflasyona Göre Mağaza Katkısı (%18,75)",
+      "Mağaza Reel Büyüme %",
+      "Fazla Mesai Verimliliği Puanı (%12,5)",
+      "Yönetici Değerlendirme Puanı (%12,5)",
+      "Performans Endeksi (0-100)",
+      "Sınıf",
+      "Not"
+    ]
+  },
+  "Performans_Endeksi_Kriterleri": {
+    "header_row": 1,
+    "headers": [
+      "PERSONEL PERFORMANS ENDEKSİ — KRİTER VE AĞIRLIK TABLOSU (v2, puantaj/eğitim/disiplin kaydı olmadan)"
+    ]
+  },
+  "Tahmin_Dogruluk_Testi": {
+    "header_row": 2,
+    "headers": [
+      "⚠️ DİKKAT: Bölüm A istatistiksel testine göre (Istatistiksel_Model_Testi sayfası) bu zaman-trend tahminlerinin HİÇBİRİ istatistiksel olarak anlamlı değildir (R²≈0, t-istatistiği kritik değerin altında). Karar almadan önce Istatistiksel_Model_Testi sayfasındaki Bölüm C (Ciro→İş Yükü Endeksi modeli, r=0,91) tercih edilmelidir."
+    ]
+  },
+  "Verimlilik_Operasyon_Tahmini": {
+    "header_row": 2,
+    "headers": [
+      "⚠️ DİKKAT: Bölüm A istatistiksel testine göre (Istatistiksel_Model_Testi sayfası) bu zaman-trend tahminlerinin HİÇBİRİ istatistiksel olarak anlamlı değildir (R²≈0, t-istatistiği kritik değerin altında). Karar almadan önce Istatistiksel_Model_Testi sayfasındaki Bölüm C (Ciro→İş Yükü Endeksi modeli, r=0,91) tercih edilmelidir."
+    ]
+  },
+  "Istatistiksel_Model_Testi": {
+    "header_row": 1,
+    "headers": [
+      "İSTATİSTİKSEL MODEL DOĞRULUK TESTİ VE DEĞİŞKEN İLİŞKİ ANALİZİ"
+    ]
+  },
+  "Norm_Durumu": {
+    "header_row": 1,
+    "headers": [
+      "MağazaID",
+      "Mağaza",
+      "UnvanID",
+      "Unvan",
+      "Norm Kadro",
+      "Aktif Mevcut",
+      "Yardımcı UnvanID",
+      "Yardımcı Norm Kadro",
+      "Yardımcı Aktif Mevcut",
+      "Toplam Norm (Aile)",
+      "Toplam Aktif (Aile)",
+      "Yardımcı Mı",
+      "Norm Eksiği",
+      "Norm Fazlası"
+    ]
+  },
+  "Oncelikli_Transfer_Listesi": {
+    "header_row": 2,
+    "headers": [
+      "Hedef Mağaza",
+      "Unvan",
+      "Mevcut",
+      "AI Önerilen Norm",
+      "Açık",
+      "Güven Skoru",
+      "Aday Personel",
+      "Aday Mevcut Mağaza",
+      "Mağazalar Arası Mesafe (km)",
+      "Google Maps Rota",
+      "Önerilen Aksiyon"
+    ]
+  },
+  "Magaza_KPI_Skor_Karti": {
+    "header_row": 2,
+    "headers": [
+      "Mağaza",
+      "Norm Kadro",
+      "Norm Eksiği",
+      "Norm Fazlası",
+      "Norm Uyumu Puanı",
+      "Risk Skoru",
+      "Personel Devri Puanı",
+      "Fiili Kayıp FTE",
+      "Devamsızlık Puanı",
+      "Fazla Mesai Saat",
+      "Fazla Mesai Puanı",
+      "Ortalama Performans Puanı",
+      "MAĞAZA SKORU (0-100)",
+      "Sınıf"
+    ]
+  },
+  "Isgucu_Tahmin_Parametreleri": {
+    "header_row": 1,
+    "headers": [
+      "Parametre",
+      "Değer",
+      "Veri Tipi",
+      "Açıklama",
+      "Kullanıcı Notu"
+    ]
+  },
+  "Tahmin_Takvimi": {
+    "header_row": 1,
+    "headers": [
+      "Etki Adı",
+      "Etki Türü",
+      "Başlangıç Tarihi",
+      "Bitiş Tarihi",
+      "Ufuk Gün",
+      "Katsayı",
+      "Aktif Mi",
+      "Açıklama"
+    ]
+  },
+  "00_AI_SIZ_GIRIS_REHBERI": {
+    "header_row": 1,
+    "headers": [
+      "BAŞDAŞ V19 GERÇEK INPUT DOSYASI - RENK REHBERİ"
+    ]
+  },
+  "00_TUM_SAYFALAR_REHBERI": {
+    "header_row": 1,
+    "headers": [
+      "BAŞDAŞ V19 - TÜM 62 SAYFA KULLANIM VE RENK REHBERİ"
+    ]
+  }
+}

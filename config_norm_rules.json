@@ -1,0 +1,21 @@
+{
+  "mode": "family",
+  "family_aliases": {
+    "YÖNETİCİ": ["YÖNETİCİ", "UZMAN YÖNETİCİ", "ELİT YÖNETİCİ"],
+    "MANAV": ["MANAV", "UZMAN MANAV", "ELİT MANAV"],
+    "ŞARKÜTERİ": ["ŞARKÜTERİ", "UZMAN ŞARKÜTERİ", "ELİT ŞARKÜTERİ"],
+    "KASAP": ["KASAP", "UZMAN KASAP", "ELİT KASAP"]
+  },
+  "separate_roles": [],
+  "assistant_balance": {
+    "enabled": true,
+    "minimum_main_current": 1,
+    "pairs": {
+      "YÖNETİCİ": "YÖNETİCİ YARDIMCISI",
+      "MANAV": "MANAV YARDIMCISI",
+      "ŞARKÜTERİ": "ŞARKÜTERİ YARDIMCISI",
+      "KASAP": "KASAP YARDIMCISI"
+    },
+    "rule": "Ana ve yardımcı normları ayrı gösterilir; ancak aynı aile içindeki toplam aktif personel toplam normu karşılıyorsa eksik/fazla KPI hesabında dengelenir. Ana unvanda en az 1 gerçek kişi yoksa (minimum_main_current) dengeleme uygulanmaz, ayrı bir 'Ana Unvan Personelsiz Uyarısı' bayrağı işaretlenir."
+  }
+}
