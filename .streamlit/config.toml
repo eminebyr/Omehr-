@@ -1,0 +1,17 @@
+# KOYU TEMA DÜZELTMESİ (2026-08-17 eklendi) — DÜZELTME:
+# web/styles.py'deki özel CSS, Streamlit'in ESKİ/HTML tabanlı bileşenlerini
+# (kartlar, butonlar, kenar çubuğu) koyu temaya çeker, ANCAK st.dataframe()
+# gibi CANVAS tabanlı (glide-data-grid ile çizilen) interaktif tablolar
+# rastgele CSS'e neredeyse hiç tepki VERMEZ — yalnızca Streamlit'in KENDİ
+# tema motoruna (bu dosyaya) bakar. Bu dosya olmadan, tablo DIŞI (kenarlık,
+# gölge) koyulaşsa bile tablo İÇİ (hücreler, başlıklar) hep BEYAZ kalır —
+# tam olarak bildirilen görsel hata buydu. Renkler web/styles.py'deki
+# --bd-* jetonlarıyla BİREBİR aynı tutulur ki iki katman (CSS + bu tema)
+# birbirinden görsel olarak AYRIŞMASIN.
+[theme]
+base = "dark"
+primaryColor = "#5B8FD9"
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#141B2E"
+textColor = "#F0F3F7"
+font = "sans serif"
