@@ -158,4 +158,5 @@ def invalidate_local_reports_if_shared_input_changed(root: Path, input_path: Pat
             pass
     try: marker.write_text(current, encoding='utf-8')
     except OSError: pass
-    return changed
+    return changed 
+
