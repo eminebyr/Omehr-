@@ -26,21 +26,33 @@ def migrate_excel_to_db(excel_path: str, kullanici: str = "GOC_ARACI", tenant_id
     # dosyanın TAMAMI yeniden açılıp okunuyordu (~0.5 sn/sayfa, 26 sayfa
     # ~6 sn) — ölçüldü: TEK açık ExcelFile handle'ı üzerinden okumak bu
     # süreyi ~2,6x düşürüyor (göç toplamda ~10 sn'den ~5 sn'ye indi).
+    # DÜZELTME (KRİTİK — bellek taşması/OOM ile bizzat bulundu, 20.08.2026):
+    # Önceki "performans" düzeltmesi TÜM sayfaları (şema dışındaki
+    # rehber/dokümantasyon sayfaları dahil — ör. STAR_SCHEMA_REHBER,
+    # KULLANIM_REHBERI, 00_AI_SIZ_GIRIS_REHBERI — hiçbiri asla kullanılmıyor)
+    # tek seferde belleğe okuyordu. 64+ sayfalık geniş bir şirket dosyasında
+    # bu, Railway'in 1GB RAM limitini aşıp süreci OOM ile çökertti (ölçüldü:
+    # bellek kullanımı limitine dayanıp 5xx hatalarına yol açtı). Artık
+    # yalnızca GERÇEKTEN şemada olan sayfalar, TEK TEK (aynı açık handle
+    # üzerinden, önceki hız kazanımı korunarak) okunuyor — kullanılmayan
+    # sayfalar hiç belleğe alınmıyor.
     with pd.ExcelFile(excel_path) as xls:
-        sheets = {s: pd.read_excel(xls, sheet_name=s, dtype=object) for s in xls.sheet_names}
+        mevcut_sayfalar = set(xls.sheet_names)
         for sheet_adi, bilgi in sema.items():
-            df = sheets.get(sheet_adi)
-            header_row = bilgi["header_row"]
-            if df is None:
+            if sheet_adi not in mevcut_sayfalar:
                 sonuclar[sheet_adi] = {"durum": "EXCEL'DE YOK", "satir": 0}
                 continue
+            header_row = bilgi["header_row"]
             if header_row == 2:
                 # gerçek başlıklar 2. satırda (ör. Fazla Mesai gibi başlık
                 # şeridi taşıyan sayfalar) — AYNI açık handle üzerinden
-                # header=1 ile yeniden oku (dosyayı YENİDEN AÇMADAN).
+                # header=1 ile oku (dosyayı YENİDEN AÇMADAN).
                 df = pd.read_excel(xls, sheet_name=sheet_adi, header=1, dtype=object)
+            else:
+                df = pd.read_excel(xls, sheet_name=sheet_adi, dtype=object)
             yazilan = write_sheet(sheet_adi, df, kullanici=kullanici, tenant_id=tenant_id)
             sonuclar[sheet_adi] = {"durum": "OK", "satir": yazilan}
+            del df
     return sonuclar
 
 
