@@ -42,9 +42,17 @@ def test_full_chain_upload_migrate_read_produces_correct_kpis(tmp_path, monkeypa
 
 
 def test_ayarlar_upload_section_uses_correct_migration_signature():
-    """ayarlar.py'nin migrate_excel_to_db()'yi doğru parametrelerle
-    çağırdığını kod incelemesiyle doğrular (regresyon: fonksiyon imzası
-    değişirse bu test fark eder)."""
+    """ayarlar.py'nin yükleme mantığının DOĞRU davrandığını kod incelemesiyle
+    doğrular (regresyon, 20.08.2026 canlı olayında bulundu): eskiden bu
+    ekran KOŞULSUZ migrate_excel_to_db() çağırıyordu — BASDAS_INPUT_SOURCE=
+    excel (dosya) modunda çalışan dağıtımlarda bu, veriyi dashboard'un HİÇ
+    okumadığı bir veritabanına yazıp kullanıcıya yanlışlıkla "başarılı"
+    mesajı gösteriyordu. Artık ekran gerçek modu (_db_modu()) kontrol edip
+    dosya modunda uploaded dosyayı doğrudan canlı input yoluna yazmalı."""
     kaynak = open("web/tab_modules/ayarlar.py", encoding="utf-8").read()
     assert "migrate_excel_to_db(" in kaynak
-    assert "tenant_id=tenant_code()" in kaynak
+    assert "_db_modu()" in kaynak, (
+        "REGRESYON: yükleme ekranı artık gerçek modu kontrol etmiyor — "
+        "dosya modunda veri sessizce yanlış yere yazılabilir."
+    )
+    assert "current_tenant_id()" in kaynak
