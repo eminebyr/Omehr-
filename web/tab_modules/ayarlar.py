@@ -215,29 +215,49 @@ def render(ctx: PageContext) -> None:
     st.subheader("Excel Verisi Yükle")
     st.caption(
         "Kalıcı bir dosya sisteminin olmadığı dağıtımlarda (ör. ücretsiz "
-        "bulut barındırma) ana Excel dosyanızı buradan yükleyebilirsiniz — "
-        "veri veritabanına (BASDAS_INPUT_SOURCE=db modu) aktarılır."
+        "bulut barındırma) ana Excel dosyanızı buradan yükleyebilirsiniz."
     )
     yuklenen_dosya = st.file_uploader(
         "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx (ya da kendi şirketinizin aynı yapıdaki dosyası)",
         type=["xlsx"], key="excel_yukleme",
     )
-    if yuklenen_dosya is not None and st.button("Veritabanına aktar", key="excel_yukle_dugmesi"):
+    if yuklenen_dosya is not None and st.button("Yükle ve etkinleştir", key="excel_yukle_dugmesi"):
         import tempfile
         from pathlib import Path as _Path
-        from services.input_excel_migration import migrate_excel_to_db
-        from services.runtime_paths import tenant_code
+        from common_veri_okuma import _db_modu
 
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as _tmp:
             _tmp.write(yuklenen_dosya.getvalue())
             _gecici_yol = _Path(_tmp.name)
         try:
-            with st.spinner("Excel veritabanına aktarılıyor, bu birkaç saniye sürebilir..."):
-                _sonuc = migrate_excel_to_db(
-                    str(_gecici_yol), kullanici=getattr(ctx, "username", "web"), tenant_id=tenant_code(),
-                )
-            _basarili = sum(1 for v in _sonuc.values() if v.get("durum") == "OK")
-            st.success(f"{_basarili}/{len(_sonuc)} sayfa başarıyla veritabanına aktarıldı.")
+            # DÜZELTME (KRİTİK — bizzat bulundu, 20.08.2026): bu ekran
+            # önceden KOŞULSUZ migrate_excel_to_db() çağırıyordu — yani
+            # veriyi HER ZAMAN veritabanına yazıyordu. Ama dashboard'un
+            # gerçek okuma yolu (common_veri_okuma.read_all -> _db_modu())
+            # yalnız BASDAS_INPUT_SOURCE=db İKEN veritabanını okur; bu
+            # canlı dağıtımda (BASDAS_INPUT_SOURCE=excel) _db_modu() HER
+            # ZAMAN False döner ve dashboard doğrudan input DOSYASINI
+            # okur. Sonuç: "64/64 sayfa başarıyla aktarıldı" mesajı
+            # doğruydu ama veri dashboard'un HİÇ bakmadığı bir yere
+            # yazılıyordu — dashboard sonsuza dek eski veriyi gösterirdi.
+            # Artık gerçek moda göre DOĞRU hedefe yazılıyor.
+            if _db_modu():
+                from services.input_excel_migration import migrate_excel_to_db
+                from services.multitenant.tenant_context import current_tenant_id
+                with st.spinner("Excel veritabanına aktarılıyor, bu birkaç saniye sürebilir..."):
+                    _sonuc = migrate_excel_to_db(
+                        str(_gecici_yol), kullanici=getattr(ctx, "username", "web"), tenant_id=current_tenant_id(),
+                    )
+                _basarili = sum(1 for v in _sonuc.values() if v.get("durum") == "OK")
+                st.success(f"{_basarili}/{len(_sonuc)} sayfa başarıyla veritabanına aktarıldı.")
+            else:
+                from services.runtime_paths import runtime_root
+                from services.settings import input_path as _input_path_helper
+                _hedef = _input_path_helper(runtime_root())
+                _hedef.parent.mkdir(parents=True, exist_ok=True)
+                import shutil as _shutil
+                _shutil.copyfile(_gecici_yol, _hedef)
+                st.success(f"Dosya etkinleştirildi: {_hedef.name} (dashboard artık bu veriyi kullanacak).")
             st.cache_data.clear()
         except Exception as _exc:
             st.error(f"Aktarım başarısız: {_exc}")
