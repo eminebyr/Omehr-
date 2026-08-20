@@ -41,8 +41,17 @@ def test_safe_sample_data_produces_correct_kpis():
     kp = kpis(st)
     assert kp["Aktif Mevcut"] == 596
     assert kp["Toplam Norm"] == 607
-    assert kp["Norm Eksiği"] == 49
-    assert kp["Norm Fazlası"] == 23
+    # DÜZELTME (20.08.2026): önceki "49" beklentisi, REFERENTIAL_CONTROL
+    # sayfasının canlı hesabı SESSİZCE ezdiği (bkz. src/state_engine.py
+    # DÜZELTME notu) bir dönemden kalma DONMUŞ bir değerdi — canlıda
+    # bizzat doğrulandı: personel eklense/çıkarılsa bile bu sayı hiç
+    # değişmiyordu. Artık varsayılan olarak canlı Mevcut/Norm hesabı
+    # kullanıldığı için doğru (ve gerçekte hesaplanan) değer 48'dir.
+    assert kp["Norm Eksiği"] == 48
+    # Aynı sebeple: REFERENTIAL_CONTROL'de karşılığı olmayan fazla-personelli
+    # (mağaza,unvan) kombinasyonları önceden SESSİZCE 0'a zorlanıyordu —
+    # canlı hesap artık bunları da doğru yansıtıyor.
+    assert kp["Norm Fazlası"] == 37
 
 
 def test_safe_sample_data_is_shipped_but_real_data_is_not(tmp_path):
