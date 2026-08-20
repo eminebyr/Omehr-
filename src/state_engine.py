@@ -348,7 +348,18 @@ def state(norm,staff,sheets):
     # sayfadaki mağaza+norm ailesi dağılımı esas alınır. Tüm norm aileleri
     # (UNLU MAMÜLLER, PART TİME, ONLINE vb. dahil) işlenir.
     title['Norm Fazlası']=(effective-title['Norm Kadro']).where(in_scope,0).clip(lower=0).astype(int)
-    ctl=sheets.get('REFERENTIAL_CONTROL') if isinstance(sheets,dict) else None
+    # DÜZELTME (KRİTİK — bizzat canlıda bulundu, 20.08.2026): bu blok
+    # REFERENTIAL_CONTROL sayfası varsa yukarıda TAZE hesaplanan Norm
+    # Eksiği/Norm Fazlası'nı SESSİZCE eziyordu — sayfada karşılığı olmayan
+    # her (mağaza,unvan) için 0'a düşürüyordu. Sonuç: personel eklense/
+    # çıkarılsa bile (Aktif Mevcut doğru güncellense bile) Norm Eksiği/
+    # Fazlası hiç değişmiyormuş gibi görünüyordu — kullanıcı canlı olarak
+    # bunu Akevler/Kasiyer ve Akevler/Yönetici örnekleriyle doğruladı.
+    # Artık bu "resmi/sabit dağılım" ezmesi varsayılan olarak KAPALI;
+    # yalnız BASDAS_USE_REFERENTIAL_CONTROL=1 açıkça ayarlanırsa devreye
+    # girer (bilinçli bir kalibrasyon/onay süreci isteniyorsa).
+    import os as _os_ref_ctl
+    ctl=sheets.get('REFERENTIAL_CONTROL') if isinstance(sheets,dict) and _os_ref_ctl.getenv('BASDAS_USE_REFERENTIAL_CONTROL','0')=='1' else None
     if ctl is not None and not ctl.empty:
         try:
             c=ctl.copy()
