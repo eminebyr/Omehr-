@@ -300,14 +300,18 @@ def test_build_dashboard_model_works_without_legacy_baseline_file(isolated_root)
     müşteride ASLA bulunmayacaktı. Artık dosya yoksa çökmemeli, zaten var
     olan 'taban yoksa mevcut sayıyı kullan' yedek mantığına düşmeli."""
     import pandas as pd
-    from services.dashboard_model import build_dashboard_model, CONTROL_FILENAME, REGIONS
+    from services.dashboard_model import build_dashboard_model, CONTROL_FILENAME
 
+    # DÜZELTME: sabit REGIONS sabiti kaldırıldı (kullanılmıyordu) — burada
+    # sadece test verisi için rastgele bir bölge müdürü adı yeterli, sistem
+    # bölge isminin ne olduğuna bağlı olarak davranış değiştirmemeli.
+    ornek_bolge = "Örnek Bölge Müdürü"
     norm = pd.DataFrame([
-        {"MağazaID": 1, "Mağaza": "A Mağazası", "Bölge Sorumlusu": REGIONS[0],
+        {"MağazaID": 1, "Mağaza": "A Mağazası", "Bölge Sorumlusu": ornek_bolge,
          "UnvanID": "U1", "Unvan": "Kasiyer", "Norm Kadro": 5},
     ])
     staff = pd.DataFrame([
-        {"MağazaID": 1, "Mağaza": "A Mağazası", "Bölge Sorumlusu": REGIONS[0],
+        {"MağazaID": 1, "Mağaza": "A Mağazası", "Bölge Sorumlusu": ornek_bolge,
          "PersonelID": "P1", "UnvanID": "U1", "Unvan": "Kasiyer", "Departman": "Kasiyer",
          "İsim Soyisim": "Kişi 1", "İşten Çıkış": None},
     ])
