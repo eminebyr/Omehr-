@@ -55,7 +55,7 @@ def main():
         import pandas as _pd
         from services.schema_validation import validate as _sema_dogrula
         import os as _os
-        if _os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db":
+        if _os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db":
             from services.input_data_access import read_all_sheets as _read_all_sheets_db
             _sheets_on_kontrol = _read_all_sheets_db()
         else:
@@ -145,10 +145,10 @@ def main():
         print('[5/6] Mevcut, yönetim normu, bölge ve yönetici raporları...',flush=True); result=run_all()
         audit['report_schema']=validate_report_schema(result)
         audit['kpis']=result['kpis']; audit['files']={'excel':str(result['excel']),'pdf':str(result['pdf'])}
-        if os.getenv('BASDAS_SEND_EMAIL','1')=='1':
+        if os.getenv('OMEHR_SEND_EMAIL','1')=='1':
             print('[6/6] E-posta dağıtımı...',flush=True); audit['email']=send_reports_via_outlook()
         else:
-            print('[6/6] Otomatik e-posta kapalı.',flush=True); audit['email']={'status':'SKIPPED','reason':'BASDAS_SEND_EMAIL=1 ile açılır.'}
+            print('[6/6] Otomatik e-posta kapalı.',flush=True); audit['email']={'status':'SKIPPED','reason':'OMEHR_SEND_EMAIL=1 ile açılır.'}
         audit.update(status='SUCCESS',finished_at=datetime.now().isoformat(timespec='seconds'),duration_seconds=round((datetime.now()-started).total_seconds(),2)); write_audit(audit)
         write_runtime_status("HEALTHY", kpis=audit.get("kpis"), duration_seconds=audit["duration_seconds"])
         _lineage_bitir(_lineage, 'SUCCESS', kpis=audit.get('kpis'))

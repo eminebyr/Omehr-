@@ -27,7 +27,7 @@ gerçek testlerle doğrulandı:
 | 42-44 | Excel kilidi + atomic save | `services/multi_pc_excel.py`, `services/master_data_admin.py` |
 | 50 | AI lazy-load (önceden üretilmiş sonuç okur) | `web/tab_modules/ai_operasyon.py` |
 | 57-59 | Performans loglama | `services/performance_log.py` |
-| 66 | Mail test/üretim ayrımı | `BASDAS_MAIL_DRY_RUN` |
+| 66 | Mail test/üretim ayrımı | `OMEHR_MAIL_DRY_RUN` |
 | 79-82 | Test disiplini, regresyon bariyerleri | `tools/check_regression_guards.py` |
 
 ## Bu çalışmada YAPILAN düzeltmeler
@@ -67,7 +67,7 @@ sistemi ciddi şekilde etkileyebilirlerdi:
    + N yardımcı" durumunda normu yapay olarak kapatıyordu; bu modülün
    `excel_report.py` üzerinden GERÇEKTEN üretimde kullanıldığı
    keşfedildi. Kullanıcı ile "Kural A + ayrı uyarı bayrağı" netleştirildi.
-4. **23 dosyada modül-seviyesi `ROOT` önbellekleme** — `BASDAS_TENANT`
+4. **23 dosyada modül-seviyesi `ROOT` önbellekleme** — `OMEHR_TENANT`
    değişse bile ilk kiracının dizinine saplanıp kalma riski
    (`services/security.py` dahil). 22 dosya düzeltildi.
 5. **2 dosyada parametresiz `@lru_cache`** — `norm_rule_config.py` ve

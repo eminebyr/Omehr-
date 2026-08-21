@@ -11,7 +11,7 @@ bir INSERT ifadesi, `credentials` tablosuna `tenant_id` sütunu
 eklendiğinde (çok kiracılı SaaS dönüşümü) güncellenmemiş, hâlâ eski
 8 sütunluk konumsal `VALUES(...)` sözdizimini kullanıyordu. Bu hata
 kurulumun 5/8 adımını (`INITIAL_PASSWORD_IMPORT.py`) BLOKE ediyordu —
-her `BASDAS_CURRENT_BASLAT.bat` çalıştırmasında da tekrarlanırdı.
+her `OMEHR_CURRENT_BASLAT.bat` çalıştırmasında da tekrarlanırdı.
 
 **Düzeltme:** Açık sütun adlarıyla INSERT'e çevrildi, `tenant_id`
 doğru şekilde ekleniyor. **Sizin attığınız GERÇEK kurulum adımını

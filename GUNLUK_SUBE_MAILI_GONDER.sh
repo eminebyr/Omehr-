@@ -7,7 +7,7 @@ TEMPLATE="GUNLUK_SUBE_MAIL_METNI.txt"
 PREVIEW="logs/CURRENT_Gunluk_Sube_Mail_Onizleme.txt"
 
 [[ -x "$PY" ]] || {
-  echo "HATA: Önce BASDAS_CURRENT_BASLAT.sh dosyasını bir kez çalıştırın."
+  echo "HATA: Önce OMEHR_CURRENT_BASLAT.sh dosyasını bir kez çalıştırın."
   exit 1
 }
 [[ -f "$TEMPLATE" ]] || {

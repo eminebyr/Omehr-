@@ -5,7 +5,7 @@ cd /d "%~dp0"
 rem =====================================================================
 rem GUNLUK_OTOMATIK_CALISTIR.bat
 rem =====================================================================
-rem Bu betik BASDAS_CURRENT_BASLAT.bat'tan farklidir: interaktif degildir,
+rem Bu betik OMEHR_CURRENT_BASLAT.bat'tan farklidir: interaktif degildir,
 rem "Bir tusa basin" gibi bekleme icermez, hicbir pencere acik kalmaz.
 rem Windows Gorev Zamanlayicisi (Task Scheduler) tarafindan gunluk/haftalik
 rem tetiklenmek uzere tasarlanmistir. Otomatik kaydolmak icin

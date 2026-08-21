@@ -20,7 +20,7 @@ if exist ".venv\Scripts\python.exe" (
 "%BASEPY%" -c "import socket; s=socket.socket(); s.settimeout(.5); r=s.connect_ex(('127.0.0.1',8501)); s.close(); raise SystemExit(0 if r==0 else 1)" >nul 2>nul
 if errorlevel 1 (
     echo HATA: Web sistemi calismiyor.
-    echo Once BASDAS_CURRENT_BASLAT.bat dosyasini calistirin.
+    echo Once OMEHR_CURRENT_BASLAT.bat dosyasini calistirin.
     pause
     exit /b 1
 )

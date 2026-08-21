@@ -2,7 +2,7 @@
 ve son çalıştırma durumunu gösteren minimal bir FastAPI servisi.
 
 Çalıştırma: uvicorn monitoring_server:app --host 127.0.0.1 --port 9108
-(BASDAS_CURRENT_BASLAT.bat/.sh ve docker-compose.production.yml tarafından
+(OMEHR_CURRENT_BASLAT.bat/.sh ve docker-compose.production.yml tarafından
 bu şekilde çağrılır.)
 
 Kapsam BİLEREK küçük tutuldu: bu bir tam APM/metrik toplama sistemi değil,

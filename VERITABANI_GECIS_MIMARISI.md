@@ -12,7 +12,7 @@ tablo şeması. Elle yazılmadı — gerçek Excel başlıklarından programatik
 `read_sheet()`, `read_all_sheets()`, `write_sheet()` — Excel okumasıyla
 **birebir aynı şekilli** (`dict[str, DataFrame]`, sütun adı/sırası aynı)
 sonuç döner. `services/db_backend.py`'nin (önceden var olan, test
-edilmiş) SQLite/PostgreSQL soyutlamasını kullanır — `BASDAS_DB_BACKEND`
+edilmiş) SQLite/PostgreSQL soyutlamasını kullanır — `OMEHR_DB_BACKEND`
 ortam değişkeniyle iki backend arasında geçiş yapılabilir.
 
 ### 3. Göç aracı (`services/input_excel_migration.py`)
@@ -22,7 +22,7 @@ başarıyla aktarıldı.
 
 ### 4. Merkezi entegrasyon — TEK noktadan tüm motorlar düzeldi
 `src/data_loading.py::load()` (tüm 30+ motorun ortak giriş noktası)
-`BASDAS_INPUT_SOURCE=db` bayrağını kontrol eder; ayarlıysa Excel'e HİÇ
+`OMEHR_INPUT_SOURCE=db` bayrağını kontrol eder; ayarlıysa Excel'e HİÇ
 dokunmadan veritabanından okur. Kod tabanında 30 dosyada dağınık halde
 bulunan doğrudan `pd.read_excel(INPUT,...)` çağrıları TEK TEK
 değiştirilmedi — bunun yerine `services/excel_read_shim.py`,
@@ -47,16 +47,16 @@ değişmeden geçmeye devam ediyor; yeni 7 test yalnız DB modunu doğrular.
 
 ```bash
 # 1) Bir kez: mevcut Excel'i veritabanına aktar
-python3 services/input_excel_migration.py input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx
+python3 services/input_excel_migration.py input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx
 
 # 2) Sistemi veritabanı modunda başlat
-set BASDAS_INPUT_SOURCE=db
-set BASDAS_DB_BACKEND=sqlite
-BASDAS_CURRENT_BASLAT.bat
+set OMEHR_INPUT_SOURCE=db
+set OMEHR_DB_BACKEND=sqlite
+OMEHR_CURRENT_BASLAT.bat
 
 # PostgreSQL için:
-set BASDAS_DB_BACKEND=postgres
-set BASDAS_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
+set OMEHR_DB_BACKEND=postgres
+set OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
 ```
 
 ## Bilerek YAPILMAYAN, dürüstçe kapsam dışı bırakılan kısımlar
@@ -64,7 +64,7 @@ set BASDAS_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
 1. **Excel dosyası hâlâ mevcut, kaldırılmadı.** Siz "Excel tamamen
    kalksın" dediniz — teknik olarak sistem artık Excel'e MUHTAÇ değil
    (kanıtlandı), ama şu an İKİ MOD da bir arada duruyor
-   (`BASDAS_INPUT_SOURCE` bayrağıyla seçiliyor). Excel dosyasını
+   (`OMEHR_INPUT_SOURCE` bayrağıyla seçiliyor). Excel dosyasını
    tamamen kaldırıp yalnız veritabanı moduna geçmek, üretim ortamınızda
    gerçek kullanıcılarla bir süre paralel test edildikten sonra
    yapılması gereken bir KARARdır — şu an geri dönüşü olmayan bir
@@ -94,7 +94,7 @@ set BASDAS_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
    ortamınızda yapılmalı.
 
 ## Önerilen sonraki adımlar (aşama aşama, sizin önceki tercihiniz)
-1. Bu paketi test ortamınızda `BASDAS_INPUT_SOURCE=db` ile bir süre
+1. Bu paketi test ortamınızda `OMEHR_INPUT_SOURCE=db` ile bir süre
    Excel ile PARALEL çalıştırın (ikisi de aynı anda doğru sonucu
    veriyor, karşılaştırma kolay).
 2. Sorun çıkmazsa Karma sayfalar (Fact_Norm, Fact_Mevcut,

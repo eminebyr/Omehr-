@@ -14,7 +14,7 @@
 - **Madde 55**: st.form 4 yerde kullanılıyor
 - **Madde 56**: Plotly'ye hiç dokunulmadı, varsayılan araçlar korunuyor
 - **Madde 62**: audit_events.py zaten immutable audit sağlıyor
-- **Madde 66**: BASDAS_MAIL_DRY_RUN zaten test/production ayrımı sağlıyor
+- **Madde 66**: OMEHR_MAIL_DRY_RUN zaten test/production ayrımı sağlıyor
 
 ## Yeni inşa edilen (gerçek eksik)
 **Madde 57-59: Performans loglama** — `services/performance_log.py`
@@ -46,7 +46,7 @@ geçti.** Mimari + regresyon bariyerleri temiz, main.py uçtan uca
 Şartnameyi uygularken, DOĞRUDAN istenmeyen ama derin incelemede ortaya
 çıkan **3 ayrı sistemik hata sınıfı** bulunup düzeltildi:
 
-1. **Modül-seviyesi `ROOT` önbellekleme** (23 dosya) — `BASDAS_TENANT`
+1. **Modül-seviyesi `ROOT` önbellekleme** (23 dosya) — `OMEHR_TENANT`
    değişse bile ilk kiracının dizinine saplı kalma riski
 2. **Parametresiz `@lru_cache`** (2 dosya, en kritiği
    `norm_rule_config.py`) — family_balance güvenlik eşiğinin yanlış

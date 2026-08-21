@@ -34,7 +34,7 @@ Madde 13 testini tam pakette çalıştırırken bir test başarısız oldu
 (tek başına geçiyordu). Kök neden: `common_veri_okuma.py`'de
 `ROOT = runtime_root()` MODÜL SEVİYESİNDE, import anında BİR KEZ
 hesaplanıyordu — Python modülleri process boyunca yalnız bir kez
-import edildiği için, `BASDAS_RUNTIME_ROOT` SONRADAN değişse bile bu
+import edildiği için, `OMEHR_RUNTIME_ROOT` SONRADAN değişse bile bu
 YANSIMIYORDU. Bu, hem test izolasyonunu BOZUYORDU hem de TEORİK
 olarak üretimde (runtime kökü değişebilecek herhangi bir senaryoda)
 bir risk oluşturabilirdi. Her çağrıda taze çözümlenecek şekilde

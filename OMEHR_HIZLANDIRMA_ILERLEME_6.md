@@ -48,7 +48,7 @@ düzeltildi.
 ## Bilinçli olarak dokunulmayan: web/app.py
 Streamlit bu script'i HER kullanıcı etkileşiminde baştan çalıştırır
 (normal Python import önbelleklemesi değil) — modül seviyesi kod her
-zaman taze çalışır. Tipik dağıtım modeli (BASDAS_TENANT bir OS ortam
+zaman taze çalışır. Tipik dağıtım modeli (OMEHR_TENANT bir OS ortam
 değişkeni) "kiracı başına bir süreç" olduğundan, ROOT'un süreç ömrü
 boyunca sabit kalması muhtemelen DOĞRU davranış. 868 satırlık, son
 derece kritik bu dosyaya körü körüne aynı düzeltmeyi uygulamak riski

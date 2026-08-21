@@ -3,7 +3,7 @@
 kontrol eder: Python sürümü, gerekli klasörler, input dosyası,
 config dosyalarının okunabilirliği, kritik kütüphanelerin kurulu olması.
 
-BASDAS_CURRENT_BASLAT.bat/.sh tarafından her başlatmada çağrılır.
+OMEHR_CURRENT_BASLAT.bat/.sh tarafından her başlatmada çağrılır.
 Kritik bir sorun varsa (input dosyası yok, config bozuk, kütüphane
 eksik) sıfırdan farklı bir çıkış koduyla döner ve başlatmayı durdurur —
 üretimde yarım/bozuk bir sistemin sessizce açılmasındansa, açık bir
@@ -58,14 +58,14 @@ def main() -> int:
         root = None
 
     # 4) Input dosyası
-    # DÜZELTME: BASDAS_INPUT_SOURCE=db modunda (ör. kalıcı dosya sistemi
+    # DÜZELTME: OMEHR_INPUT_SOURCE=db modunda (ör. kalıcı dosya sistemi
     # olmayan ücretsiz bulut dağıtımları, ya da Ayarlar > "Excel Verisi
     # Yükle" ekranından veri girecek yeni bir kiracı) input dosyasının
     # henüz VAR OLMAMASI beklenen, normal bir durumdur — bu KRİTİK bir
     # hata SAYILMAMALI. Bizzat kanıtlandı: kurulum, veri henüz web
     # panelinden yüklenmeden ÖNCE "KRİTİK sorun var" diyip duruyordu.
     import os
-    _db_modu = os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    _db_modu = os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
     if root is not None:
         try:
             from services.settings import input_path

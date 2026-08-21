@@ -21,7 +21,7 @@ test edilmiş durumdaydı. Görevim bu turda "sıfırdan inşa" değil,
 | KVKK Aydınlatma Metni taslağı | ✅ Var — doğru şekilde "avukat incelemesi ZORUNLU" uyarısı taşıyor |
 
 ## Bulduğum ve düzelttiğim gerçek hata
-`input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx` **bozuktu** (1.19MB, olması
+`input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx` **bozuktu** (1.19MB, olması
 gereken 1.62MB — yarıda kesilmiş bir yazma işleminden kalma). Bu, 7
 testin başarısız olmasına neden oluyordu (aile kuralları, KPI
 doğrulaması, Ana Veri Yönetimi round-trip). Sağlam kopyayla değiştirdim

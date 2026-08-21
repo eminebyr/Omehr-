@@ -8,7 +8,7 @@ mağazalara (Sube_Mail_Listesi, Aktif=Evet + Günlük Gönderim=Evet) puantaj
 hatırlatma e-postası gönderir ve sonucu logs/ klasörüne yazar.
 
 Manuel test için: python GUNLUK_PUANTAJ_HATIRLATMA.py
-Gerçek gönderim yapmadan denemek için: BASDAS_MAIL_DRY_RUN=1 önceden ayarlanmalı.
+Gerçek gönderim yapmadan denemek için: OMEHR_MAIL_DRY_RUN=1 önceden ayarlanmalı.
 """
 
 import json

@@ -7,7 +7,7 @@ okuma.py`'de bulup düzelttiğim SINIFTA bir hata daha fark ettim:
 hesaplanıyordu. Sistematik taramada bu deseni **28 dosyada** buldum.
 
 ## Neden kritik
-`runtime_root()`'un GERÇEKTEN `BASDAS_TENANT`'a göre değişebildiğini
+`runtime_root()`'un GERÇEKTEN `OMEHR_TENANT`'a göre değişebildiğini
 doğruladım (izole çok-kiracılı modda). Bu, potansiyel olarak: bir
 kiracının isteğiyle İLK KEZ import edilen bir modülün, SONRAKİ TÜM
 kiracılar için YANLIŞ (İLK kiracının) dizine yazmaya devam etmesi
@@ -30,7 +30,7 @@ sabit) eksik kaldı — bunları elle bulup düzelttim.
 
 ## Doğrulama
 - `security.py` ve `mail_idempotency.py`'nin gerçekten doğru
-  (BASDAS_RUNTIME_ROOT'a göre) dizine yazdığı gerçek fonksiyon
+  (OMEHR_RUNTIME_ROOT'a göre) dizine yazdığı gerçek fonksiyon
   çağrılarıyla kanıtlandı
 - Bir test dosyası (`test_transfer_notification_recipients.py`), artık
   fonksiyona çevrilen eski bir sabite doğrudan erişmeye çalıştığı için

@@ -3,8 +3,8 @@
 ## Kapsam kararı
 Kullanıcı-görünür marka metni/logosu (web başlığı, sayfa başlığı,
 PDF/Excel rapor başlıkları, kılavuz) BAŞDAŞ → OMEHR olarak değiştirildi.
-Teknik/dahili isimlendirmelere (ortam değişkenleri BASDAS_RUNTIME_ROOT
-vb., dosya adları BASDAS_AI_NORM_TRANSFER_INPUT.xlsx, .bat betikleri,
+Teknik/dahili isimlendirmelere (ortam değişkenleri OMEHR_RUNTIME_ROOT
+vb., dosya adları OMEHR_AI_NORM_TRANSFER_INPUT.xlsx, .bat betikleri,
 veritabanı tablo önekleri) BİLİNÇLİ olarak dokunulmadı — bunları
 değiştirmek tüm kurulu sistemleri, testleri ve otomasyon betiklerini
 kırar.

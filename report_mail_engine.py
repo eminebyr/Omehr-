@@ -121,29 +121,29 @@ def _attachments(row: pd.Series) -> list[Path]:
     add_pdf=yes(row.get("PDF Ekle","Evet")); add_excel=yes(row.get("Excel Ekle","Evet"))
     if is_executive_audience(row):
         files=[
-            _output_dir()/"BASDAS_Admin_Yonetici_Ozeti.pdf",
-            _output_dir()/"BASDAS_Yonetici_Raporu.pdf",
-            _output_dir()/"BASDAS_Kutucuklu_Yonetici_Raporu.xlsx",
-            _output_dir()/"BASDAS_AI_Karar_Analizi.pdf",
-            _output_dir()/"BASDAS_Operasyon_Verimlilik_Analizi.pdf",
-            _output_dir()/"BASDAS_Maliyet_Analizi.pdf",
-            _output_dir()/"BASDAS_Admin_Norm_ve_Aksiyonlar.xlsx",
-            _output_dir()/"BASDAS_Admin_Maliyet_ve_Operasyon.xlsx",
-            _output_dir()/"BASDAS_Executive_Data.xlsx",
+            _output_dir()/"OMEHR_Admin_Yonetici_Ozeti.pdf",
+            _output_dir()/"OMEHR_Yonetici_Raporu.pdf",
+            _output_dir()/"OMEHR_Kutucuklu_Yonetici_Raporu.xlsx",
+            _output_dir()/"OMEHR_AI_Karar_Analizi.pdf",
+            _output_dir()/"OMEHR_Operasyon_Verimlilik_Analizi.pdf",
+            _output_dir()/"OMEHR_Maliyet_Analizi.pdf",
+            _output_dir()/"OMEHR_Admin_Norm_ve_Aksiyonlar.xlsx",
+            _output_dir()/"OMEHR_Admin_Maliyet_ve_Operasyon.xlsx",
+            _output_dir()/"OMEHR_Executive_Data.xlsx",
         ]
     elif is_global_scope(region,send_type):
         files=[]
-        if add_pdf: files.append(_output_dir()/"BASDAS_Yonetici_Raporu.pdf")
+        if add_pdf: files.append(_output_dir()/"OMEHR_Yonetici_Raporu.pdf")
         # Şirket geneli/yönetici gönderiminde PDF'nin Excel karşılığı zorunludur.
-        files.append(_output_dir()/"BASDAS_Kutucuklu_Yonetici_Raporu.xlsx")
+        files.append(_output_dir()/"OMEHR_Kutucuklu_Yonetici_Raporu.xlsx")
         # Global İK kullanıcılarına ana raporlar gider; bölge raporlarının tümü ayrıca eklenmez.
     else:
         files=region_report_paths(region,add_pdf,add_excel)
         # Aktif ve gerçek adresli yönetici için özel bölge dosyası yoksa rapor
         # gönderimini düşürmek yerine şirket geneli resmi norm raporunu kullan.
         if not files:
-            if add_pdf: files.append(_output_dir()/"BASDAS_Yonetici_Raporu.pdf")
-            files.append(_output_dir()/"BASDAS_Kutucuklu_Yonetici_Raporu.xlsx")
+            if add_pdf: files.append(_output_dir()/"OMEHR_Yonetici_Raporu.pdf")
+            files.append(_output_dir()/"OMEHR_Kutucuklu_Yonetici_Raporu.xlsx")
     out=[]; seen=set()
     for p in files:
         p=Path(p).resolve()

@@ -3,7 +3,7 @@
 ilk giriş şifrelerini, güvenli parola kasasına (data/security.db,
 PBKDF2-HMAC-SHA256) bir kez taşır.
 
-BASDAS_CURRENT_BASLAT.bat/.sh tarafından her başlatmada çağrılır — ama
+OMEHR_CURRENT_BASLAT.bat/.sh tarafından her başlatmada çağrılır — ama
 services.security.migrate_legacy_input() zaten bir "marker" dosyasıyla
 (data/.legacy_passwords_migrated) yalnız BİR KEZ gerçek taşıma yapar;
 sonraki çalıştırmalarda hızlıca no-op döner. Bu yüzden her başlatmada
@@ -33,7 +33,7 @@ def main() -> int:
         adet = migrate_legacy_input(path)
     except Exception as exc:
         # DÜZELTME: önceden bu istisna return 1 (KRİTİK HATA) döndürüyordu
-        # ve BASDAS_CURRENT_BASLAT.bat bunu görünce TÜM kurulum/başlatma
+        # ve OMEHR_CURRENT_BASLAT.bat bunu görünce TÜM kurulum/başlatma
         # sürecini "HATA: Kullanici guvenlik aktarimi basarisiz oldu"
         # mesajıyla DURDURUYORDU. Şifre taşıma yalnız bir KOLAYLIKTIR
         # (Mail_Listesi'ndeki geçici şifreleri önceden yükler) — sistemin

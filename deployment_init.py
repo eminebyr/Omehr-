@@ -10,10 +10,10 @@ from services.runtime_paths import code_root, runtime_root
 
 def main() -> int:
     runtime_root()
-    password = os.getenv("BASDAS_ADMIN_PASSWORD", "")
+    password = os.getenv("OMEHR_ADMIN_PASSWORD", "")
     if not credential_exists("admin"):
         if not password:
-            print("HATA: BASDAS_ADMIN_PASSWORD zorunludur.")
+            print("HATA: OMEHR_ADMIN_PASSWORD zorunludur.")
             return 2
         set_password("admin", password, must_change=True)
     return subprocess.run([sys.executable, str(code_root() / "main.py")], cwd=code_root()).returncode

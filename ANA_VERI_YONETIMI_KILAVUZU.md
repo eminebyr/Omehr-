@@ -8,7 +8,7 @@ Bu ekran, ana Excel input dosyasını açmadan dört temel veri tablosunu web pa
 - **Mağaza Sözlüğü / Dim_Magaza**
 - **Unvan Sözlüğü / Dim_Unvan**
 
-Ana veri kaynağı yine `input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx` dosyasıdır. Panelde kaydedilen değişiklikler bu dosyaya yazılır; mevcut norm, transfer, PDF/Excel ve Outlook motorları aynı dosyayı okumaya devam eder.
+Ana veri kaynağı yine `input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx` dosyasıdır. Panelde kaydedilen değişiklikler bu dosyaya yazılır; mevcut norm, transfer, PDF/Excel ve Outlook motorları aynı dosyayı okumaya devam eder.
 
 ## Yetki
 Ekran yalnız ADMIN ve İK Direktörü rollerine açıktır.

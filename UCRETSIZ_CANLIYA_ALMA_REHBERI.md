@@ -56,19 +56,21 @@ bir sınırıdır.
    (Secrets) TAM OLARAK bu formatta girin:
 
 ```toml
-BASDAS_ISOLATED = "0"
-BASDAS_RUN_ENGINE_ON_START = "0"
-BASDAS_WORKER_INLINE = "1"
-BASDAS_INPUT_SOURCE = "db"
-BASDAS_DB_BACKEND = "postgres"
-BASDAS_POSTGRES_DSN = "Adım 3'te kopyaladığınız connection string'i buraya yapıştırın"
-BASDAS_ADMIN_PASSWORD = "kendi-seçtiğiniz-güçlü-bir-şifre-2026!"
-BASDAS_MAIL_DRY_RUN = "1"
+# OMEHR_ADMIN_PASSWORD için "***" yerine kendi seçtiğiniz, en az 10
+# karakterli, büyük/küçük harf ve rakam içeren güçlü bir şifre yazın.
+OMEHR_ISOLATED = "0"
+OMEHR_RUN_ENGINE_ON_START = "0"
+OMEHR_WORKER_INLINE = "1"
+OMEHR_INPUT_SOURCE = "db"
+OMEHR_DB_BACKEND = "postgres"
+OMEHR_POSTGRES_DSN = "Adım 3'te kopyaladığınız connection string'i buraya yapıştırın"
+OMEHR_ADMIN_PASSWORD = "***"
+OMEHR_MAIL_DRY_RUN = "1"
 ```
 
-**Not:** `BASDAS_MAIL_DRY_RUN = "1"` mailleri GERÇEKTEN göndermez,
+**Not:** `OMEHR_MAIL_DRY_RUN = "1"` mailleri GERÇEKTEN göndermez,
 yalnız "gönderilmiş gibi" işaretler. Gerçek mail göndermek için bunu
-kaldırıp SMTP bilgilerinizi (`BASDAS_SMTP_HOST` vb.) eklemeniz gerekir
+kaldırıp SMTP bilgilerinizi (`OMEHR_SMTP_HOST` vb.) eklemeniz gerekir
 — isterseniz sonraki bir adımda bunu birlikte kurarız.
 
 7. "Deploy" tıklayın — birkaç dakika içinde uygulamanız `https://sizin-uygulamaniz.streamlit.app` adresinde açılır
@@ -86,12 +88,12 @@ otomatik rapor gönderimi zamanlanmış olarak KURULMAZ.
 ## Adım 5: İlk giriş
 
 - Kullanıcı adı: `admin`
-- Şifre: Adım 4'te `BASDAS_ADMIN_PASSWORD` olarak girdiğiniz şifre
+- Şifre: Adım 4'te `OMEHR_ADMIN_PASSWORD` olarak girdiğiniz şifre
 - İlk girişte sistem şifrenizi değiştirmenizi isteyecektir
 
 ## Adım 5.5: Excel verinizi yükleyin
 
-Veritabanı modunda (`BASDAS_INPUT_SOURCE=db`) çalıştığınız için, Excel
+Veritabanı modunda (`OMEHR_INPUT_SOURCE=db`) çalıştığınız için, Excel
 dosyanızı artık **web panelinden** yüklersiniz — dosya sistemine elle
 kopyalamaya gerek yok:
 
@@ -112,25 +114,10 @@ yapabilir.
 
 ## Adım 6: Başka şirketler nasıl kendi verilerini girer?
 
-**Düzeltme:** Sistemde **kendi-kendine kayıt** (self-service signup)
-ekranı zaten VAR — giriş ekranında "Giriş Yap" / "Yeni Firma Kaydı"
-seçeneğini göreceksiniz. Yeni bir şirket:
-1. "Yeni Firma Kaydı" seçer
-2. Firma kodu, firma adı ve plan seçer (deneme/temel/standart/kurumsal
-   — her planın farklı şube/kullanıcı kotası vardır)
-3. İlk yönetici hesabını oluşturur
-4. İsteğe bağlı olarak kendi Excel dosyasını hemen yükler (ya da
-   boş başlayıp verileri sonradan "Tüm Sayfalar" panelinden girer)
-
-Bu, admin müdahalesi olmadan tamamen kendi kendine işler — **gerçek
-bir uçtan uca testle kanıtlandı** (kayıt → giriş → veri yükleme →
-doğru KPI gösterimi).
-
-**Önemli not:** "Deneme" planının şube kotası düşüktür (10) — büyük
-bir gerçek şirket verisini hemen yüklemek isteyen bir kullanıcı kota
-aşımı hatası alabilir. Bu, kasıtlı bir kota koruması (bizzat
-doğrulandı) — kullanıcı "standart" veya "kurumsal" plan seçerek
-bunu aşabilir.
+Şu an sistemde **kendi-kendine kayıt** (self-service signup) ekranı
+YOK — her yeni şirket için siz (admin) manuel bir "kiracı" (tenant)
+oluşturmanız gerekiyor. Bunu birlikte yapmak isterseniz (basit bir
+"Yeni Şirket Ekle" ekranı) bir sonraki adımda ele alabiliriz.
 
 ---
 

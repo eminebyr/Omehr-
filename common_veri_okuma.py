@@ -2,13 +2,13 @@ import hashlib, json, os, pandas as pd
 from services.runtime_paths import runtime_root
 
 def _db_modu():
-    return os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    return os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
 
 def input_file():
     # DÜZELTME (kritik test-izolasyon + potansiyel üretim hatası): ROOT
     # önceden modül seviyesinde, import anında BİR KEZ hesaplanıyordu —
     # Python modülleri process boyunca yalnız bir kez import edildiği
-    # için, BASDAS_RUNTIME_ROOT SONRADAN değişse bile (ör. testler arası,
+    # için, OMEHR_RUNTIME_ROOT SONRADAN değişse bile (ör. testler arası,
     # ya da teorik olarak uzun süre çalışan bir süreçte) bu değişiklik
     # ASLA yansımıyordu. Bizzat kanıtlandı: tam test paketinde bir test
     # başka bir testin kök dizinini okuyordu. Artık her çağrıda taze
@@ -21,7 +21,7 @@ def input_file():
             # hata değildir. Bazı çağıranlar (preflight/backup gibi) yine
             # de bir Path bekler; var olmayan sembolik bir yol döner,
             # İÇERİĞİ hiçbir zaman okunmaz (read_all() DB'ye yönlenir).
-            return root/'input'/'BASDAS_AI_NORM_TRANSFER_INPUT.xlsx'
+            return root/'input'/'OMEHR_AI_NORM_TRANSFER_INPUT.xlsx'
         raise FileNotFoundError('input klasorunde Excel dosyasi yok.')
     if len(fs)>1: print('UYARI: Birden fazla Excel bulundu; ilk dosya kullaniliyor:',fs[0].name)
     return fs[0]

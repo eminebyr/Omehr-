@@ -4,8 +4,8 @@ kritik norm açığı eşiğini (Ayarlar ekranındaki critical_deficit_threshold
 aşan mağazalar için services.management_center.scan_alerts() ile uyarı
 oluşturur ve varsa Teams webhook'una gönderir.
 
-BASDAS_CURRENT_BASLAT.bat/.sh tarafından arka plan süreci olarak başlatılır.
-BASDAS_ALERT_INTERVAL_SECONDS ortam değişkeniyle kontrol periyodu
+OMEHR_CURRENT_BASLAT.bat/.sh tarafından arka plan süreci olarak başlatılır.
+OMEHR_ALERT_INTERVAL_SECONDS ortam değişkeniyle kontrol periyodu
 ayarlanabilir (varsayılan: 900 sn / 15 dk).
 
 Kapsam BİLEREK hafif tutuldu: dosyayı `prepare=False` ile okur (yedekleme/
@@ -53,7 +53,7 @@ def _bir_tur() -> int:
 
 
 def main() -> int:
-    aralik = int(os.getenv("BASDAS_ALERT_INTERVAL_SECONDS", "900"))
+    aralik = int(os.getenv("OMEHR_ALERT_INTERVAL_SECONDS", "900"))
     print(f"Alert watcher başladı — her {aralik} saniyede bir kritik norm açığı taranacak.")
     try:
         while True:

@@ -9,7 +9,7 @@ PY="${PWD}/.venv/bin/python"
 
 "$PY" -c "import socket; s=socket.socket(); s.settimeout(.5); r=s.connect_ex(('127.0.0.1',8501)); s.close(); raise SystemExit(0 if r==0 else 1)" || {
   echo "HATA: Web sistemi çalışmıyor."
-  echo "Önce BASDAS_CURRENT_BASLAT.sh dosyasını çalıştırın."
+  echo "Önce OMEHR_CURRENT_BASLAT.sh dosyasını çalıştırın."
   exit 1
 }
 

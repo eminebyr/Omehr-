@@ -8,7 +8,7 @@ Kullanım:
     python GUNCELLEME_UYGULA.py C:\\indirilenler\\basdas_v19_21_3_paket 19.21.3
 
 Bu betik services/updater.py'yi çağırır (bkz. o modülün docstring'i için
-kapsam ve sınırlar). BASDAS_CURRENT_BASLAT.bat/.sh ile AYNI desende,
+kapsam ve sınırlar). OMEHR_CURRENT_BASLAT.bat/.sh ile AYNI desende,
 KURULUM.bat'ın yanına GUNCELLEME_UYGULA.bat/.sh eklenerek çağrılabilir.
 """
 from __future__ import annotations
@@ -56,7 +56,7 @@ def main() -> int:
         print(f"\n✅ Güncelleme BAŞARILI: {sonuc.onceki_surum} -> {sonuc.yeni_surum}")
         print(f"Yedek konumu: {sonuc.yedek_yolu}")
         print(f"Güncellenen ögeler: {', '.join(sonuc.kopyalanan_ogeler)}")
-        print("\nDevam etmeden önce BASDAS_CURRENT_BASLAT.bat/.sh ile sistemi yeniden başlatın ve YESIL_PAKET_TESTI/TESTLERI_CALISTIR ile doğrulayın.")
+        print("\nDevam etmeden önce OMEHR_CURRENT_BASLAT.bat/.sh ile sistemi yeniden başlatın ve YESIL_PAKET_TESTI/TESTLERI_CALISTIR ile doğrulayın.")
         return 0
     else:
         print(f"\n❌ Güncelleme BAŞARISIZ: {sonuc.hata}")

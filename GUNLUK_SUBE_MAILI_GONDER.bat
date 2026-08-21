@@ -4,7 +4,7 @@ cd /d "%~dp0"
 title BASDAS CURRENT - Gunluk Sube Maili
 
 if not exist ".venv\Scripts\python.exe" (
-  echo HATA: Once BASDAS_CURRENT_BASLAT.bat dosyasini bir kez calistirin.
+  echo HATA: Once OMEHR_CURRENT_BASLAT.bat dosyasini bir kez calistirin.
   pause
   exit /b 1
 )

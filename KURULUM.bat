@@ -174,7 +174,7 @@ echo [6/8] Masaustu kisayolu olusturuluyor...
 set "KISAYOL=%USERPROFILE%\Desktop\BASDAS Norm Kadro Sistemi.bat"
 > "%KISAYOL%" echo @echo off
 >> "%KISAYOL%" echo cd /d "%cd%"
->> "%KISAYOL%" echo call "%cd%\BASDAS_CURRENT_BASLAT.bat"
+>> "%KISAYOL%" echo call "%cd%\OMEHR_CURRENT_BASLAT.bat"
 echo   Kisayol olusturuldu: %KISAYOL%
 
 echo [7/8] Zamanlanmis gorevler ^(istege bagli^) ...
@@ -195,7 +195,7 @@ echo.
 echo ================================================================
 echo  KURULUM TAMAMLANDI.
 echo  Program Masaustundeki mevcut klasorunde kalabilir.
-echo  Gunluk kullanim: BASDAS_CURRENT_BASLAT.bat
+echo  Gunluk kullanim: OMEHR_CURRENT_BASLAT.bat
 echo ================================================================
 pause
 exit /b 0
