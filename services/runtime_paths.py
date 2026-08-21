@@ -11,10 +11,10 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 
 
 def tenant_code() -> str:
-    raw = os.getenv("BASDAS_TENANT", "BASDAS").strip().upper()
+    raw = os.getenv("OMEHR_TENANT", "BASDAS").strip().upper()
     code = re.sub(r"[^A-Z0-9_-]", "", raw)
     if not code or code != raw:
-        raise ValueError("Geçersiz BASDAS_TENANT kodu.")
+        raise ValueError("Geçersiz OMEHR_TENANT kodu.")
     return code
 
 
@@ -23,7 +23,7 @@ _RESOLVED_PATH_CACHE: dict[str, Path] = {}
 
 
 def runtime_root() -> Path:
-    explicit = os.getenv("BASDAS_RUNTIME_ROOT", "").strip()
+    explicit = os.getenv("OMEHR_RUNTIME_ROOT", "").strip()
     if explicit:
         # DÜZELTME (performans): Path.resolve() bir sistem çağrısı
         # gerektirir (dosya sistemiyle etkileşir) — HER çağrıda tekrar
@@ -35,7 +35,7 @@ def runtime_root() -> Path:
         if root is None:
             root = Path(explicit).expanduser().resolve()
             _RESOLVED_PATH_CACHE[explicit] = root
-    elif os.getenv("BASDAS_ISOLATED", "0") == "1":
+    elif os.getenv("OMEHR_ISOLATED", "0") == "1":
         tcode = tenant_code()
         cache_key = f"__isolated__{tcode}"
         root = _RESOLVED_PATH_CACHE.get(cache_key)
@@ -60,7 +60,7 @@ def runtime_root() -> Path:
     root.mkdir(parents=True, exist_ok=True)
     for name in ("input", "output", "data", "logs", "archive", "backup", "reference", "assets"):
         (root / name).mkdir(exist_ok=True)
-    if os.getenv("BASDAS_BOOTSTRAP_RUNTIME", "0") == "1" and root != CODE_ROOT:
+    if os.getenv("OMEHR_BOOTSTRAP_RUNTIME", "0") == "1" and root != CODE_ROOT:
         defaults = [
             (CODE_ROOT / "input" / input_file_name(), root / "input" / input_file_name()),
             (CODE_ROOT / "reference" / "KONTROL_NORM_KADRO_24_07_2026.xlsx", root / "reference" / "KONTROL_NORM_KADRO_24_07_2026.xlsx"),
