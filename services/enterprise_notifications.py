@@ -17,8 +17,8 @@ def send_outlook(subject: str, body: str):
     if not c.get('outlook_enabled'): return False,'Outlook e-posta gönderimi kapalı.'
     msg=EmailMessage(); msg['Subject']=subject; msg['From']=c['from'] or c['smtp_username']; msg['To']=c['to']; msg.set_content(body)
     attachments=[]
-    if c.get('send_pdf'): attachments.append(ROOT/'output'/'BASDAS_Yonetici_Raporu.pdf')
-    if c.get('send_excel'): attachments.append(ROOT/'output'/'BASDAS_Executive_Data.xlsx')
+    if c.get('send_pdf'): attachments.append(ROOT/'output'/'OMEHR_Yonetici_Raporu.pdf')
+    if c.get('send_excel'): attachments.append(ROOT/'output'/'OMEHR_Executive_Data.xlsx')
     for p in attachments:
         if p.exists():
             typ,_=mimetypes.guess_type(str(p)); main,sub=(typ or 'application/octet-stream').split('/',1)

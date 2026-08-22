@@ -5,7 +5,7 @@ mantığı burada toplanır — UI katmanı (web/tab_modules/personel_kartlari.p
 yalnızca bu fonksiyonları çağırır, hangi kaynağın (Excel/veritabanı)
 aktif olduğunu bilmesi GEREKMEZ.
 
-DÜZELTME: Bu sayfa önceden YALNIZ veritabanı modunda (BASDAS_INPUT_
+DÜZELTME: Bu sayfa önceden YALNIZ veritabanı modunda (OMEHR_INPUT_
 SOURCE=db) çalışıyordu; Excel modunda (VARSAYILAN durum) tamamen devre
 dışıydı. Artık ikisi de destekleniyor:
   - Veritabanı modu: services/input_data_access.py (read_sheet/write_sheet)
@@ -29,7 +29,7 @@ import pandas as pd
 
 
 def _db_modu() -> bool:
-    return os.environ.get("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    return os.environ.get("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
 
 
 # ------------------------------------------------------------------
@@ -111,10 +111,10 @@ def _invalidate_current_reports(root: Path) -> None:
     """
     output = root / 'output'
     for name in (
-        'BASDAS_Yonetici_Raporu.pdf',
-        'BASDAS_Yonetici_Raporu.xlsx',
-        'BASDAS_Kutucuklu_Yonetici_Raporu.xlsx',
-        'BASDAS_Executive_Data.xlsx',
+        'OMEHR_Yonetici_Raporu.pdf',
+        'OMEHR_Yonetici_Raporu.xlsx',
+        'OMEHR_Kutucuklu_Yonetici_Raporu.xlsx',
+        'OMEHR_Executive_Data.xlsx',
     ):
         try:
             (output / name).unlink(missing_ok=True)
@@ -122,7 +122,7 @@ def _invalidate_current_reports(root: Path) -> None:
             pass
     # Tüm yeniden üretilebilir yönetici/bölge çıktıları eski personel adını
     # taşımasın. Arşiv ve rotasyon belgelerine dokunulmaz.
-    for pattern in ('BASDAS_*Yonetici*.*', 'BASDAS_Executive_Data.xlsx', 'CURRENT_*Yonetici*.*', 'TUMU_*Yonetici*.*'):
+    for pattern in ('BASDAS_*Yonetici*.*', 'OMEHR_Executive_Data.xlsx', 'CURRENT_*Yonetici*.*', 'TUMU_*Yonetici*.*'):
         for fp in output.glob(pattern):
             if fp.is_file() and fp.suffix.lower() in {'.pdf','.xlsx'}:
                 try:

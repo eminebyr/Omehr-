@@ -143,7 +143,7 @@ def update_settings(patch: dict[str, Any]) -> dict[str, Any]:
 def input_file_info() -> dict[str, Any]:
     """Ana input dosyası hakkında SALT OKUNUR bilgi (Ayarlar ekranında
     gösterim için). Dosya adını değiştirmek services/settings.py'deki
-    BASDAS_INPUT_FILE ortam değişkeni ile yapılır — bilerek bu ekrandan
+    OMEHR_INPUT_FILE ortam değişkeni ile yapılır — bilerek bu ekrandan
     DEĞİL, çünkü çalışan bir sistemde dosya adını web panelinden anlık
     değiştirmek, motorun bir sonraki adımda dosyayı bulamamasına yol
     açabilir (ortam değişkeni + yeniden başlatma daha güvenli)."""

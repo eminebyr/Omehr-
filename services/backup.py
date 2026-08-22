@@ -19,7 +19,7 @@ P1 GÜÇLENDİRMELERİ (reviewer önerisi):
   - restore_backup() öncesi, o an DURAN dosyanın kendisi de otomatik olarak
     yedeklenir (restore'un kendisi de geri alınabilir olsun diye).
   - Her restore işlemi kalıcı bir denetim kaydına (kullanıcı+tarih) yazılır.
-  - BASDAS_SECONDARY_BACKUP_DIR ortam değişkeni verilmişse, yedek AYRICA
+  - OMEHR_SECONDARY_BACKUP_DIR ortam değişkeni verilmişse, yedek AYRICA
     o (farklı disk/ağ) konuma da kopyalanır — en iyi çaba, hata akışı bozmaz.
 """
 
@@ -37,7 +37,7 @@ from services.safe_exec import log_swallowed
 # (Path(__file__).resolve().parent.parent) hesaplıyordu — projedeki HER
 # DİĞER services/*.py modülü (ai_operations_engine, main, report_mail_engine,
 # model_governance, vb.) runtime_root()'u kullanırken bu tek modül
-# kullanmıyordu. Sonucu: çoklu kiracı (multi-tenant) veya BASDAS_RUNTIME_ROOT
+# kullanmıyordu. Sonucu: çoklu kiracı (multi-tenant) veya OMEHR_RUNTIME_ROOT
 # ile izole edilmiş bir çalışma zamanında bile TÜM kiracıların input yedekleri
 # ve restore_audit.json kaydı, izole runtime kökleri yerine kod köküne
 # (backups/, logs/) yazılıyor, birbirine karışabiliyordu. runtime_root()
@@ -122,7 +122,7 @@ def backup_input_file(path: Path, actor: str = "sistem") -> Path | None:
 
         # İSTEĞE BAĞLI İKİNCİL KONUM: farklı bir disk/ağ yoluna da kopyala
         # (en iyi çaba — başarısız olursa akışı bozmaz).
-        ikincil_yol = os.environ.get("BASDAS_SECONDARY_BACKUP_DIR")
+        ikincil_yol = os.environ.get("OMEHR_SECONDARY_BACKUP_DIR")
         if ikincil_yol:
             try:
                 ikincil_hedef = Path(ikincil_yol) / hedef.name

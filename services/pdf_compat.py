@@ -18,10 +18,10 @@ def make_outlook_safe_pdf(path: str | Path, *, dpi: int = 180, jpeg_quality: int
     """PDF'yi Outlook/Edge uyumlu image-only PDF olarak yerinde donusturur.
 
     Donusum atomik yapilir: basarisiz olursa orijinal PDF korunur.
-    BASDAS_PDF_OUTLOOK_SAFE=0 ile devre disi birakilabilir.
+    OMEHR_PDF_OUTLOOK_SAFE=0 ile devre disi birakilabilir.
     """
     target = Path(path)
-    if os.getenv("BASDAS_PDF_OUTLOOK_SAFE", "1").strip().lower() in {"0", "false", "hayir", "no"}:
+    if os.getenv("OMEHR_PDF_OUTLOOK_SAFE", "1").strip().lower() in {"0", "false", "hayir", "no"}:
         return target
     if not target.is_file() or target.stat().st_size == 0:
         raise FileNotFoundError(f"PDF bulunamadi veya bos: {target}")

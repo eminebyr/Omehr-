@@ -1,6 +1,6 @@
 """EXCEL -> VERİTABANI GÖÇ ARACI (tek seferlik/tekrarlanabilir).
 
-input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx dosyasındaki 62+ sayfayı okuyup
+input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx dosyasındaki 62+ sayfayı okuyup
 services/input_db_schema.py'nin tanımladığı tablolara aktarır. Idempotent'tir
 (tekrar çalıştırılırsa tabloları TEMİZLEYİP yeniden doldurur — Excel HER
 ZAMAN "doğru" kaynak kabul edilir bu geçiş anında).
@@ -57,7 +57,7 @@ def migrate_excel_to_db(excel_path: str, kullanici: str = "GOC_ARACI", tenant_id
 
 
 if __name__ == "__main__":
-    yol = sys.argv[1] if len(sys.argv) > 1 else "input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    yol = sys.argv[1] if len(sys.argv) > 1 else "input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     kiraci = sys.argv[2] if len(sys.argv) > 2 else None
     sonuc = migrate_excel_to_db(yol, tenant_id=kiraci)
     toplam = sum(v["satir"] for v in sonuc.values())

@@ -13,9 +13,9 @@ doğrulandı) fonksiyonu HER ÇAĞRIDA `pandas` modülünün GÜNCEL
 (monkeypatch) ile TÜM 30+ çağrı noktasını, HİÇBİRİNİ değiştirmeden
 düzeltmeyi mümkün kılar.
 
-GÜVENLİ AYIRT ETME: Yalnızca dosya adı BASDAS_AI_NORM_TRANSFER_INPUT.xlsx
+GÜVENLİ AYIRT ETME: Yalnızca dosya adı OMEHR_AI_NORM_TRANSFER_INPUT.xlsx
 İLE EŞLEŞEN çağrılar yönlendirilir. Üretilen ÇIKTI dosyalarını
-(V19_AI_Norm_Sonuclari.xlsx, BASDAS_Yonetici_Raporu.xlsx, tahmin
+(V19_AI_Norm_Sonuclari.xlsx, OMEHR_Yonetici_Raporu.xlsx, tahmin
 sonuçları vb.) okuyan onlarca ayrı çağrı ETKİLENMEZ — bunlar zaten
 Python motorunun ÜRETTİĞİ gerçek Excel dosyalarıdır ve girdi kaynağından
 bağımsız olarak hep Excel olarak kalmaya devam eder (rapor/Power BI/
@@ -36,7 +36,7 @@ import pandas as pd
 _ORIJINAL_READ_EXCEL = pd.read_excel
 _KURULU = False
 
-_GIRDI_DOSYA_ADI = "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+_GIRDI_DOSYA_ADI = "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
 
 def _girdi_dosyasi_mi(io) -> bool:
@@ -49,7 +49,7 @@ def _girdi_dosyasi_mi(io) -> bool:
 
 
 def _db_modu_aktif() -> bool:
-    return os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    return os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
 
 
 def _yamali_read_excel(io, sheet_name=0, **kwargs):

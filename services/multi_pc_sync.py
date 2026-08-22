@@ -79,54 +79,11 @@ def detect_changed_sheets(root: Path, input_path: Path, sheets: tuple[str, ...] 
     return degisenler
 
 
-def _rapor_uretimi_devam_ediyor_mu(root: Path) -> bool:
-    """DÜZELTME: Rapor motoru (main.py) çalışırken girdi dosyasına dokunduğu
-    için mtime değişiyor ve bu durum, motorun KENDİ ürettiği raporların bu
-    modül tarafından geçersiz kılınıp (silinip) hemen ardından gelen bir
-    Streamlit sayfa yenilemesinde (st.rerun()) kaybolmasına yol açıyordu.
-
-    Son 3 dakika içinde tamamlanmış ya da hâlâ çalışan bir RUN_REPORTS işi
-    varsa True döner — bu durumda çağıran taraf geçersiz kılma işlemini
-    atlamalı (ama mtime kaydını yine de güncellemeli, aksi halde koruma
-    süresi bittiğinde bir sonraki etkileşimde raporlar yine silinir)."""
-    try:
-        import sqlite3
-        from datetime import datetime
-        jobs_db = Path(root) / "data" / "jobs.db"
-        if not jobs_db.is_file():
-            return False
-        con = sqlite3.connect(str(jobs_db))
-        try:
-            row = con.execute(
-                "SELECT status, finished_at FROM jobs "
-                "WHERE job_type='RUN_REPORTS' ORDER BY id DESC LIMIT 1"
-            ).fetchone()
-        finally:
-            con.close()
-        if not row:
-            return False
-        status, finished_at = row
-        if status == "RUNNING":
-            return True
-        if status == "SUCCESS" and finished_at:
-            finished = datetime.fromisoformat(finished_at)
-            if (datetime.now() - finished).total_seconds() < 180:
-                return True
-        return False
-    except Exception:
-        return False
-
-
 def invalidate_local_reports_if_shared_input_changed(root: Path, input_path: Path) -> bool:
     """Başka PC ortak Excel'i değiştirdiyse bu PC'deki eski 'güncel' raporları siler.
 
     Arşivlere dokunmaz. Böylece PC-1 çıkış işlediğinde PC-2/PC-3 sonraki
     panel etkileşiminde eski PDF/XLSX'i güncel sanarak açamaz.
-
-    DÜZELTME: aktif ya da yakın zamanda tamamlanmış bir RUN_REPORTS işi
-    varken bu geçersiz kılma ATLANIR (bkz. _rapor_uretimi_devam_ediyor_mu) —
-    ama mtime kaydı yine de güncellenir, aksi halde koruma penceresi
-    bittiğinde bir sonraki etkileşimde raporlar yanlışlıkla silinir.
     """
     root = Path(root); input_path = Path(input_path)
     marker = root / 'logs' / '.last_seen_shared_input_mtime'
@@ -135,14 +92,6 @@ def invalidate_local_reports_if_shared_input_changed(root: Path, input_path: Pat
         current = str(input_path.stat().st_mtime_ns)
     except OSError:
         return False
-
-    if _rapor_uretimi_devam_ediyor_mu(root):
-        try:
-            marker.write_text(current, encoding='utf-8')
-        except OSError:
-            pass
-        return False
-
     previous = ''
     try: previous = marker.read_text(encoding='utf-8').strip()
     except OSError: pass
@@ -158,4 +107,4 @@ def invalidate_local_reports_if_shared_input_changed(root: Path, input_path: Pat
             pass
     try: marker.write_text(current, encoding='utf-8')
     except OSError: pass
-    return changed 
+    return changed

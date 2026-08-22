@@ -5,8 +5,8 @@ kalır — hiçbir ek kurulum gerekmez. Ürün birden fazla firmaya veya aynı
 anda çok kullanıcıya satılacaksa, kod tabanını YENİDEN YAZMADAN, yalnız
 ortam değişkenleriyle PostgreSQL'e geçilebilir:
 
-    BASDAS_DB_BACKEND=postgres
-    BASDAS_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
+    OMEHR_DB_BACKEND=postgres
+    OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
 
 Tasarım kararı: Var olan tüm modüller `?` yer tutucularıyla (sqlite3
 tarzı) ve sqlite3.Row benzeri sözlük-erişimli satırlarla yazılmıştı. Bu
@@ -40,10 +40,10 @@ from services.exceptions import ConfigurationError
 
 def backend_name() -> str:
     """'sqlite' (varsayılan) veya 'postgres' döner."""
-    value = os.environ.get("BASDAS_DB_BACKEND", "sqlite").strip().lower()
+    value = os.environ.get("OMEHR_DB_BACKEND", "sqlite").strip().lower()
     if value not in {"sqlite", "postgres"}:
         raise ConfigurationError(
-            f"Geçersiz BASDAS_DB_BACKEND: '{value}'. 'sqlite' veya 'postgres' olmalı."
+            f"Geçersiz OMEHR_DB_BACKEND: '{value}'. 'sqlite' veya 'postgres' olmalı."
         )
     return value
 
@@ -172,7 +172,7 @@ def connect(sqlite_path: Path | str) -> Any:
     """Backend'e göre SQLite veya PostgreSQL bağlantısı döner.
 
     sqlite_path: yalnız sqlite backend'inde kullanılır (PostgreSQL'de tüm
-    modüller AYNI veritabanına, BASDAS_POSTGRES_DSN ile bağlanır — dosya
+    modüller AYNI veritabanına, OMEHR_POSTGRES_DSN ile bağlanır — dosya
     yolu kavramı yoktur, parametre yalnız arayüz uyumluluğu için tutulur).
     """
     if backend_name() == "sqlite":
@@ -188,14 +188,14 @@ def connect(sqlite_path: Path | str) -> Any:
         import psycopg2
     except ImportError as exc:
         raise ConfigurationError(
-            "BASDAS_DB_BACKEND=postgres ayarlanmış ama psycopg2 kurulu değil. "
+            "OMEHR_DB_BACKEND=postgres ayarlanmış ama psycopg2 kurulu değil. "
             "'pip install psycopg2-binary' ile kurun."
         ) from exc
 
-    dsn = os.environ.get("BASDAS_POSTGRES_DSN", "").strip()
+    dsn = os.environ.get("OMEHR_POSTGRES_DSN", "").strip()
     if not dsn:
         raise ConfigurationError(
-            "BASDAS_DB_BACKEND=postgres ayarlanmış ama BASDAS_POSTGRES_DSN tanımlı değil."
+            "OMEHR_DB_BACKEND=postgres ayarlanmış ama OMEHR_POSTGRES_DSN tanımlı değil."
         )
     pg_conn = psycopg2.connect(dsn)
     return _PgConnectionWrapper(pg_conn)

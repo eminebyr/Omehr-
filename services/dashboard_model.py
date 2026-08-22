@@ -4,12 +4,10 @@ import re
 import pandas as pd
 
 CONTROL_FILENAME = "KONTROL_NORM_KADRO_24_07_2026.xlsx"
-# DÜZELTME: sabit 4 isimlik REGIONS listesi kaldırıldı — kullanılmıyordu
-# (kod tabanında hiçbir aktif filtre/karşılaştırma bu sabite bağlı değildi,
-# yalnızca kendi dosyasındaki yorumlarda anılıyordu). Bölge Sorumlusu adı,
-# Mevcut/Norm Eksiği/Net İhtiyaç gibi diğer tüm alanlarla aynı ilkeye göre
-# TAMAMEN veri kaynaklı olmalı (Fact_Norm/Fact_Mevcut'ta ne yazıyorsa) —
-# 4, 6 ya da başka herhangi bir sayıda bölge müdürü ismiyle çalışmalı.
+# DÜZELTME: sabit 4 isimlik REGIONS listesi kaldırıldı — kullanılmıyordu.
+# Bölge Sorumlusu adı, Mevcut/Norm Eksiği/Net İhtiyaç gibi diğer tüm
+# alanlarla aynı ilkeye göre TAMAMEN veri kaynaklı olmalı — 4, 6 ya da
+# başka herhangi bir sayıda bölge müdürü ismiyle çalışmalı.
 
 def text_key(value) -> str:
     s = str(value or "").strip().upper()

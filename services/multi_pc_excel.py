@@ -29,7 +29,7 @@ def excel_transaction_lock(input_path: Path | None, *, user: str = '', timeout: 
     `O_CREAT|O_EXCL` aynı paylaşım üzerinde tek sahip oluşturur. Çökmüş bir
     istemciden kalan kilit, stale_after süresi geçince temizlenebilir.
 
-    DÜZELTME: Veritabanı modunda (BASDAS_INPUT_SOURCE=db) paylaşılacak bir
+    DÜZELTME: Veritabanı modunda (OMEHR_INPUT_SOURCE=db) paylaşılacak bir
     Excel dosyası YOKTUR — ``input_path`` bilerek ``None`` gelir, eşzamanlı
     yazma güvenliğini PostgreSQL/SQLite'ın kendi transaction mekanizması
     sağlar. Bu durumda dosya kilidi TAMAMEN ATLANIR (no-op); aksi halde

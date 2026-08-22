@@ -1,6 +1,6 @@
 """Web panelinden ana Excel input verilerini güvenli biçimde yönetir.
 
-Ana veri kaynağı değişmez: input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx.
+Ana veri kaynağı değişmez: input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx.
 Bu servis panelde yapılan değişiklikleri yedek alarak aynı çalışma kitabına
 atomik şekilde yazar. Böylece mevcut motorlar, raporlar ve Outlook akışları
 kod değişmeden güncel veriyi okumaya devam eder.
@@ -227,8 +227,8 @@ def _invalidate_generated_reports(root: Path) -> None:
     """Ana veri değişince eski güncel raporları kaldır; arşive dokunma."""
     output = root / 'output'
     for name in (
-        'BASDAS_Yonetici_Raporu.pdf', 'BASDAS_Yonetici_Raporu.xlsx',
-        'BASDAS_Kutucuklu_Yonetici_Raporu.xlsx', 'BASDAS_Executive_Data.xlsx',
+        'OMEHR_Yonetici_Raporu.pdf', 'OMEHR_Yonetici_Raporu.xlsx',
+        'OMEHR_Kutucuklu_Yonetici_Raporu.xlsx', 'OMEHR_Executive_Data.xlsx',
     ):
         try:
             (output / name).unlink(missing_ok=True)
@@ -270,7 +270,7 @@ def _replace_excel_with_retry(temp: Path, input_path: Path, *, attempts: int = 5
         if isinstance(last_error, PermissionError) or winerror in {5, 32}:
             raise PermissionError(
                 "Ana Excel dosyası şu anda başka bir program tarafından kullanılıyor veya Windows yazma izni vermiyor. "
-                "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx dosyasını Excel/LibreOffice'te kapatın ve işlemi tekrar deneyin. "
+                "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx dosyasını Excel/LibreOffice'te kapatın ve işlemi tekrar deneyin. "
                 "Kayıt uygulanmadı; mevcut ana Excel dosyası korunmuştur."
             ) from last_error
         raise last_error
@@ -299,7 +299,7 @@ def _save_tables_unlocked(root: Path, input_path: Path, tables: dict[str, pd.Dat
     backups = root / "backups"
     backups.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup = backups / f"BASDAS_AI_NORM_TRANSFER_INPUT_PANEL_{stamp}.xlsx"
+    backup = backups / f"OMEHR_AI_NORM_TRANSFER_INPUT_PANEL_{stamp}.xlsx"
     shutil.copy2(input_path, backup)
 
     wb = load_workbook(input_path)

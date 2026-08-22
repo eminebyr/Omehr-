@@ -9,16 +9,16 @@ taşınabilir (bkz. services/db_backend.py'nin aynı felsefeyle
 web_runtime.py/management_center.py için uyguladığı desen).
 
 Hangi backend'in kullanılacağı services/db_backend.py::backend_name() ile
-aynı ortam değişkenleriyle (BASDAS_DB_BACKEND=sqlite|postgres) belirlenir.
+aynı ortam değişkenleriyle (OMEHR_DB_BACKEND=sqlite|postgres) belirlenir.
 Girdinin Excel mi veritabanı mı olduğu AYRI bir bayrakla kontrol edilir:
 
-    BASDAS_INPUT_SOURCE=excel   (varsayılan — mevcut davranış, HİÇBİR ŞEY BOZULMAZ)
-    BASDAS_INPUT_SOURCE=db      (yeni — bu modül devreye girer)
+    OMEHR_INPUT_SOURCE=excel   (varsayılan — mevcut davranış, HİÇBİR ŞEY BOZULMAZ)
+    OMEHR_INPUT_SOURCE=db      (yeni — bu modül devreye girer)
 
 DÜZELTME (SaaS/çok kiracılı temel): tüm okuma/yazma fonksiyonları artık
 tenant_id ile SATIR BAZLI filtrelenir. tenant_id parametresi verilmezse
 services/tenant_context.py::current_tenant_id() ile OTURUMDAN (veya
-BASDAS_TENANT ortam değişkeninden) otomatik çözümlenir.
+OMEHR_TENANT ortam değişkeninden) otomatik çözümlenir.
 
 KRİTİK DÜZELTME: write_sheet() önceden `DELETE FROM tablo` ile TÜM
 kiracıların TÜM satırlarını siliyordu (yalnız DataFrame'deki satırları
@@ -41,7 +41,7 @@ from services.tenant_context import current_tenant_id
 
 
 def input_source() -> str:
-    v = os.environ.get("BASDAS_INPUT_SOURCE", "excel").strip().lower()
+    v = os.environ.get("OMEHR_INPUT_SOURCE", "excel").strip().lower()
     if v not in {"excel", "db"}:
         v = "excel"
     return v
@@ -151,51 +151,6 @@ def write_sheet(sheet_adi: str, df: pd.DataFrame, kullanici: str = "", tenant_id
             )
             yazilan += 1
         con.commit()
-        # DÜZELTME (bizzat gerçek bir testle bulundu): denetim izi
-        # (_guncelleme_zamani) saniye çözünürlüğünde kalır (format
-        # DEĞİŞTİRİLMEDİ) — ama önbellek geçersizliği İÇİN AYRI,
-        # mikrosaniye çözünürlüklü bir zaman damgası kullanılır. Aksi
-        # halde AYNI SANİYE içindeki iki yazma (ör. Excel içe aktarma +
-        # hemen ardından bir düzenleme), versiyon damgasını
-        # DEĞİŞTİRMEZ, önbellek YANLIŞLIKLA geçersiz KILINMAZ.
-        _tenant_versiyon_guncelle(tenant_id, datetime.now(timezone.utc).isoformat())
         return yazilan
     finally:
         con.close()
-
-
-def _tenant_versiyon_dosyasi(tenant_id: str):
-    from services.runtime_paths import runtime_root
-    dizin = runtime_root() / "data" / "tenant_versiyonlari"
-    dizin.mkdir(parents=True, exist_ok=True)
-    return dizin / f"{tenant_id.strip().upper()}.txt"
-
-
-def _tenant_versiyon_guncelle(tenant_id: str, zaman_iso: str) -> None:
-    try:
-        _tenant_versiyon_dosyasi(tenant_id).write_text(zaman_iso, encoding="utf-8")
-    except Exception as _exc:
-        from services.safe_exec import log_swallowed
-        log_swallowed("input_data_access._tenant_versiyon_guncelle başarısız", _exc, level="INFO")
-
-
-def tenant_content_version(tenant_id: str) -> float:
-    """DÜZELTME (KRİTİK — bizzat gerçek bir testle bulundu): DB modunda
-    (BASDAS_INPUT_SOURCE=db) Excel dosyası hiç olmadığı/değişmediği
-    için, web/app.py'nin @st.cache_data önbelleği (dosya mtime'ına göre
-    anahtarlanan) bir write_sheet() SONRASI bile ESKİ veriyi döndürmeye
-    DEVAM EDERDİ — kullanıcı Fact_Mevcut'a bir satır eklese bile Genel
-    Özet güncellenmezdi (yalnız tarayıcı TAM yenilenirse/yeni oturum
-    başlarsa fark edilirdi, ki bu da GÜVENİLİR bir çözüm değildi).
-    Bu fonksiyon, HER write_sheet() çağrısında güncellenen bir dosya
-    tabanlı zaman damgasını okur — web/app.py bunu mtime YERİNE
-    kullanarak, DB modunda da önbelleğin GERÇEKTEN geçersiz olmasını
-    sağlar."""
-    try:
-        yol = _tenant_versiyon_dosyasi(tenant_id)
-        if not yol.is_file():
-            return 0.0
-        from datetime import datetime
-        return datetime.fromisoformat(yol.read_text(encoding="utf-8").strip()).timestamp()
-    except Exception:
-        return 0.0

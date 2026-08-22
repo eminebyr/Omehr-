@@ -355,7 +355,7 @@ def close_alert(alert_id: int, username: str) -> None:
 
 def send_teams(message: str) -> tuple[bool, str]:
     cfg = ensure_config()
-    url = os.getenv("BASDAS_TEAMS_WEBHOOK") or cfg.get("notifications", {}).get("teams_webhook_url", "")
+    url = os.getenv("OMEHR_TEAMS_WEBHOOK") or cfg.get("notifications", {}).get("teams_webhook_url", "")
     if not url:
         return False, "Teams webhook tanımlı değil."
     req = urllib.request.Request(url, data=json.dumps({"text": message}).encode("utf-8"), headers={"Content-Type": "application/json"})
@@ -526,7 +526,7 @@ def _export_transfer_tracking_pdf() -> Path | None:
         font_regular = _basdas_font(bold=False)
         font_bold = _basdas_font(bold=True)
         _output_dir().mkdir(parents=True, exist_ok=True)
-        out = _output_dir() / "BASDAS_Transfer_Takip_Raporu.pdf"
+        out = _output_dir() / "OMEHR_Transfer_Takip_Raporu.pdf"
         df = list_transfer_requests({"role":"HR_DIRECTOR","scope":"ALL","username":"system"})
         doc = SimpleDocTemplate(str(out), pagesize=landscape(A4), leftMargin=8*mm, rightMargin=8*mm, topMargin=8*mm, bottomMargin=8*mm)
         head = ParagraphStyle("head", fontName=font_bold, fontSize=6.2, leading=7, textColor=colors.white, leftIndent=0, rightIndent=0, firstLineIndent=0, alignment=1)
@@ -622,7 +622,7 @@ def _send_transfer_outlook_notification(request_key: str, status: str, note: str
         )
         if recipient_contacts.empty: return False, "Uygun e-posta alıcısı bulunamadı."
         report=_export_transfer_tracking_pdf()
-        main_pdf=_output_dir()/"BASDAS_Yonetici_Raporu.pdf"
+        main_pdf=_output_dir()/"OMEHR_Yonetici_Raporu.pdf"
         sent=0
         failures=[]
         for _,recipient in recipient_contacts.iterrows():

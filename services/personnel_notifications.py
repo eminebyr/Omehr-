@@ -11,7 +11,7 @@ Bunlara ek olarak kullanıcı, Mail_Listesi'ndeki aktif kişilerden ek alıcı s
 
 DÜZELTME (çok kiracılı SaaS entegrasyonu):
 1) Önceki sürüm YALNIZ Excel modunu destekliyordu (pd.read_excel
-   doğrudan çağrılıyordu) — veritabanı modunda (BASDAS_INPUT_SOURCE=db)
+   doğrudan çağrılıyordu) — veritabanı modunda (OMEHR_INPUT_SOURCE=db)
    bu modül ya hatalı çalışırdı ya da yanlış/eski veriyi okurdu. Artık
    services/personnel_exit.py ile AYNI çift-modlu desen kullanılıyor.
 2) Önceki sürümde SABİT, gerçek bir kişinin e-posta adresi
@@ -36,7 +36,7 @@ from web.formatting import norm_text
 
 
 def _db_modu() -> bool:
-    return os.environ.get("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    return os.environ.get("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
 
 
 def _read_sheet(input_path: Path | None, sheet_adi: str) -> pd.DataFrame:

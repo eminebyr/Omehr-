@@ -19,13 +19,13 @@ def get_logger(name: str = "basdas") -> logging.Logger:
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
-    logger.setLevel(os.getenv("BASDAS_LOG_LEVEL", "INFO").upper())
+    logger.setLevel(os.getenv("OMEHR_LOG_LEVEL", "INFO").upper())
     formatter = logging.Formatter(
         "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     handler = RotatingFileHandler(
-        _log_dir() / "BASDAS_CURRENT.log",
+        _log_dir() / "OMEHR_CURRENT.log",
         maxBytes=5 * 1024 * 1024,
         backupCount=5,
         encoding="utf-8",

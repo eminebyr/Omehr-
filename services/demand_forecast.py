@@ -21,7 +21,7 @@ MINIMUM_HISTORY_MONTHS = 6  # önceden 3 idi — erken/yetersiz veride yanıltma
 MINIMUM_OBSERVATIONS = 8
 MAXIMUM_NORM_EFFECT = 0.0      # bu modülün çıktısı norma HİÇ etki etmez (kasıtlı)
 MAXIMUM_TRANSFER_EFFECT = 0.0  # bu modülün çıktısı transfer kararına HİÇ etki etmez (kasıtlı)
-OUTPUT_FILE_NAME = "BASDAS_Ciro_Kisa_Vadeli_Projeksiyonu.xlsx"
+OUTPUT_FILE_NAME = "OMEHR_Ciro_Kisa_Vadeli_Projeksiyonu.xlsx"
 
 
 def run(sheets: dict, outdir: Path) -> dict:
