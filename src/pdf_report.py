@@ -135,7 +135,7 @@ def _pdf_int_text(value):
 
 
 def pdf_report(kpi,st,scens):
-    out=runtime_root()/'output'/'BASDAS_Yonetici_Raporu.pdf';f=font();styles=getSampleStyleSheet();title=ParagraphStyle('t',parent=styles['Title'],fontName=f,fontSize=18,textColor=colors.HexColor('#102F64'));body=ParagraphStyle('b',parent=styles['BodyText'],fontName=f,fontSize=7,leading=9,leftIndent=0,rightIndent=0,firstLineIndent=0)
+    out=runtime_root()/'output'/'OMEHR_Yonetici_Raporu.pdf';f=font();styles=getSampleStyleSheet();title=ParagraphStyle('t',parent=styles['Title'],fontName=f,fontSize=18,textColor=colors.HexColor('#102F64'));body=ParagraphStyle('b',parent=styles['BodyText'],fontName=f,fontSize=7,leading=9,leftIndent=0,rightIndent=0,firstLineIndent=0)
     doc=SimpleDocTemplate(str(out),pagesize=landscape(A4),leftMargin=9*mm,rightMargin=9*mm,topMargin=9*mm,bottomMargin=9*mm);story=[Paragraph('OMEHR NORM KADRO VE TRANSFER YÖNETİM SİSTEMİ',title),Spacer(1,4*mm)]
     dat=[list(kpi.keys()),list(kpi.values())];t=Table(dat,colWidths=[48*mm]*5);t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#102F64')),('TEXTCOLOR',(0,0),(-1,0),colors.white),('FONTNAME',(0,0),(-1,-1),f),('ALIGN',(0,0),(-1,-1),'CENTER'),('GRID',(0,0),(-1,-1),.5,colors.grey)]));story+=[t,Spacer(1,5*mm)]
     for reg,g in st.groupby('Bölge Sorumlusu',dropna=False):
@@ -198,8 +198,8 @@ def enhanced_pdf_reports(kpi, norm, staff, sheets, scens, ai, validation_summary
     # geçirin. Yeniden ölçmek için: cProfile.Profile() ile run_all()'ı
     # sarıp pstats.Stats(...).sort_stats('cumulative').print_stats(20).
     outdir=runtime_root()/'output'; outdir.mkdir(exist_ok=True)
-    main_tmp=outdir/'BASDAS_Yonetici_Raporu.pdf.tmp'
-    main=outdir/'BASDAS_Yonetici_Raporu.pdf'
+    main_tmp=outdir/'OMEHR_Yonetici_Raporu.pdf.tmp'
+    main=outdir/'OMEHR_Yonetici_Raporu.pdf'
     _build_store_pdf(main_tmp,kpi,norm,staff,ai,validation_summary,sheets=sheets)
     main_tmp.replace(main)
     region_dir=outdir/'Bolge_Raporlari'; region_dir.mkdir(exist_ok=True)
@@ -212,7 +212,7 @@ def enhanced_pdf_reports(kpi, norm, staff, sheets, scens, ai, validation_summary
     regions=sorted({txt(v) for v in norm[nb].dropna() if txt(v).strip()} | {txt(v) for v in staff[sb].dropna() if txt(v).strip()})
     for region in regions:
         safe=''.join(c if c.isalnum() else '_' for c in region).strip('_')
-        _build_store_pdf(temp_dir/f'BASDAS_Bolge_{safe}.pdf',kpi,norm,staff,ai,validation_summary,[region],include_summary=True,sheets=sheets)
+        _build_store_pdf(temp_dir/f'OMEHR_Bolge_{safe}.pdf',kpi,norm,staff,ai,validation_summary,[region],include_summary=True,sheets=sheets)
     for old_pdf in region_dir.glob('*.pdf'): old_pdf.unlink()
     for fresh in temp_dir.glob('*.pdf'): fresh.replace(region_dir/fresh.name)
     shutil.rmtree(temp_dir,ignore_errors=True)

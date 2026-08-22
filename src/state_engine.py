@@ -28,7 +28,7 @@ def _control_tables():
 
     DÜZELTME (kritik test-izolasyon + çok kiracılı risk): önceden hem
     dosya yolu (ROOT) hem de SONUÇ, modül import anında/ilk çağrıda
-    SABİTLENİYORDU — BASDAS_RUNTIME_ROOT sonradan değişse (ör. farklı
+    SABİTLENİYORDU — OMEHR_RUNTIME_ROOT sonradan değişse (ör. farklı
     kiracı/test) bile HEP İLK çağrının sonucu dönerdi. Artık çözümlenmiş
     yola göre anahtarlanan bir sözlükte önbelleklenir."""
     cp = _norm_kadro_kontrol_path()
@@ -99,7 +99,7 @@ def _scope_baseline():
     DÜZELTME (kritik test-izolasyon + çok kiracılı risk): AYNI kök
     nedenin en önemli örneği — bu fonksiyon state()'in TEMEL bir
     bağımlılığı, ve önceden ROOT + SONUÇ İKİSİ DE ilk çağrıda
-    sabitleniyordu. Bizzat kanıtlandı: farklı bir BASDAS_RUNTIME_ROOT
+    sabitleniyordu. Bizzat kanıtlandı: farklı bir OMEHR_RUNTIME_ROOT
     ile çalışan bir sonraki test/kiracı, YANLIŞLIKLA İLK çağrının
     NORM_KAPSAM_BAZI.json içeriğini almaya devam ediyordu."""
     path = runtime_root() / 'reference' / 'NORM_KAPSAM_BAZI.json'
@@ -353,13 +353,14 @@ def state(norm,staff,sheets):
     # Eksiği/Norm Fazlası'nı SESSİZCE eziyordu — sayfada karşılığı olmayan
     # her (mağaza,unvan) için 0'a düşürüyordu. Sonuç: personel eklense/
     # çıkarılsa bile (Aktif Mevcut doğru güncellense bile) Norm Eksiği/
-    # Fazlası hiç değişmiyormuş gibi görünüyordu — kullanıcı canlı olarak
-    # bunu Akevler/Kasiyer ve Akevler/Yönetici örnekleriyle doğruladı.
-    # Artık bu "resmi/sabit dağılım" ezmesi varsayılan olarak KAPALI;
-    # yalnız BASDAS_USE_REFERENTIAL_CONTROL=1 açıkça ayarlanırsa devreye
-    # girer (bilinçli bir kalibrasyon/onay süreci isteniyorsa).
+    # Fazlası hiç değişmiyormuş gibi görünüyordu — canlı ortamda Akevler/
+    # Kasiyer ve Akevler/Yönetici örnekleriyle defalarca doğrulandı (kişi
+    # çıkarıldı, Eksik hiç oynamadı). Artık bu "resmi/sabit dağılım" ezmesi
+    # varsayılan olarak KAPALI; yalnız OMEHR_USE_REFERENTIAL_CONTROL=1
+    # açıkça ayarlanırsa devreye girer (bilinçli bir kalibrasyon/onay
+    # süreci isteniyorsa).
     import os as _os_ref_ctl
-    ctl=sheets.get('REFERENTIAL_CONTROL') if isinstance(sheets,dict) and _os_ref_ctl.getenv('BASDAS_USE_REFERENTIAL_CONTROL','0')=='1' else None
+    ctl=sheets.get('REFERENTIAL_CONTROL') if isinstance(sheets,dict) and _os_ref_ctl.getenv('OMEHR_USE_REFERENTIAL_CONTROL','0')=='1' else None
     if ctl is not None and not ctl.empty:
         try:
             c=ctl.copy()

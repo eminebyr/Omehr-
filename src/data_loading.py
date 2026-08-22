@@ -16,7 +16,7 @@ from src.text_utils import canon, col, numeric, req, txt, _region_name
 def load(*, prepare: bool | None = None):
     import os
 
-    # DÜZELTME: girdi kaynağı artık Excel'e SABİT DEĞİL. BASDAS_INPUT_SOURCE=db
+    # DÜZELTME: girdi kaynağı artık Excel'e SABİT DEĞİL. OMEHR_INPUT_SOURCE=db
     # ayarlandığında, Excel'e hiç dokunmadan (dosya kilidi, yedekleme,
     # LibreOffice yeniden hesaplama adımlarının HİÇBİRİ çalışmadan)
     # doğrudan veritabanından okunur — bu sayede Excel dosyası hiç
@@ -24,7 +24,7 @@ def load(*, prepare: bool | None = None):
     # ayarlanmamışsa) DEĞİŞMEDEN Excel'den okumaya devam eder; bu yüzden
     # mevcut tüm kurulumlar hiçbir kod/ayar değişikliği yapılmadan
     # ÇALIŞMAYA DEVAM EDER.
-    if os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db":
+    if os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db":
         from services.input_data_access import read_all_sheets
         sheets = read_all_sheets()
         try:
@@ -37,14 +37,14 @@ def load(*, prepare: bool | None = None):
             # bekleyebilir; var olmayan ama geçerli bir yol referansı
             # döndürülür, İÇERİĞİ asla okunmaz (sheets zaten DB'den geldi).
             from services.runtime_paths import runtime_root as _rr
-            _referans_yol = _rr() / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+            _referans_yol = _rr() / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
             _ozet = "veritabani-kaynakli"
         return _finish_load(sheets, kaynak_yolu=_referans_yol, kaynak_ozet=_ozet)
 
     from common_veri_okuma import input_file,read_all,fingerprint
     p=input_file()
     if prepare is None:
-        prepare = os.getenv('BASDAS_PREPARE_INPUT', '1') == '1'
+        prepare = os.getenv('OMEHR_PREPARE_INPUT', '1') == '1'
     try:
         # EŞZAMANLI KULLANIM KORUMASI: Aşağıdaki 3 adım (yedekleme, koordinat
         # yenileme, formül yeniden hesaplama) dosyayı DEĞİŞTİRİR. Birden fazla

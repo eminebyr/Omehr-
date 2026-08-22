@@ -161,13 +161,13 @@ def run_all():
         kalite_raporu=None
     # Kullanıcının eski OMEHR dosyasını yanlışlıkla açmasını önlemek için yeni
     # sürüm adları ayrıca üretilir; OMEHR adları Outlook uyumluluğu için korunur.
-    current_excel=outdir/'BASDAS_Executive_Data.xlsx'
-    manager_excel=outdir/'BASDAS_Yonetici_Raporu.xlsx'
-    current_pdf=outdir/'BASDAS_Yonetici_Raporu.pdf'
+    current_excel=outdir/'OMEHR_Executive_Data.xlsx'
+    manager_excel=outdir/'OMEHR_Yonetici_Raporu.xlsx'
+    current_pdf=outdir/'OMEHR_Yonetici_Raporu.pdf'
     # DÜZELTME: enhanced_pdf_reports() bir önceki sürümde doğrudan
-    # BASDAS_Yonetici_Raporu.pdf'e yazacak şekilde yeniden adlandırıldı
+    # OMEHR_Yonetici_Raporu.pdf'e yazacak şekilde yeniden adlandırıldı
     # (outp artık current_pdf ile AYNI dosya) — ama Excel tarafı hâlâ eski
-    # BASDAS_Executive_Data.xlsx adını kullanıyor (outx != current_excel). Kaynak
+    # OMEHR_Executive_Data.xlsx adını kullanıyor (outx != current_excel). Kaynak
     # ve hedef aynı dosyaysa shutil.copy2 SameFileError ile çöküyordu.
     # Artık yalnız GERÇEKTEN farklı bir dosyaysa kopyalanıyor — ileride
     # isimler tekrar birleştirilse bile güvenli.
@@ -183,11 +183,11 @@ def run_all():
     (runtime_root()/'logs').mkdir(exist_ok=True); (runtime_root()/'backup').mkdir(exist_ok=True); (runtime_root()/'archive').mkdir(exist_ok=True)
     if p.exists():
         shutil.copy2(p,runtime_root()/'backup'/f'{p.stem}_{stamp}.xlsx')
-    shutil.copy2(outx,runtime_root()/'archive'/f'BASDAS_Executive_Data_{stamp}.xlsx')
-    shutil.copy2(outp,runtime_root()/'archive'/f'BASDAS_Yonetici_Raporu_{stamp}.pdf')
+    shutil.copy2(outx,runtime_root()/'archive'/f'OMEHR_Executive_Data_{stamp}.xlsx')
+    shutil.copy2(outp,runtime_root()/'archive'/f'OMEHR_Yonetici_Raporu_{stamp}.pdf')
     snap={'version':'V19.1 Derin Model Karşılaştırması','timestamp':datetime.now().isoformat(),'duration_seconds':round((datetime.now()-started).total_seconds(),2),'sha256':h,'kpis':kp,'sources':{'mevcut':'Fact_Mevcut','norm':'Fact_Norm','ai':'V19_AI_Norm_Sonuclari.xlsx','benchmark':'V19_1_Derin_Model_Karsilastirmasi.xlsx'},'engines':{'mevcut_norm_comparison':True,'pdf':True,'excel':True,'region_reports':True,'ai':True,'statistical_tests':True,'machine_learning':True,'group_kfold':True,'operational':True},'files':{'excel':str(outx),'pdf':str(outp),'region_reports':str(outdir/'Bolge_Raporlari')}}
-    (outdir/'BASDAS_latest.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
-    (runtime_root()/'logs'/'BASDAS_Run_Audit.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
+    (outdir/'OMEHR_latest.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
+    (runtime_root()/'logs'/'OMEHR_Run_Audit.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
     return {'path':p,'sheets':sheets,'norm':norm,'staff':staff,'state':st,'titles':tt,'kpis':kp,'scenarios':scens,'risk':risk,'ai_norm':ai,'hash':h,'excel':outx,'pdf':outp,'excel_v18':current_excel,'manager_excel':manager_excel,'boxed_manager_excel':boxed_manager_excel,'pdf_v18':current_pdf,'admin_reports':admin_reports,'veri_kalitesi_raporu':kalite_raporu,'version':'V19.21.28 Kutucuklu Personel Excel Raporu'}
 
 # ============================================================================
@@ -219,7 +219,7 @@ def run_all():
         "started_at": started.isoformat(timespec="seconds"),
         "stages": {},
     }
-    audit_path = runtime_root() / "logs" / "BASDAS_Runtime_Audit.json"
+    audit_path = runtime_root() / "logs" / "OMEHR_Runtime_Audit.json"
 
     try:
         from common_veri_okuma import input_file

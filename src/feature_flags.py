@@ -49,7 +49,7 @@ def _all_features_cached(path_text: str, mtime_ns: int) -> dict:
 def all_features() -> dict:
     """DÜZELTME (kritik test-izolasyon + çok kiracılı risk): önceden hem
     ROOT hem de @lru_cache(maxsize=1) (PARAMETRESİZ) ilk çağrıda
-    SONSUZA DEK sabitleniyordu — BASDAS_RUNTIME_ROOT değişse bile İLK
+    SONSUZA DEK sabitleniyordu — OMEHR_RUNTIME_ROOT değişse bile İLK
     kiracının/testin özellik bayrakları TÜM sonraki kiracılara/testlere
     uygulanmaya devam ederdi. Artık dosya yolu+mtime'a göre anahtarlanır."""
     p = runtime_root()/'config_features.json'

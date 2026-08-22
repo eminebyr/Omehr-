@@ -9,7 +9,7 @@ biliyordu (loglara "sessiz uyarı" olarak yazıyordu — bkz. services/
 safe_exec.py::log_swallowed çağrıları) ama bir yöneticinin kolayca
 açıp okuyabileceği AYRI, GÖRÜNÜR bir özet dosyası YOKTU. Bu modül o
 boşluğu kapatır: input dosyasındaki bilinen 4 veri kalitesi işaretini
-tarar ve output/BASDAS_Veri_Kalitesi_Raporu.xlsx üretir.
+tarar ve output/OMEHR_Veri_Kalitesi_Raporu.xlsx üretir.
 
 Bu modül YENİ veri kalitesi sorunu ÜRETMEZ/TAHMİN ETMEZ — sadece
 zaten var olan işaretleri (ör. "Veri Durumu" sütunundaki "Dummy" metni)
@@ -25,7 +25,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from src.excel_report import write_df
 from src.text_utils import product_name
 
-REPORT_FILENAME = "BASDAS_Veri_Kalitesi_Raporu.xlsx"
+REPORT_FILENAME = "OMEHR_Veri_Kalitesi_Raporu.xlsx"
 
 
 def _oran(sayi: int, toplam: int) -> str:

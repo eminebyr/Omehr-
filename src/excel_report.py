@@ -198,7 +198,7 @@ def _surplus_people_report(tt,staff):
 def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None):
     tt=balance_detail_table(tt)
     """Sadece Fact_Mevcut ve Fact_Norm karşılaştırmasını içeren sade yönetici Excel'i."""
-    out=runtime_root()/'output'/'BASDAS_Executive_Data.xlsx'
+    out=runtime_root()/'output'/'OMEHR_Executive_Data.xlsx'
     wb=Workbook(); wb.remove(wb.active)
     ws=wb.create_sheet('Yönetici Özeti')
     ws.append([product_name().upper(),'']); ws.merge_cells('A1:B1')
@@ -322,7 +322,7 @@ def enhanced_excel_reports(kpi,st,tt,ai,staff):
     temp_dir=runtime_root()/'output'/'Bolge_Excel_Yeni'; shutil.rmtree(temp_dir,ignore_errors=True); temp_dir.mkdir(exist_ok=True)
     for region in sorted(st['Bölge Sorumlusu'].dropna().map(txt).unique()):
         safe=''.join(c if c.isalnum() else '_' for c in region).strip('_')
-        _region_excel(temp_dir/f'BASDAS_Bolge_{safe}.xlsx',region,kpi,st,tt,ai,staff)
+        _region_excel(temp_dir/f'OMEHR_Bolge_{safe}.xlsx',region,kpi,st,tt,ai,staff)
     for old in outdir.glob('*.xlsx'): old.unlink()
     for fresh in temp_dir.glob('*.xlsx'): fresh.replace(outdir/fresh.name)
     shutil.rmtree(temp_dir,ignore_errors=True)
@@ -682,12 +682,12 @@ def _build_admin_report_pack(kpi, st, tt, ai, input_path, main_pdf, main_excel):
         wb.save(path)
         return path
 
-    norm_path=make_book(outdir/'BASDAS_Admin_Norm_ve_Aksiyonlar.xlsx',[
+    norm_path=make_book(outdir/'OMEHR_Admin_Norm_ve_Aksiyonlar.xlsx',[
         ('KPI Özeti',pd.DataFrame([kpi])),
         ('Kritik Norm Durumları',critical),
         ('AI Aksiyonları',actions),
     ])
-    finance_path=make_book(outdir/'BASDAS_Admin_Maliyet_ve_Operasyon.xlsx',[
+    finance_path=make_book(outdir/'OMEHR_Admin_Maliyet_ve_Operasyon.xlsx',[
         ('Yönetici Özeti',summary),
         ('Maliyet Analizi',financial),
         ('Operasyon Analizi',operational),
@@ -696,7 +696,7 @@ def _build_admin_report_pack(kpi, st, tt, ai, input_path, main_pdf, main_excel):
         ('Maliyet - Merkez',financial[financial.get('Birim Tipi',pd.Series('',index=financial.index)).eq('Merkez')]),
     ])
     from pypdf import PdfReader,PdfWriter
-    admin_pdf=outdir/'BASDAS_Admin_Yonetici_Ozeti.pdf'
+    admin_pdf=outdir/'OMEHR_Admin_Yonetici_Ozeti.pdf'
     reader=PdfReader(str(main_pdf));writer=PdfWriter()
     for page in reader.pages[:min(3,len(reader.pages))]:writer.add_page(page)
     with admin_pdf.open('wb') as stream:writer.write(stream)
@@ -709,9 +709,9 @@ def _build_admin_report_pack(kpi, st, tt, ai, input_path, main_pdf, main_excel):
         with target.open('wb') as stream:subset.write(stream)
         return target
 
-    ai_pdf=extract_pdf('BASDAS_AI_Karar_Analizi.pdf',[0,1])
-    operation_pdf=extract_pdf('BASDAS_Operasyon_Verimlilik_Analizi.pdf',[0,1])
-    cost_pdf=extract_pdf('BASDAS_Maliyet_Analizi.pdf',[1,2])
+    ai_pdf=extract_pdf('OMEHR_AI_Karar_Analizi.pdf',[0,1])
+    operation_pdf=extract_pdf('OMEHR_Operasyon_Verimlilik_Analizi.pdf',[0,1])
+    cost_pdf=extract_pdf('OMEHR_Maliyet_Analizi.pdf',[1,2])
     # Tüm yönetici çıktıları doğrudan kurumsal BASDAS adlarıyla üretilir.
     return [admin_pdf,ai_pdf,operation_pdf,cost_pdf,norm_path,finance_path,Path(main_excel)]
 
@@ -723,7 +723,7 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
     ayrıntı mantığını taşır: Gerçek Unvan, Ad Soyad, M, N, E, F.
     Eksik satırlar mavi, norm fazlası personel satırları yeşil gösterilir.
     """
-    out = Path(output_path) if output_path else runtime_root() / 'output' / 'BASDAS_Kutucuklu_Yonetici_Raporu.xlsx'
+    out = Path(output_path) if output_path else runtime_root() / 'output' / 'OMEHR_Kutucuklu_Yonetici_Raporu.xlsx'
     out.parent.mkdir(parents=True, exist_ok=True)
 
     def _norm_name(value):
