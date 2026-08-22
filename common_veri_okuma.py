@@ -79,5 +79,5 @@ def semantic_manifest(sheets):
 
 def save_manifest(path=None):
     p=path or input_file(); all_=read_all(p); data={'file':p.name,'sha256':fingerprint(p),**semantic_manifest(all_)}
-    out=runtime_root()/'output'/'BASDAS_Input_Manifest.json'; out.parent.mkdir(exist_ok=True); out.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
+    out=runtime_root()/'output'/'OMEHR_Input_Manifest.json'; out.parent.mkdir(exist_ok=True); out.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     return data

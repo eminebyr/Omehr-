@@ -1,7 +1,7 @@
 {
   "company_name": "OMEHR",
   "product_name": "Norm Kadro, Transfer ve İş Gücü Optimizasyon Platformu",
-  "input_file": "input/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+  "input_file": "input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
   "web_port": 8501,
   "support_email": ""
 }

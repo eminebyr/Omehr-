@@ -12,12 +12,12 @@ rem tetiklenmek uzere tasarlanmistir. Otomatik kaydolmak icin
 rem ZAMANLAYICI_KUR.bat dosyasini BIR KEZ calistirin.
 rem
 rem Ne yapar: formulleri yeniden hesaplar, AI/istatistik motorunu calistirir,
-rem tum PDF/Excel raporlarini uretir ve (BASDAS_SEND_EMAIL=1 ise) Outlook
+rem tum PDF/Excel raporlarini uretir ve (OMEHR_SEND_EMAIL=1 ise) Outlook
 rem uzerinden gercek e-postalari gonderir. Cikti logs\Otomatik_Calistirma_*.log
 rem dosyasina yazilir; masaustunde hicbir pencere kalmaz.
 rem =====================================================================
 
-set "BASDAS_SEND_EMAIL=1"
+set "OMEHR_SEND_EMAIL=1"
 set "BASEPY="
 if exist ".venv\Scripts\python.exe" set "BASEPY=.venv\Scripts\python.exe"
 if not defined BASEPY (

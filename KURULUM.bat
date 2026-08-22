@@ -49,7 +49,7 @@ if not exist "%~dp0requirements.txt" (
 set "PYTHONUTF8=1"
 set "PYTHONUNBUFFERED=1"
 set "APP_VERSION=19.21.28"
-set "VENV_DIR=%LOCALAPPDATA%\BASDAS_RUNTIME\venv"
+set "VENV_DIR=%LOCALAPPDATA%\OMEHR_RUNTIME\venv"
 set "VENVPY=%VENV_DIR%\Scripts\python.exe"
 
 rem =====================================================================
@@ -66,7 +66,7 @@ echo  Uygulama konumu: %cd%
 echo  Sanal ortam:      %VENV_DIR%
 echo.
 
-if not exist "%LOCALAPPDATA%\BASDAS_RUNTIME" mkdir "%LOCALAPPDATA%\BASDAS_RUNTIME"
+if not exist "%LOCALAPPDATA%\OMEHR_RUNTIME" mkdir "%LOCALAPPDATA%\OMEHR_RUNTIME"
 
  echo [1/8] Uyumlu Python surumu kontrol ediliyor...
 set "BASEPY="

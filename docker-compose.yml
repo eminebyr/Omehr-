@@ -10,9 +10,9 @@ services:
     env_file:
       - .env
     environment:
-      BASDAS_INPUT_SOURCE: "db"
-      BASDAS_DB_BACKEND: "postgres"
-      BASDAS_POSTGRES_DSN: "postgresql://basdas:${POSTGRES_PASSWORD}@postgres:5432/basdas"
+      OMEHR_INPUT_SOURCE: "db"
+      OMEHR_DB_BACKEND: "postgres"
+      OMEHR_POSTGRES_DSN: "postgresql://omehr:${POSTGRES_PASSWORD}@postgres:5432/omehr"
     volumes:
       - ./input:/app/input
       - ./output:/app/output
@@ -30,13 +30,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: basdas
+      POSTGRES_USER: omehr
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: basdas
+      POSTGRES_DB: omehr
     volumes:
-      - basdas_postgres_data:/var/lib/postgresql/data
+      - omehr_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U basdas"]
+      test: ["CMD-SHELL", "pg_isready -U omehr"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -56,5 +56,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  basdas_postgres_data:
+  omehr_postgres_data:
   certbot_webroot:
