@@ -6,7 +6,7 @@ echo ============================================================
 echo   BASDAS / OMEHR - 3 PC ORTAK EXCEL AYARI
 echo ============================================================
 echo.
-echo Ornek yol: \\SUNUCU\OMEHR\BASDAS_AI_NORM_TRANSFER_INPUT.xlsx
+echo Ornek yol: \\SUNUCU\OMEHR\OMEHR_AI_NORM_TRANSFER_INPUT.xlsx
 echo Bu yol 3 bilgisayarda da AYNI olmalidir.
 echo.
 set /p ORTAK_YOL=Ortak Excel tam yolunu girin: 
@@ -23,14 +23,14 @@ if not exist "%ORTAK_YOL%" (
   pause
   exit /b 2
 )
-setx BASDAS_INPUT_PATH "%ORTAK_YOL%" >nul
+setx OMEHR_INPUT_PATH "%ORTAK_YOL%" >nul
 if errorlevel 1 (
   echo Ortam ayari kaydedilemedi. Komut Istemi'ni normal kullanici olarak tekrar deneyin.
   pause
   exit /b 3
 )
 echo.
-echo TAMAM: BASDAS_INPUT_PATH kaydedildi.
+echo TAMAM: OMEHR_INPUT_PATH kaydedildi.
 echo Panel aciksa kapatip yeniden baslatin.
 echo Diger PC'lerde de bu dosyayi calistirip AYNI yolu girin.
 pause

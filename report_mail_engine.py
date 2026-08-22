@@ -29,7 +29,7 @@ def _log_dir():
 
 
 def _log_file():
-    return _log_dir() / "BASDAS_Outlook_Gonderim_Log.json"
+    return _log_dir() / "OMEHR_Outlook_Gonderim_Log.json"
 
 
 def _staging_dir():

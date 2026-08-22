@@ -1,20 +1,12 @@
 {
-  "verified_at_utc": "2026-08-21T05:45:36+00:00",
+  "verified_at_utc": "2026-08-22T07:10:20+00:00",
   "python": "3.12.3",
   "compile": "PASS",
   "architecture": "PASS",
   "regression_guards": "PASS",
   "secret_scan": "PASS",
   "pytest": {
-    "tests": 331,
-    "passed": 324,
-    "skipped": 7,
-    "failures": 0,
-    "errors": 0,
-    "files": 86,
-    "fallback_nodes": 12,
-    "status": "PASS",
-    "not": "Sandbox arac cagrisi suresi kisitindan dolayi 3 ayri oturumda calistirildi (dosya 1-35, 36-59, 60-86); her segment ayri ayri dogrulandi, toplami --collect-only ile birebir eslesti."
+    "status": "SKIPPED"
   },
-  "input_sha256": "b36eb79617605e82cfd8d9c08dfc15da1d5349c656bf24da1b235923c87ac527"
+  "input_sha256": "6fa58bd45e1377b729a89124b8ca25b078d18dd882cfd82da3f3ed368b6ad047"
 }
