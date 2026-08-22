@@ -64,7 +64,7 @@ def render(ctx: PageContext) -> None:
         port = c3.number_input("Port", value=int(smtp.get("port", 587)), min_value=1, max_value=65535)
         smtp_user = c4.text_input("Kullanıcı adı", value=smtp.get("username", ""))
         gonderen = st.text_input("Gönderen adresi (From)", value=smtp.get("from", ""))
-        st.caption("Parola buradan görüntülenmez/kaydedilmez; sunucuda BASDAS_SMTP_PASSWORD ortam değişkeni ile tanımlayın.")
+        st.caption("Parola buradan görüntülenmez/kaydedilmez; sunucuda OMEHR_SMTP_PASSWORD ortam değişkeni ile tanımlayın.")
         if st.form_submit_button("SMTP ayarlarını kaydet"):
             try:
                 update_settings({
@@ -143,7 +143,7 @@ def render(ctx: PageContext) -> None:
         )
         st.caption(
             "Dosya adını değiştirmek için services/settings.py veya "
-            "BASDAS_INPUT_FILE ortam değişkeni kullanılır (sistem "
+            "OMEHR_INPUT_FILE ortam değişkeni kullanılır (sistem "
             "yöneticisi işlemi, yeniden başlatma gerektirir)."
         )
     with c2:
@@ -218,7 +218,7 @@ def render(ctx: PageContext) -> None:
         "bulut barındırma) ana Excel dosyanızı buradan yükleyebilirsiniz."
     )
     yuklenen_dosya = st.file_uploader(
-        "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx (ya da kendi şirketinizin aynı yapıdaki dosyası)",
+        "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx (ya da kendi şirketinizin aynı yapıdaki dosyası)",
         type=["xlsx"], key="excel_yukleme",
     )
     if yuklenen_dosya is not None and st.button("Yükle ve etkinleştir", key="excel_yukle_dugmesi"):
@@ -230,17 +230,16 @@ def render(ctx: PageContext) -> None:
             _tmp.write(yuklenen_dosya.getvalue())
             _gecici_yol = _Path(_tmp.name)
         try:
-            # DÜZELTME (KRİTİK — bizzat bulundu, 20.08.2026): bu ekran
-            # önceden KOŞULSUZ migrate_excel_to_db() çağırıyordu — yani
-            # veriyi HER ZAMAN veritabanına yazıyordu. Ama dashboard'un
-            # gerçek okuma yolu (common_veri_okuma.read_all -> _db_modu())
-            # yalnız BASDAS_INPUT_SOURCE=db İKEN veritabanını okur; bu
-            # canlı dağıtımda (BASDAS_INPUT_SOURCE=excel) _db_modu() HER
-            # ZAMAN False döner ve dashboard doğrudan input DOSYASINI
-            # okur. Sonuç: "64/64 sayfa başarıyla aktarıldı" mesajı
-            # doğruydu ama veri dashboard'un HİÇ bakmadığı bir yere
-            # yazılıyordu — dashboard sonsuza dek eski veriyi gösterirdi.
-            # Artık gerçek moda göre DOĞRU hedefe yazılıyor.
+            # DÜZELTME (KRİTİK — bizzat canlıda bulundu, 20.08.2026): bu ekran
+            # önceden KOŞULSUZ migrate_excel_to_db() çağırıyordu (veriyi HER
+            # ZAMAN veritabanına yazıyordu). Ama dashboard'un gerçek okuma
+            # yolu (common_veri_okuma.read_all -> _db_modu()) yalnız
+            # OMEHR_INPUT_SOURCE=db İKEN veritabanını okur; dosya modunda
+            # (OMEHR_INPUT_SOURCE=excel) dashboard doğrudan input DOSYASINI
+            # okur. Sonuç: "X/Y sayfa başarıyla aktarıldı" mesajı doğruydu
+            # ama veri dashboard'un hiç bakmadığı bir yere yazılıyordu —
+            # dashboard sonsuza dek eski veriyi gösterirdi. Artık gerçek
+            # moda göre doğru hedefe yazılıyor.
             if _db_modu():
                 from services.input_excel_migration import migrate_excel_to_db
                 from services.multitenant.tenant_context import current_tenant_id

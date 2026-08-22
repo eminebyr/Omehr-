@@ -37,34 +37,34 @@ CSS_STYLES = """
        kaçmamak için ana renk değil).
        ================================================================ */
     :root {
-        --bd-primary: #5B8FD9;
-        --bd-primary-deep: #102F64;
-        --bd-primary-light: #7BA3E0;
-        --bd-primary-tint: #1A2540;
-        --bd-accent: #2BB8C4;
+        --bd-primary: #102F64;
+        --bd-primary-deep: #081B3D;
+        --bd-primary-light: #1B4A7A;
+        --bd-primary-tint: #E8EDF5;
+        --bd-accent: #118B94;
         --bd-accent-deep: #0D6D74;
-        --bd-accent-tint: #10282A;
+        --bd-accent-tint: #E3F3F4;
         --bd-selected-yellow: #FFEEA6;
         --bd-gold: #D5A95C;
-        --bd-gold-tint: #3D3220;
-        --bd-bg: #0B1220;
-        --bd-surface: #141B2E;
-        --bd-surface-sunken: #0F1626;
-        --bd-ink: #F0F3F7;
-        --bd-ink-soft: #A8B3C4;
-        --bd-ink-faint: #6B7688;
-        --bd-border: #232D42;
-        --bd-border-strong: #37415A;
-        --bd-danger: #E0685F;
-        --bd-danger-tint: #3D1F1F;
-        --bd-success: #4CAF6E;
-        --bd-success-tint: #16301F;
+        --bd-gold-tint: #FAF2E3;
+        --bd-bg: #F5F7F9;
+        --bd-surface: #FFFFFF;
+        --bd-surface-sunken: #FAFBFC;
+        --bd-ink: #1A2233;
+        --bd-ink-soft: #57616F;
+        --bd-ink-faint: #8B94A1;
+        --bd-border: #E2E6EC;
+        --bd-border-strong: #C9D0D9;
+        --bd-danger: #9B2D2D;
+        --bd-danger-tint: #F7E8E6;
+        --bd-success: #2F7A4F;
+        --bd-success-tint: #E9F3EC;
         --bd-radius-sm: 6px;
         --bd-radius-md: 10px;
         --bd-radius-lg: 16px;
-        --bd-shadow-sm: 0 1px 2px rgba(0,0,0,0.35), 0 1px 1px rgba(0,0,0,0.25);
-        --bd-shadow-md: 0 6px 16px rgba(0,0,0,0.45), 0 2px 5px rgba(0,0,0,0.30);
-        --bd-shadow-lg: 0 16px 40px rgba(0,0,0,0.55), 0 4px 10px rgba(0,0,0,0.35);
+        --bd-shadow-sm: 0 1px 2px rgba(8,27,61,0.07), 0 1px 1px rgba(8,27,61,0.05);
+        --bd-shadow-md: 0 6px 16px rgba(8,27,61,0.10), 0 2px 5px rgba(8,27,61,0.05);
+        --bd-shadow-lg: 0 16px 40px rgba(8,27,61,0.16), 0 4px 10px rgba(8,27,61,0.06);
         --bd-font-sans: 'Segoe UI', Arial, Tahoma, 'DejaVu Sans', sans-serif;
         --bd-font-mono: Consolas, 'Cascadia Mono', 'Courier New', 'DejaVu Sans Mono', monospace;
     }
@@ -81,7 +81,7 @@ CSS_STYLES = """
         color: var(--bd-ink) !important;
         -webkit-text-fill-color: var(--bd-ink) !important;
         opacity: 1 !important;
-        background-color: var(--bd-surface) !important;
+        background-color: #ffffff !important;
         font-weight: 500 !important;
     }
     div[data-testid="stTextArea"] label, div[data-testid="stTextArea"] label p,
@@ -204,7 +204,7 @@ CSS_STYLES = """
         font-weight: 700 !important;
     }
 
-    div.stButton > button, div.stDownloadButton > button, div[data-testid="stFormSubmitButton"] button {
+    div.stButton > button, div.stDownloadButton > button {
         background-color: var(--bd-primary) !important;
         color: #FFFFFF !important;
         border: none !important;
@@ -214,12 +214,12 @@ CSS_STYLES = """
         box-shadow: var(--bd-shadow-sm);
         transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
     }
-    div.stButton > button:hover, div.stDownloadButton > button:hover, div[data-testid="stFormSubmitButton"] button:hover {
+    div.stButton > button:hover, div.stDownloadButton > button:hover {
         background-color: var(--bd-primary-light) !important;
         box-shadow: var(--bd-shadow-md);
     }
-    div.stButton > button:active, div.stDownloadButton > button:active, div[data-testid="stFormSubmitButton"] button:active { transform: translateY(1px); }
-    div.stButton > button:focus-visible, div.stDownloadButton > button:focus-visible, div[data-testid="stFormSubmitButton"] button:focus-visible {
+    div.stButton > button:active, div.stDownloadButton > button:active { transform: translateY(1px); }
+    div.stButton > button:focus-visible, div.stDownloadButton > button:focus-visible {
         outline: 3px solid var(--bd-accent-tint) !important;
         outline-offset: 1px;
         box-shadow: 0 0 0 2px var(--bd-accent) !important;
@@ -266,7 +266,7 @@ CSS_STYLES = """
         max-width: 100vw !important;
         height: auto !important;
         order: -1 !important;
-        background: linear-gradient(180deg, #14264D 0%, var(--bd-primary-deep) 100%) !important;
+        background: linear-gradient(180deg, var(--bd-primary) 0%, var(--bd-primary-deep) 100%) !important;
         border-right: none !important;
         border-bottom: 2px solid var(--bd-accent);
         box-shadow: 0 2px 8px rgba(13,41,37,0.18);
@@ -368,8 +368,7 @@ CSS_STYLES = """
     }
     div.stButton > button p, div.stButton > button span,
     div.stDownloadButton > button p, div.stDownloadButton > button span,
-    div[data-testid="stFormSubmitButton"] button p, div[data-testid="stFormSubmitButton"] button span,
-    div.stButton > button, div.stDownloadButton > button, div[data-testid="stFormSubmitButton"] button { color: #FFFFFF !important; }
+    div.stButton > button, div.stDownloadButton > button { color: #FFFFFF !important; }
     div.stButton > button[kind="secondary"] p, div.stButton > button[kind="secondary"] span,
     div.stButton > button[kind="secondary"] { color: var(--bd-primary) !important; }
     section[data-testid="stSidebar"] p,
@@ -379,14 +378,8 @@ CSS_STYLES = """
     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary,
     section[data-testid="stSidebar"] div[data-testid="stExpander"] summary * { color: #FFFFFF !important; }
     div[data-testid="stMetricValue"] { color: var(--bd-primary) !important; }
-    div[data-testid="stRadio"] label[data-checked="true"],
-    div[data-testid="stRadio"] label[data-checked="true"] p,
-    div[data-testid="stRadio"] label[data-checked="true"] span,
-    div[data-testid="stRadio"] label[data-checked="true"] div { color: var(--bd-primary-deep) !important; }
-    div[data-testid="stRadio"] label:has(input:checked),
-    div[data-testid="stRadio"] label:has(input:checked) p,
-    div[data-testid="stRadio"] label:has(input:checked) span,
-    div[data-testid="stRadio"] label:has(input:checked) div { color: var(--bd-primary-deep) !important; }
+    div[data-testid="stRadio"] label[data-checked="true"] { color: var(--bd-primary-deep) !important; }
+    div[data-testid="stRadio"] label:has(input:checked) { color: var(--bd-primary-deep) !important; }
 
     html, body, .stApp, div[data-testid="stAppViewContainer"] {
         height: 100vh !important;
@@ -430,7 +423,7 @@ CSS_STYLES = """
     div[data-testid="stTextArea"] textarea,
     div[data-testid="stTextInput"] input,
     div[data-testid="stDateInput"] input {
-        background-color: var(--bd-surface) !important;
+        background-color: #FFFFFF !important;
         color: var(--bd-ink) !important;
         opacity: 1 !important;
         border-radius: var(--bd-radius-sm) !important;
@@ -444,16 +437,7 @@ CSS_STYLES = """
         box-shadow: 0 0 0 2px var(--bd-accent-tint) !important;
     }
 
-    div[data-testid="stTextInputRootElement"] {
-        background-color: var(--bd-surface) !important;
-    }
-    div[data-testid="stTextInputRootElement"] button {
-        background-color: transparent !important;
-        border: none !important;
-    }
-    div[data-testid="stTextInputRootElement"] button svg { fill: var(--bd-ink-soft) !important; }
-
-    .basdas-title-top-gap { height: 2.3rem !important; }
-    .basdas-title-gap { height: 0.35rem !important; }
+    .omehr-title-top-gap { height: 2.3rem !important; }
+    .omehr-title-gap { height: 0.35rem !important; }
     </style>
     """

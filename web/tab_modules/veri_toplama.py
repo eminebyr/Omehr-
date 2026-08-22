@@ -70,7 +70,7 @@ def render(ctx: PageContext) -> None:
                     st.success(f"✅ {_n} aktivite güncellendi: " + ", ".join(o["akt_id"] for o in _olcumler))
                     st.download_button(
                         "📤 Güncellenmiş ana dosyayı indir", _veri,
-                        file_name="BASDAS_AI_NORM_TRANSFER_INPUT_SAHA_GUNCEL.xlsx",
+                        file_name="OMEHR_AI_NORM_TRANSFER_INPUT_SAHA_GUNCEL.xlsx",
                         use_container_width=True, key="vt_saha_indir_sonuc",
                     )
                     st.caption("Bu dosyayı kontrol edip beğenirseniz, input/ klasöründeki ana dosyanın üzerine kopyalayın.")
@@ -101,7 +101,7 @@ def render(ctx: PageContext) -> None:
                     st.success(f"✅ Kapasite: {_sonuc['kapasite']} unvan, Maliyet: {_sonuc['maliyet']} unvan güncellendi.")
                     st.download_button(
                         "📤 Güncellenmiş ana dosyayı indir", _veri,
-                        file_name="BASDAS_AI_NORM_TRANSFER_INPUT_IK_FINANS_GUNCEL.xlsx",
+                        file_name="OMEHR_AI_NORM_TRANSFER_INPUT_IK_FINANS_GUNCEL.xlsx",
                         use_container_width=True, key="vt_ik_indir_sonuc",
                     )
             except Exception as _exc:
@@ -124,7 +124,7 @@ def render(ctx: PageContext) -> None:
             st.success(f"✅ {_n} mağaza için pik saat verisi gerçek veriden türetildi.")
             st.download_button(
                 "📤 Güncellenmiş ana dosyayı indir", _veri,
-                file_name="BASDAS_AI_NORM_TRANSFER_INPUT_PIK_GUNCEL.xlsx",
+                file_name="OMEHR_AI_NORM_TRANSFER_INPUT_PIK_GUNCEL.xlsx",
                 use_container_width=True, key="vt_pik_indir_sonuc",
             )
         except Exception as _exc:

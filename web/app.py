@@ -30,7 +30,6 @@ from services.job_queue import enqueue, status as job_status
 from services.runtime_paths import tenant_code
 from services.input_data_access import input_source
 from services.settings import input_path
-from services.tenant_context import current_tenant_id, set_session_tenant
 from web.display_text import MAIN_TITLE
 def _root():
     return runtime_root()
@@ -38,32 +37,6 @@ def _root():
 
 def _input():
     return input_path(_root())
-
-
-def _input_mtime_guvenli():
-    """DÜZELTME (KRİTİK — bizzat gerçek bir çöküşle bulundu): DB
-    modunda (BASDAS_INPUT_SOURCE=db) input dosyasının diskte VAR
-    OLMASI hiç gerekmez (veri veritabanında yaşar) — ama _input().
-    stat().st_mtime'ı KOŞULSUZ çağıran 5 yer, dosya yoksa
-    FileNotFoundError ile ÇÖKÜYORDU. Bu, taze bir DB modu
-    dağıtımında (ör. Streamlit Community Cloud, henüz hiçbir Excel
-    yüklenmemişken) kullanıcının GİRİŞ YAPAR YAPMAZ çökmesi, "Ayarlar
-    > Excel Verisi Yükle" ekranına HİÇ ULAŞAMAMASI anlamına gelirdi.
-
-    DÜZELTME 2 (bizzat kanıtlandı — st.cache_data DAVRANIŞ testiyle):
-    DB modunda yalnız 0.0 sabit değeri dönmek, çöküşü önler ama YENİ
-    bir sorun yaratır — write_sheet() sonrası önbellek anahtarı HİÇ
-    DEĞİŞMEDİĞİ için, Genel Özet (ve diğer TÜM ekranlar) ESKİ veriyi
-    göstermeye devam eder (yalnız tarayıcı TAM yenilenirse fark
-    edilir). Artık DB modunda services.input_data_access::
-    tenant_content_version() kullanılır — HER kayıt işleminde
-    GERÇEKTEN değişen bir zaman damgası döner, önbellek DOĞRU şekilde
-    geçersiz kılınır."""
-    if input_source() == "db":
-        from services.input_data_access import tenant_content_version
-        return tenant_content_version(current_tenant_id())
-    p = _input()
-    return p.stat().st_mtime if p.exists() else 0.0
 
 
 def _output():
@@ -138,11 +111,11 @@ def _render_main_title() -> None:
     sığdırılıyor.
     """
     title_asset = CODE_ROOT / "web" / "assets" / "omehr_logo.png"
-    st.markdown('<div class="basdas-title-top-gap"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="omehr-title-top-gap"></div>', unsafe_allow_html=True)
     _sol, _orta, _sag = st.columns([1, 2, 1])
     with _orta:
         st.image(str(title_asset), use_container_width=True)
-    st.markdown('<div class="basdas-title-gap"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="omehr-title-gap"></div>', unsafe_allow_html=True)
 
 
 from web.styles import CSS_STYLES
@@ -169,7 +142,7 @@ def read_input(mtime: float, tenant_id: str = ""):
         # DÜZELTME (kritik önbellek hatası): bu fonksiyon st.cache_data ile
         # önbelleğe alınır — Streamlit'in önbelleği İŞLEM GENELİNDEDİR, tek
         # bir oturuma özel DEĞİLDİR. Önceden önbellek anahtarı yalnızca
-        # dosya değişiklik zamanıydı (mtime); BASDAS_INPUT_SOURCE=db
+        # dosya değişiklik zamanıydı (mtime); OMEHR_INPUT_SOURCE=db
         # modunda iki farklı kiracının referans yol mtime'ı ÇAKIŞIRSA
         # (gerçekçi bir olasılık), Streamlit BİR kiracının önbelleğe
         # alınmış verisini BAŞKA bir kiracıya sessizce sunabilirdi — ciddi
@@ -214,18 +187,7 @@ def _build_model_from_sheets(sheets):
     # transfer önerileri) kullanıldığı için olduğu gibi bırakılır.
     try:
         import sys as _sys
-        # DÜZELTME (KRİTİK — bizzat gerçek bir ekran görüntüsü testiyle
-        # bulundu): önceden _root() (kiracının ÇALIŞMA ZAMANI veri
-        # dizini) altında "src" aranıyordu — ama engine_core.py KOD
-        # DEPOSUNUN (CODE_ROOT) src/ klasöründe yaşar, kiracı veri
-        # dizininde DEĞİL. Bu, HER GERÇEK dağıtımda (runtime_root ve
-        # code_root neredeyse HİÇBİR ZAMAN aynı yol değildir) sessizce
-        # ModuleNotFoundError'a yol açıyordu — hata yutulduğu için
-        # kullanıcı hiçbir şey görmüyordu, yalnız Genel Özet'in KPI
-        # kartları main.py'nin resmi rakamları YERİNE eski, kalibre
-        # edilmemiş dashboard_model hesabını (GERÇEKTEN YANLIŞ sayılar:
-        # 61/49 yerine doğru 49/23) gösteriyordu.
-        _sys.path.insert(0, str(CODE_ROOT / "src"))
+        _sys.path.insert(0, str(_root() / "src"))
         import engine_core as _ec
         _p, _sheets2, _norm, _staff, _h = _ec.load()
         _st, _tt = _ec.state(_norm, _staff, _sheets2)
@@ -431,7 +393,7 @@ from web.geo_transfer import (
 def _enqueue_and_process(job_type, payload, tenant, timeout=60):
     """enqueue() tek başına bir görevi sadece kuyruğa ekler ve döner — SÜREKLİ
     ÇALIŞAN bir arka plan worker.py süreci varsa bir gün işlenir. Ancak o süreç
-    (BASDAS_CURRENT_BASLAT.bat ile başlatılan pencere) kapanmış/hiç açılmamışsa,
+    (OMEHR_CURRENT_BASLAT.bat ile başlatılan pencere) kapanmış/hiç açılmamışsa,
     görev SESSİZCE sonsuza kadar "QUEUED" durumunda kalır — transfer onayı sonrası
     rotasyon evrakı ve e-posta hiç gönderilmez, ama kullanıcıya hiçbir hata
     gösterilmez. Bu fonksiyon, tıpkı refresh_all()'daki gibi, görevi enqueue
@@ -497,7 +459,7 @@ except Exception as _exc:
 # adımlar SADECE dosyanın son işlendiğimiz andan beri gerçekten değiştiği
 # durumlarda (mtime farklıysa) çalışır; aynı oturumda sonraki her etkileşimde
 # saniyeler içinde atlanır.
-_mevcut_mtime = _input_mtime_guvenli()
+_mevcut_mtime = _input().stat().st_mtime
 if st.session_state.get("_son_islenen_mtime") == _mevcut_mtime:
     pass  # Dosya bu oturumda daha önce işlendi ve o zamandan beri değişmedi, atla.
 else:
@@ -570,7 +532,7 @@ else:
     # Bu oturumda dosyayı işledik; bir sonraki etkileşimde dosya gerçekten
     # değişmediyse (mtime aynıysa) tüm bu ağır adımlar atlanacak.
     try:
-        st.session_state["_son_islenen_mtime"] = _input_mtime_guvenli()
+        st.session_state["_son_islenen_mtime"] = _input().stat().st_mtime
     except Exception as _exc:
         log_swallowed("web.app.refresh_all: beklenmeyen hata", _exc)
         pass
@@ -586,11 +548,12 @@ if st.session_state.get("_recalc_uyari"):
 # services.tenant_context::current_tenant_id() bunu önceliklendirir.
 #
 # DÜZELTME (kritik): önceden bu adım hiç yoktu — sheets/accounts
-# giriş formundan ÖNCE, işlem-geneli (BASDAS_TENANT ortam değişkeni
+# giriş formundan ÖNCE, işlem-geneli (OMEHR_TENANT ortam değişkeni
 # veya varsayılan) bağlamla okunuyordu. Gerçek bir SaaS'ta (tek
 # çalışan sunucu, birden fazla firmanın kullanıcıları) bu, kiracı
 # seçiminin HİÇ ÇALIŞMAMASI anlamına gelirdi.
 # ------------------------------------------------------------------
+from services.tenant_context import current_tenant_id, set_session_tenant
 
 if "user" not in st.session_state:
     _kiraci_secenekleri = ["BASDAS"]
@@ -607,7 +570,7 @@ if "user" not in st.session_state:
             "DİKKAT: Birden fazla firma kayıtlı ama sistem Excel modunda çalışıyor. "
             "Excel modu tek bir çalışan sunucu sürecinde AYNI ANDA birden fazla "
             "firmayı GÜVENLE ayıramaz (dosya yolları işlem-geneli çözümlenir). "
-            "Gerçek çok kiracılı SaaS kullanımı için BASDAS_INPUT_SOURCE=db "
+            "Gerçek çok kiracılı SaaS kullanımı için OMEHR_INPUT_SOURCE=db "
             "ZORUNLUDUR — aksi halde firmalar birbirinin verisini görebilir."
         )
 
@@ -639,7 +602,7 @@ if "user" not in st.session_state:
             k_sifre1 = st.text_input("Şifre", type="password")
             k_sifre2 = st.text_input("Şifre (tekrar)", type="password")
             st.markdown("**3) Veri (isteğe bağlı)**")
-            k_excel = st.file_uploader("Mevcut BASDAS input Excel dosyanız (isteğe bağlı)", type=["xlsx"])
+            k_excel = st.file_uploader("Mevcut OMEHR input Excel dosyanız (isteğe bağlı)", type=["xlsx"])
             k_kaydet = st.form_submit_button("Firmayı Kaydet", type="primary")
 
         if k_kaydet:
@@ -678,7 +641,7 @@ if "user" not in st.session_state:
         # Kiracıyı DOĞRULAMADAN ÖNCE oturuma yaz — bu kiracının Mail_
         # Listesi'ni (kullanıcı dizinini) okuyabilmek için gereklidir.
         set_session_tenant(secilen_kiraci)
-        _giris_sheets = read_input(_input_mtime_guvenli(), tenant_id=secilen_kiraci)
+        _giris_sheets = read_input(_input().stat().st_mtime, tenant_id=secilen_kiraci)
         _giris_acc = accounts(_giris_sheets)
         match = _giris_acc[_giris_acc["Web Kullanıcı"].astype(str).str.strip().eq(username.strip())]
         if match.empty:
@@ -729,21 +692,21 @@ if not st.session_state.get("_atama_kontrolu_yapildi"):
 # DÜZELTME (ücretsiz katman dağıtımı — worker.py AYRI bir süreç olarak
 # çalıştırılamayan platformlar, ör. Streamlit Community Cloud): normal
 # Docker/VPS dağıtımında worker.py SÜREKLİ ayrı çalışır, kuyruğa giren
-# işler (mail gönderimi vb.) hemen işlenir. Bu ortamlarda BASDAS_WORKER_
+# işler (mail gönderimi vb.) hemen işlenir. Bu ortamlarda OMEHR_WORKER_
 # INLINE=1 AYARLANMAZSA bu blok HİÇBİR ŞEY YAPMAZ (gereksiz tekrar
 # olmasın diye). Yalnız AYRI worker süreci OLMAYAN platformlarda, HER
 # sayfa yüklemesinde bekleyen işler senkron olarak (sınırlı sürede,
 # kuyruk boşsa anında) işlenir — mükemmel gerçek-zamanlı değildir
 # (kullanıcı panele TEKRAR girene kadar bekler) ama işlerin SONSUZA
 # KADAR "QUEUED" kalmasını önler.
-if os.getenv("BASDAS_WORKER_INLINE", "0") == "1":
+if os.getenv("OMEHR_WORKER_INLINE", "0") == "1":
     try:
         import worker as _worker
         _worker.run(drain=True)
     except Exception as _exc:
-        log_swallowed("web.app: inline worker (BASDAS_WORKER_INLINE) başarısız", _exc)
+        log_swallowed("web.app: inline worker (OMEHR_WORKER_INLINE) başarısız", _exc)
 
-sheets = read_input(_input_mtime_guvenli(), tenant_id=current_tenant_id())
+sheets = read_input(_input().stat().st_mtime, tenant_id=current_tenant_id())
 required = {"Fact_Mevcut", "Fact_Norm", "Mail_Listesi"}
 if not required.issubset(sheets):
     st.error(f"Eksik input sayfaları: {sorted(required-set(sheets))}"); st.stop()
@@ -830,7 +793,7 @@ with st.sidebar:
                     )
     if st.button("Çıkış", use_container_width=True): del st.session_state.user; st.rerun()
 
-fm, detail, stores, kpis = build_model_cached(_input_mtime_guvenli(), tenant_id=current_tenant_id())
+fm, detail, stores, kpis = build_model_cached(_input().stat().st_mtime, tenant_id=current_tenant_id())
 if not is_global:
     fm=fm[fm["Bölge Sorumlusu"].astype(str).map(norm_text).eq(norm_text(scope))]
     detail=detail[detail["Bölge Sorumlusu"].astype(str).map(norm_text).eq(norm_text(scope))]
@@ -842,7 +805,7 @@ if not is_global:
     kpis["Net İhtiyaç"]=kpis["Norm Fazlası"]-kpis["Norm Eksiği"]
 if kpis["Toplam Norm"]<=0:
     st.error("Toplam Norm 0 olamaz. Fact_Norm sayfasını kontrol edin."); st.stop()
-st.markdown('<div class="basdas-title-top-gap"></div>', unsafe_allow_html=True)
+st.markdown('<div class="omehr-title-top-gap"></div>', unsafe_allow_html=True)
 try:
     from services.kpi_history import snapshot_n_days_ago, log_kpi_snapshot
     log_kpi_snapshot(kpis)  # web açılışında da bugünkü anlık görüntüyü kaydet

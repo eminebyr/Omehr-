@@ -167,11 +167,11 @@ def render(ctx: PageContext) -> None:
     _powerbi_sonuc = st.session_state.get("powerbi_sonuc")
     if _powerbi_sonuc and Path(_powerbi_sonuc["file"]).is_file():
         st.download_button(
-            "Power BI modelini indir (BASDAS_PowerBI_Model.xlsx)",
+            "Power BI modelini indir (OMEHR_PowerBI_Model.xlsx)",
             Path(_powerbi_sonuc["file"]).read_bytes(),
             file_name=Path(_powerbi_sonuc["file"]).name,
             use_container_width=True,
-            on_click=_log_indirme, args=("BASDAS_PowerBI_Model.xlsx",),
+            on_click=_log_indirme, args=("OMEHR_PowerBI_Model.xlsx",),
         )
 
     if can_view_personal_address:

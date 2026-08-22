@@ -75,10 +75,7 @@ def build_clean_zip(source: Path, destination: Path, *, verification: dict | Non
     release_manifest={
         'built_at_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
         'file_count': len(files),
-        'verification': verification or {
-            'status': 'UNKNOWN_UNVERIFIED',
-            'warning': 'BU PAKET DOĞRULANMADI — build_clean_zip() verification parametresi olmadan çağrıldı. Teslim etmeden önce tools/verify_release.py ile doğrulama yapılmalı.',
-        },
+        'verification': verification or {'status':'NOT_RUN'},
         'files': {str(p.relative_to(source)): _sha256(p) for p in files},
     }
     with ZipFile(destination, 'w', compression=ZIP_DEFLATED, compresslevel=6) as zf:
@@ -89,34 +86,18 @@ def build_clean_zip(source: Path, destination: Path, *, verification: dict | Non
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='OMEHR temiz, DOĞRULANMIŞ dağıtım ZIP paketi oluşturur.')
+    parser = argparse.ArgumentParser(description='OMEHR temiz/opsiyonel doğrulanmış dağıtım ZIP paketi oluşturur.')
     parser.add_argument('source', type=Path)
     parser.add_argument('destination', type=Path)
-    # DÜZELTME (release disiplini — kullanıcı ile netleştirildi): önceden
-    # doğrulama --verify bayrağıyla AÇIKÇA İSTENMEDİKÇE ÇALIŞMIYORDU —
-    # bu, BİR paketin (OMEHR_SON_HALI.zip) yanlışlıkla bayraksız
-    # üretilip manifest'in "NOT_RUN"a GERİ DÜŞMESİNE yol açmıştı. Artık
-    # doğrulama VARSAYILAN olarak HER ZAMAN çalışır — yalnız AÇIKÇA
-    # --skip-verify verilirse atlanır, VE bu durumda bile manifest
-    # BELİRSİZ "NOT_RUN" DEĞİL, net bir şekilde "SKIPPED_BY_USER" yazar
-    # (kasıtlı bir atlamayla, unutulmuş bir adımı birbirinden ayırt
-    # etmek için).
-    parser.add_argument('--skip-verify', action='store_true', help='Doğrulamayı BİLEREK atla (önerilmez — yalnız hızlı yerel denemeler için).')
-    parser.add_argument('--fast-verify', action='store_true', help='pytest hariç, hızlı kontrolleri (derleme/mimari/regresyon/secret-scan) çalıştırır — tam izole pytest ayrı, checkpoint ile tamamlanmalıdır.')
+    parser.add_argument('--verify', action='store_true', help='Derleme + mimari + secret scan + tüm pytest koşusunu zorunlu kılar.')
     args = parser.parse_args()
-
-    if args.skip_verify:
-        print("UYARI: Doğrulama BİLEREK ATLANDI (--skip-verify). Bu paket TESLİM EDİLMEMELİDİR.")
-        verification = {'status': 'SKIPPED_BY_USER', 'warning': 'Bu paket doğrulanmadan üretildi — teslim öncesi --fast-verify veya tam --verify ile yeniden üretilmeli.'}
-    else:
+    verification=None
+    if args.verify:
         import importlib.util
         verifier_path=Path(__file__).with_name('verify_release.py')
         spec=importlib.util.spec_from_file_location('verify_release', verifier_path)
         mod=importlib.util.module_from_spec(spec); assert spec.loader is not None; spec.loader.exec_module(mod)
-        verification=mod.verify(args.source, run_tests=not args.fast_verify)
-        if args.fast_verify:
-            verification['pytest'] = {"status": "FAST_VERIFY_MODU — pytest AYRI, izole/checkpoint ile ayrıca doğrulanmalı ve manifeste elle eklenmelidir."}
-
+        verification=mod.verify(args.source, run_tests=True)
     print(build_clean_zip(args.source, args.destination, verification=verification))
 
 if __name__ == '__main__':

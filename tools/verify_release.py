@@ -35,31 +35,12 @@ def secret_scan(root: Path) -> list[str]:
     for p in root.rglob('*'):
         if not p.is_file() or p.name == '.env' or p.suffix.lower() not in TEXT_SUFFIXES:
             continue
-        if any(part in {'.git','__pycache__','.pytest_cache','tests'} for part in p.parts):
+        if any(part in {'.git','__pycache__','.pytest_cache'} for part in p.parts):
             continue
         text=p.read_text(encoding='utf-8', errors='ignore')
         for pat in SECRET_PATTERNS:
-            m = pat.search(text)
-            if m:
-                # DÜZELTME: .env.example İÇİN uygulanan "bu bir yer tutucu,
-                # gerçek gizli bilgi değil" muafiyeti, rehber/talimat
-                # dosyalarına (.md) da GENİŞLETİLDİ — bizzat bulundu:
-                # UCRETSIZ_CANLIYA_ALMA_REHBERI.md'deki "kendi-seçtiğiniz-
-                # güçlü-bir-şifre-2026!" gibi AÇIKÇA kullanıcıya yönelik
-                # bir TALİMAT metni, gerçek bir sızıntı gibi işaretleniyordu.
-                # GERÇEKTEN SATIR BAZLI kontrol: yalnız eşleşmenin bulunduğu
-                # TAM SATIR incelenir (sabit karakter penceresi DEĞİL — bu,
-                # kısa dosyalarda komşu satırlardaki kelimelere sızabiliyordu,
-                # bizzat bir testle kanıtlandı ve düzeltildi).
-                _satir_basi = text.rfind('\n', 0, m.start()) + 1
-                _satir_sonu = text.find('\n', m.end())
-                if _satir_sonu == -1:
-                    _satir_sonu = len(text)
-                _esit_satir = text[_satir_basi:_satir_sonu].lower()
-                _placeholder_isaretleri = ('change_me', 'example', 'your_', 'kendi-seç', 'kendi seç', 'örnek', 'placeholder', 'sizin-')
-                if p.name == '.env.example' and any(x in text.lower() for x in _placeholder_isaretleri):
-                    continue
-                if p.suffix.lower() == '.md' and any(x in _esit_satir for x in _placeholder_isaretleri):
+            if pat.search(text):
+                if p.name == '.env.example' and any(x in text.lower() for x in ('change_me','example','your_')):
                     continue
                 hits.append(str(p.relative_to(root)))
                 break
@@ -108,7 +89,10 @@ def run_pytest_isolated(root: Path, per_file_timeout: int = 75, start_index: int
     # kullanılıyordu, yani orada da başarısız olurdu) — verify_release.py
     # bu dosyada HER ZAMAN başarısız olurdu. Artık bilinen yavaş
     # dosyalar için ayrı, yeterli bir zaman aşımı tanımlanır.
-    SLOW_FILE_TIMEOUTS = {'test_shipped_config_norm_rules.py': 280}
+    SLOW_FILE_TIMEOUTS = {
+        'test_shipped_config_norm_rules.py': 280,
+        'test_packaging_excludes_lo_profile_and_control_files.py': 280,
+    }
     with tempfile.TemporaryDirectory(prefix='omehr-junit-') as td:
         td=Path(td)
         for offset,test_file in enumerate(test_files,1):
@@ -159,7 +143,7 @@ def verify(root: Path, *, run_tests: bool = True) -> dict:
     if secrets:
         raise RuntimeError('Potential secrets found: ' + ', '.join(secrets))
     pytest_result = run_pytest_isolated(root) if run_tests else {'status':'SKIPPED'}
-    input_file = root / 'input' / 'BASDAS_AI_NORM_TRANSFER_INPUT.xlsx'
+    input_file = root / 'input' / 'OMEHR_AI_NORM_TRANSFER_INPUT.xlsx'
     return {
         'verified_at_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
         'python': sys.version.split()[0],

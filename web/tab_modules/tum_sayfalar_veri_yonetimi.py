@@ -1,7 +1,7 @@
 """Tüm Sayfalar (Veritabanı) — 62+ input sayfasının TAMAMI için genel,
 şema tabanlı web CRUD paneli.
 
-Bu panel yalnızca BASDAS_INPUT_SOURCE=db ayarlandığında GERÇEK veri
+Bu panel yalnızca OMEHR_INPUT_SOURCE=db ayarlandığında GERÇEK veri
 gösterir/kaydeder (bkz. services/input_data_access.py). Excel modunda
 (varsayılan) bilgilendirme mesajı gösterir — hiçbir veri kaybı riski
 yoktur, çünkü bu iki mod birbirinden TAMAMEN bağımsızdır.
@@ -23,7 +23,7 @@ from web.context import PageContext
 
 # Hangi sayfaların SAHA/İK/vb. tarafından elle doldurulacağını, hangilerinin
 # sistem çıktısı olduğu için salt-okunur kalması gerektiğini belirler.
-# (bkz. daha önce hazırlanan BASDAS_SAHA_VERI_INPUT_SABLONU.xlsx ile aynı
+# (bkz. daha önce hazırlanan OMEHR_SAHA_VERI_INPUT_SABLONU.xlsx ile aynı
 # sınıflandırma mantığı.)
 OTOMATIK_SAYFALAR = {
     "Dim_Tarih", "İş Yükü Endeksi", "REFERENTIAL_CONTROL", "STAR_SCHEMA_REHBER",
@@ -79,15 +79,15 @@ def _tum_manuel_sayfalar() -> list[str]:
 def render(ctx: PageContext) -> None:
     st.header("Tüm Sayfalar (Veritabanı Tabanlı Veri Girişi)")
 
-    kaynak = os.getenv("BASDAS_INPUT_SOURCE", "excel").strip().lower()
+    kaynak = os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower()
     if kaynak != "db":
         st.info(
-            "Bu panel yalnız sistem veritabanı modunda (BASDAS_INPUT_SOURCE=db) "
+            "Bu panel yalnız sistem veritabanı modunda (OMEHR_INPUT_SOURCE=db) "
             "çalışır. Şu an sistem Excel modunda — mevcut '4 çekirdek sayfa' "
             "editörü için 'Ana Veri Yönetimi' sekmesini kullanın.\n\n"
             "Veritabanı moduna geçmek için yöneticinize başvurun: "
             "`services/input_excel_migration.py` ile mevcut Excel bir kez "
-            "veritabanına aktarılır, ardından BASDAS_INPUT_SOURCE=db ile "
+            "veritabanına aktarılır, ardından OMEHR_INPUT_SOURCE=db ile "
             "sistem başlatılır."
         )
         return
@@ -97,28 +97,10 @@ def render(ctx: PageContext) -> None:
         return
 
     from services.input_db_schema import load_schema
-    from services.input_data_access import read_sheet, write_sheet, input_source
+    from services.input_data_access import read_sheet, write_sheet
 
     _tum_manuel_sayfalar()
     sema = load_schema()
-
-    # DÜZELTME (KRİTİK — bizzat gerçek bir testle kanıtlandı): bu ekran
-    # HER ZAMAN veritabanına yazar (write_sheet), moddan bağımsız. Ama
-    # Genel Özet/CEO Özeti (web/app.py::read_input), Excel modunda
-    # DOĞRUDAN Excel dosyasından okur — veritabanına DEĞİL. Sonuç:
-    # Excel modunda burada "kaydedildi" mesajı görünse bile, değişiklik
-    # Genel Özet'e HİÇ YANSIMAZ (sessizce kaybolmuş gibi görünür).
-    # Kullanıcı yanıltılmasın diye önceden açıkça uyarılır.
-    if input_source() != "db":
-        st.error(
-            "⚠️ DİKKAT: Sistem şu an Excel modunda çalışıyor. Bu ekrandan "
-            "yaptığınız değişiklikler veritabanına kaydedilir AMA Genel "
-            "Özet/CEO Özeti panelinize YANSIMAZ (onlar doğrudan Excel "
-            "dosyasını okur). Verinizi kalıcı ve tutarlı şekilde "
-            "güncellemek için lütfen doğrudan Excel dosyasını düzenleyin, "
-            "ya da yöneticinizden veritabanı moduna (BASDAS_INPUT_SOURCE=db) "
-            "geçmesini isteyin."
-        )
 
     st.caption(
         "62+ input sayfasının TAMAMI burada düzenlenebilir. Gri (salt-okunur) "

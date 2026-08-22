@@ -8,7 +8,7 @@ import streamlit as st
 def render(ctx):
     st.subheader("30 / 60 / 90 Günlük İş Gücü Tahmin Adayı")
     st.caption("Mağaza ve unvan bazında açıklanabilir karar desteği. Yönetim normunu veya transfer kararını otomatik değiştirmez.")
-    path = Path(ctx.output_path) / "BASDAS_Magaza_Unvan_Isgucu_Tahmini.xlsx"
+    path = Path(ctx.output_path) / "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
     c1,c2=st.columns([1,2])
     if c1.button("Tahmini şimdi hesapla", type="primary", use_container_width=True):
         from services.workforce_forecast import run

@@ -169,7 +169,7 @@ def render(ctx: PageContext) -> None:
                 "Önerilen Aksiyon":st.column_config.TextColumn("Önerilen Aksiyon",width="large"),
             },
         )
-        executive_path=OUTPUT/"BASDAS_Executive_Data.xlsx"
+        executive_path=OUTPUT/"OMEHR_Executive_Data.xlsx"
         if executive_path.is_file():
             st.markdown("### Operasyon Analizi")
             try:
