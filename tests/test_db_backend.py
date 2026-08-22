@@ -1,7 +1,7 @@
 """SQLite/PostgreSQL VERİTABANI SOYUTLAMASI — testler (services/db_backend.py).
 
 SQLite testleri HER ZAMAN çalışır (varsayılan backend, ek kurulum
-gerektirmez). PostgreSQL testleri yalnız BASDAS_TEST_POSTGRES_DSN ortam
+gerektirmez). PostgreSQL testleri yalnız OMEHR_TEST_POSTGRES_DSN ortam
 değişkeni tanımlıysa çalışır, aksi halde nazikçe ATLANIR — bu, geliştirme
 ortamında gerçek bir PostgreSQL'e karşı doğrulanmış (bkz. DEGISIKLIK_OZETI),
 ama teslim edilen pakette PostgreSQL zorunlu kılınmayan bir tasarımdır.
@@ -16,20 +16,20 @@ from services.exceptions import ConfigurationError
 def test_default_backend_is_sqlite(monkeypatch):
     from services.db_backend import backend_name
 
-    monkeypatch.delenv("BASDAS_DB_BACKEND", raising=False)
+    monkeypatch.delenv("OMEHR_DB_BACKEND", raising=False)
     assert backend_name() == "sqlite"
 
 
 def test_invalid_backend_name_raises_configuration_error(monkeypatch):
     from services.db_backend import backend_name
 
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "mongodb")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "mongodb")
     with pytest.raises(ConfigurationError):
         backend_name()
 
 
 def test_sqlite_connect_execute_and_row_access(tmp_path, monkeypatch):
-    monkeypatch.delenv("BASDAS_DB_BACKEND", raising=False)
+    monkeypatch.delenv("OMEHR_DB_BACKEND", raising=False)
     from services.db_backend import connect, ddl_for_backend
 
     con = connect(tmp_path / "test.db")
@@ -46,7 +46,7 @@ def test_sqlite_connect_execute_and_row_access(tmp_path, monkeypatch):
 
 
 def test_sqlite_lastrowid_works(tmp_path, monkeypatch):
-    monkeypatch.delenv("BASDAS_DB_BACKEND", raising=False)
+    monkeypatch.delenv("OMEHR_DB_BACKEND", raising=False)
     from services.db_backend import connect
 
     con = connect(tmp_path / "test.db")
@@ -65,8 +65,8 @@ def test_sqlite_lastrowid_works(tmp_path, monkeypatch):
 # ------------------------------------------------------------------
 
 def test_postgres_connect_execute_and_row_access(postgres_dsn, monkeypatch):
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "postgres")
-    monkeypatch.setenv("BASDAS_POSTGRES_DSN", postgres_dsn)
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "postgres")
+    monkeypatch.setenv("OMEHR_POSTGRES_DSN", postgres_dsn)
     from services.db_backend import connect, ddl_for_backend
 
     con = connect("/unused")
@@ -87,8 +87,8 @@ def test_postgres_connect_execute_and_row_access(postgres_dsn, monkeypatch):
 
 
 def test_postgres_lastrowid_via_returning(postgres_dsn, monkeypatch):
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "postgres")
-    monkeypatch.setenv("BASDAS_POSTGRES_DSN", postgres_dsn)
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "postgres")
+    monkeypatch.setenv("OMEHR_POSTGRES_DSN", postgres_dsn)
     from services.db_backend import connect
 
     con = connect("/unused")
@@ -107,8 +107,8 @@ def test_postgres_immutability_trigger_blocks_update_and_delete(postgres_dsn, mo
     """REGRESYON/KANIT testi: 6. maddede SQLite için eklenen 'değiştirilemez
     audit tablosu' deseninin PostgreSQL'de de (farklı trigger sözdizimiyle)
     çalıştığını kanıtlar."""
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "postgres")
-    monkeypatch.setenv("BASDAS_POSTGRES_DSN", postgres_dsn)
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "postgres")
+    monkeypatch.setenv("OMEHR_POSTGRES_DSN", postgres_dsn)
     from services.db_backend import connect
 
     con = connect("/unused")

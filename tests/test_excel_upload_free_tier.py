@@ -5,15 +5,15 @@ from __future__ import annotations
 Kalıcı dosya sisteminin olmadığı dağıtımlarda (ücretsiz bulut
 barındırma), ana Excel dosyasının web arayüzünden yüklenip
 veritabanına aktarılabildiğini doğrular — bu özellik olmadan
-BASDAS_INPUT_SOURCE=db modunda hiçbir veri sisteme giremezdi.
+OMEHR_INPUT_SOURCE=db modunda hiçbir veri sisteme giremezdi.
 """
 
 
 def test_full_chain_upload_migrate_read_produces_correct_kpis(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "data").mkdir()
 
     from services.input_excel_migration import migrate_excel_to_db
@@ -22,7 +22,7 @@ def test_full_chain_upload_migrate_read_produces_correct_kpis(tmp_path, monkeypa
 
     create_tenant(tenant_code(), "Test Firması", plan="standart", sube_kotasi=200, kullanici_kotasi=100)
     sonuc = migrate_excel_to_db(
-        "ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+        "ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
         kullanici="test", tenant_id=tenant_code(),
     )
     basarili = sum(1 for v in sonuc.values() if v.get("durum") == "OK")
@@ -44,7 +44,7 @@ def test_full_chain_upload_migrate_read_produces_correct_kpis(tmp_path, monkeypa
 def test_ayarlar_upload_section_uses_correct_migration_signature():
     """ayarlar.py'nin yükleme mantığının DOĞRU davrandığını kod incelemesiyle
     doğrular (regresyon, 20.08.2026 canlı olayında bulundu): eskiden bu
-    ekran KOŞULSUZ migrate_excel_to_db() çağırıyordu — BASDAS_INPUT_SOURCE=
+    ekran KOŞULSUZ migrate_excel_to_db() çağırıyordu — OMEHR_INPUT_SOURCE=
     excel (dosya) modunda çalışan dağıtımlarda bu, veriyi dashboard'un HİÇ
     okumadığı bir veritabanına yazıp kullanıcıya yanlışlıkla "başarılı"
     mesajı gösteriyordu. Artık ekran gerçek modu (_db_modu()) kontrol edip

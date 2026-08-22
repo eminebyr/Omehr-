@@ -7,7 +7,7 @@ Bu dosyada bir kez, kendi belgelediği kuralla ("aynı aile içindeki
 toplam aktif personel toplam normu karşılıyorsa dengelenir") ÇELİŞEN
 bir 'separate_roles' listesi ve 'minimum_main_current: 0' bulundu —
 bu, family reconciliation'ı fiilen devre dışı bırakıyordu VE pakete
-dahil edildiği için GERÇEK ÜRETİMDE (BASDAS_RUNTIME_ROOT set
+dahil edildiği için GERÇEK ÜRETİMDE (OMEHR_RUNTIME_ROOT set
 edilmeden çalıştırıldığında) etkili olabilirdi.
 """
 
@@ -35,7 +35,7 @@ def test_shipped_norm_rules_config_does_not_disable_family_reconciliation():
 
 
 def test_main_py_produces_correct_kpis_with_default_root(tmp_path, monkeypatch):
-    """Gerçek kullanıcı deneyimini simüle eder: BASDAS_RUNTIME_ROOT hiç
+    """Gerçek kullanıcı deneyimini simüle eder: OMEHR_RUNTIME_ROOT hiç
     set edilmeden (varsayılan = proje kök dizini), main.py'nin
     yayınlanan config_norm_rules.json ile bile doğru KPI ürettiğini
     doğrular.
@@ -51,14 +51,14 @@ def test_main_py_produces_correct_kpis_with_default_root(tmp_path, monkeypatch):
     import shutil
 
     proje_kok = Path(__file__).resolve().parents[1]
-    input_dosyasi = proje_kok / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    input_dosyasi = proje_kok / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     yedek = tmp_path / "input_yedek.xlsx"
     if input_dosyasi.exists():
         shutil.copyfile(input_dosyasi, yedek)
 
     env = dict(os.environ)
-    env.pop("BASDAS_RUNTIME_ROOT", None)
-    env["BASDAS_MAIL_DRY_RUN"] = "1"
+    env.pop("OMEHR_RUNTIME_ROOT", None)
+    env["OMEHR_MAIL_DRY_RUN"] = "1"
 
     try:
         sonuc = subprocess.run(
@@ -67,8 +67,10 @@ def test_main_py_produces_correct_kpis_with_default_root(tmp_path, monkeypatch):
         )
         assert sonuc.returncode == 0, f"main.py başarısız: {sonuc.stderr[-2000:]}"
         assert '"Aktif Mevcut": 596' in sonuc.stdout
-        assert '"Norm Eksiği": 49' in sonuc.stdout
-        assert '"Norm Fazlası": 23' in sonuc.stdout
+        # DÜZELTME (20.08.2026): 49/23, REFERENTIAL_CONTROL'ün canlı hesabı
+        # sessizce ezdiği dönemden kalma donmuş değerlerdi. Doğru değerler 48/37.
+        assert '"Norm Eksiği": 48' in sonuc.stdout
+        assert '"Norm Fazlası": 37' in sonuc.stdout
     finally:
         if yedek.exists():
             shutil.copyfile(yedek, input_dosyasi)

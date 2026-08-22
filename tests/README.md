@@ -18,7 +18,7 @@ Bu klasör, **sıfırdan, küçük bir başlangıç** olarak eklendi.
   (`test_sample_workbook.py`)
 
 Tümü **izole** çalışır: `conftest.py`'deki `isolated_root` fixture'ı
-`BASDAS_RUNTIME_ROOT` ortam değişkenini her testte geçici bir klasöre
+`OMEHR_RUNTIME_ROOT` ortam değişkenini her testte geçici bir klasöre
 yönlendirir — testler gerçek `input/`, `output/`, `data/`, `logs/`
 klasörlerinize KESİNLİKLE dokunmaz.
 

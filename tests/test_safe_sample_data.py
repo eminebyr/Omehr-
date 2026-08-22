@@ -13,7 +13,7 @@ import pandas as pd
 
 
 def test_safe_sample_data_contains_no_real_looking_names():
-    df = pd.read_excel("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name="Fact_Mevcut")
+    df = pd.read_excel("ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name="Fact_Mevcut")
     bilinen_gercek_isimler = {"ŞEYMA ASLAN", "KEVSER ARSLAN", "BİLGE AKŞİT", "EVİN MEN"}
     bulunan = bilinen_gercek_isimler.intersection(set(df["İsim Soyisim"].astype(str)))
     assert not bulunan, f"REGRESYON: güvenli örnek veride GERÇEK isimler bulundu: {bulunan}"
@@ -24,7 +24,7 @@ def test_safe_sample_data_contains_no_real_looking_names():
 
 
 def test_safe_sample_data_contains_no_real_domain():
-    df = pd.read_excel("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name="Mail_Listesi")
+    df = pd.read_excel("ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name="Mail_Listesi")
     assert not df["E-posta"].astype(str).str.contains("basdasmarket", case=False).any(), (
         "REGRESYON: güvenli örnek veride gerçek şirket domaini bulundu."
     )
@@ -36,21 +36,17 @@ def test_safe_sample_data_produces_correct_kpis():
     from src.state_engine import state
     from src.kpi_engine import kpis
 
-    sheets = pd.read_excel("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name=None)
+    sheets = pd.read_excel("ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name=None)
     st, detail = state(sheets["Fact_Norm"], sheets["Fact_Mevcut"], sheets)
     kp = kpis(st)
     assert kp["Aktif Mevcut"] == 596
     assert kp["Toplam Norm"] == 607
-    # DÜZELTME (20.08.2026): önceki "49" beklentisi, REFERENTIAL_CONTROL
-    # sayfasının canlı hesabı SESSİZCE ezdiği (bkz. src/state_engine.py
-    # DÜZELTME notu) bir dönemden kalma DONMUŞ bir değerdi — canlıda
-    # bizzat doğrulandı: personel eklense/çıkarılsa bile bu sayı hiç
-    # değişmiyordu. Artık varsayılan olarak canlı Mevcut/Norm hesabı
-    # kullanıldığı için doğru (ve gerçekte hesaplanan) değer 48'dir.
+    # DÜZELTME (20.08.2026): önceki "49/23" beklentisi, REFERENTIAL_CONTROL
+    # sayfasının canlı hesabı SESSİZCE ezdiği bir dönemden kalma DONMUŞ bir
+    # değerdi — canlıda bizzat doğrulandı: personel eklense/çıkarılsa bile
+    # bu sayı hiç değişmiyordu. Artık varsayılan olarak canlı Mevcut/Norm
+    # hesabı kullanıldığı için doğru (ve gerçekte hesaplanan) değerler 48/37.
     assert kp["Norm Eksiği"] == 48
-    # Aynı sebeple: REFERENTIAL_CONTROL'de karşılığı olmayan fazla-personelli
-    # (mağaza,unvan) kombinasyonları önceden SESSİZCE 0'a zorlanıyordu —
-    # canlı hesap artık bunları da doğru yansıtıyor.
     assert kp["Norm Fazlası"] == 37
 
 

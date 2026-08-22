@@ -1,7 +1,7 @@
 """Ortak pytest fixture'ları.
 
 En önemli fixture `isolated_root`: her testi kendi geçici klasöründe
-çalıştırır (BASDAS_RUNTIME_ROOT ortam değişkeni ile) — GERÇEK input
+çalıştırır (OMEHR_RUNTIME_ROOT ortam değişkeni ile) — GERÇEK input
 dosyanıza veya `data/`, `logs/`, `output/` klasörlerinize ASLA dokunmaz.
 Bu, kullanıcının "gerçek inputa dokunmamalı" isteğini karşılar.
 """
@@ -24,7 +24,7 @@ if str(ROOT_DIR) not in sys.path:
 def isolated_root(tmp_path, monkeypatch):
     """Her test kendi izole runtime kök dizininde çalışır.
 
-    services.runtime_paths.runtime_root(), BASDAS_RUNTIME_ROOT ortam
+    services.runtime_paths.runtime_root(), OMEHR_RUNTIME_ROOT ortam
     değişkeni tanımlıysa onu kullanır — bu sayede test, gerçek proje
     kökündeki input/output/data/logs klasörlerine hiç dokunmadan
     input/output/data/logs alt klasörlerini tmp_path içinde oluşturur.
@@ -33,15 +33,15 @@ def isolated_root(tmp_path, monkeypatch):
     management_center, ai_operations_engine, ...) ROOT/DB gibi sabitleri
     MODÜL SEVİYESİNDE, import anında bir kez hesaplar. Python modülleri
     cache'lediği için, bir modül İLK testte import edildiğinde hangi
-    BASDAS_RUNTIME_ROOT aktifse o kalıcılaşır — sonraki testler farklı
+    OMEHR_RUNTIME_ROOT aktifse o kalıcılaşır — sonraki testler farklı
     bir tmp_path kullansa bile eski (stale) yolu görür. Bunu önlemek için
     bu fixture, ROOT/DB sabiti taşıyan bilinen modülleri HER testte
     yeniden yükler (importlib.reload) — böylece her test gerçekten kendi
     izole tmp_path'ini kullanır.
     """
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.delenv("BASDAS_ISOLATED", raising=False)
-    monkeypatch.delenv("BASDAS_BOOTSTRAP_RUNTIME", raising=False)
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.delenv("OMEHR_ISOLATED", raising=False)
+    monkeypatch.delenv("OMEHR_BOOTSTRAP_RUNTIME", raising=False)
 
     from services import runtime_paths
     importlib.reload(runtime_paths)
@@ -88,7 +88,7 @@ def isolated_root(tmp_path, monkeypatch):
         yield tmp_path
     finally:
         # DÜZELTME (teardown): monkeypatch, bu fixture fonksiyonu bitince
-        # BASDAS_RUNTIME_ROOT'u geri alır — ama yukarıda yeniden
+        # OMEHR_RUNTIME_ROOT'u geri alır — ama yukarıda yeniden
         # yüklediğimiz modüller hâlâ (artık SİLİNMİŞ) tmp_path'i
         # ÖNBELLEKTE tutar. Bir SONRAKİ test isolated_root KULLANMIYORSA
         # (ör. gerçek proje köküyle çalışan test_engine_state_web_aliases_
@@ -108,11 +108,11 @@ def isolated_root(tmp_path, monkeypatch):
 def postgres_dsn():
     """Test ortamında gerçek bir PostgreSQL sunucusu varsa DSN'ini döner;
     yoksa testi NAZİKÇE ATLAR (fail etmez). Bu sayede PostgreSQL testleri
-    hem geliştirici makinesinde (BASDAS_TEST_POSTGRES_DSN tanımlıysa)
+    hem geliştirici makinesinde (OMEHR_TEST_POSTGRES_DSN tanımlıysa)
     hem de PostgreSQL'siz bir CI/müşteri ortamında sorunsuz çalışır."""
-    dsn = os.environ.get("BASDAS_TEST_POSTGRES_DSN", "").strip()
+    dsn = os.environ.get("OMEHR_TEST_POSTGRES_DSN", "").strip()
     if not dsn:
-        pytest.skip("BASDAS_TEST_POSTGRES_DSN tanımlı değil — PostgreSQL testi atlandı.")
+        pytest.skip("OMEHR_TEST_POSTGRES_DSN tanımlı değil — PostgreSQL testi atlandı.")
     try:
         import psycopg2
     except ImportError:

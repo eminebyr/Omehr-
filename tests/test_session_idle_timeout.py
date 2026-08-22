@@ -36,7 +36,7 @@ def test_activity_just_over_timeout_expires_session():
 
 
 def test_idle_timeout_respects_env_override(monkeypatch):
-    monkeypatch.setenv("BASDAS_SESSION_IDLE_TIMEOUT_MIN", "30")
+    monkeypatch.setenv("OMEHR_SESSION_IDLE_TIMEOUT_MIN", "30")
     from services.session_guard import idle_timeout_dakika
     assert idle_timeout_dakika() == 30
 

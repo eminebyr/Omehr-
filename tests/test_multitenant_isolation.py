@@ -16,7 +16,7 @@ import pytest
 
 
 def _ornek_dosya() -> Path:
-    return Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    return Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ def iki_kiracili_db(isolated_root, monkeypatch):
     """Aynı veritabanında A ve B kodlu iki kiracı kurar, İKİSİNE DE
     aynı örnek Excel'i (farklı personel isimleriyle DEĞİŞTİRİLMİŞ)
     göç ettirir."""
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
     (isolated_root / "data").mkdir(parents=True, exist_ok=True)
 
     from services.input_excel_migration import migrate_excel_to_db
@@ -143,7 +143,7 @@ def test_iki_kiracinin_kpi_hesaplamasi_birbirinden_bagimsiz(iki_kiracili_db):
 # KİRACI KAYDI (registry)
 # ------------------------------------------------------------------
 def test_tenant_registry_crud(isolated_root, monkeypatch):
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (isolated_root / "data").mkdir(parents=True, exist_ok=True)
     from services.tenant_registry import create_tenant, get_tenant, list_tenants, set_status, is_active
 
@@ -166,20 +166,20 @@ def test_tenant_registry_crud(isolated_root, monkeypatch):
 
 def test_tenant_context_env_fallback(monkeypatch):
     """Web oturumu yoksa (main.py toplu çalıştırma, worker, testler),
-    BASDAS_TENANT ortam değişkenine düşmeli; o da yoksa varsayılan 'BASDAS'."""
-    monkeypatch.delenv("BASDAS_TENANT", raising=False)
+    OMEHR_TENANT ortam değişkenine düşmeli; o da yoksa varsayılan 'BASDAS'."""
+    monkeypatch.delenv("OMEHR_TENANT", raising=False)
     from services.tenant_context import current_tenant_id
     assert current_tenant_id() == "BASDAS"
 
-    monkeypatch.setenv("BASDAS_TENANT", "OZEL_KOD")
+    monkeypatch.setenv("OMEHR_TENANT", "OZEL_KOD")
     assert current_tenant_id() == "OZEL_KOD"
 
 
 def test_excel_modu_tenant_sisteminden_hic_etkilenmez(monkeypatch):
-    """En önemli geriye dönük uyumluluk garantisi: BASDAS_INPUT_SOURCE
+    """En önemli geriye dönük uyumluluk garantisi: OMEHR_INPUT_SOURCE
     ayarlanmamışsa (varsayılan Excel modu), kiracı sistemi devreye HİÇ
     girmez — mevcut tek-firma davranışı harfiyen korunur."""
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     import common_veri_okuma
     import importlib
     importlib.reload(common_veri_okuma)

@@ -54,8 +54,8 @@ def test_end_to_end_exit_produces_small_actionable_manifest(tmp_path):
     from datetime import date
 
     (tmp_path / "input").mkdir()
-    shutil.copyfile("ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    shutil.copyfile("ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
     staff, magaza, unvan, cikis_nedeni = load_personnel_view(hedef)
     kisi = staff[staff["İşten Çıkış"].isna()].iloc[0]

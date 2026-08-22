@@ -55,8 +55,8 @@ def test_main_py_works_without_optional_control_files(tmp_path, monkeypatch):
     for d in ("input", "templates", "reference", "assets/fonts"):
         (calisma_dizini / d).mkdir(parents=True)
     shutil.copyfile(
-        proje_kok / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
-        calisma_dizini / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+        proje_kok / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
+        calisma_dizini / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
     )
     for f in (proje_kok / "templates").glob("*.docx"):
         shutil.copyfile(f, calisma_dizini / "templates" / f.name)
@@ -69,8 +69,8 @@ def test_main_py_works_without_optional_control_files(tmp_path, monkeypatch):
     # BİLEREK: GUNCEL_NORM_KADRO_KONTROL.xlsx kopyalanmıyor
 
     env = dict(os.environ)
-    env["BASDAS_RUNTIME_ROOT"] = str(calisma_dizini)
-    env["BASDAS_MAIL_DRY_RUN"] = "1"
+    env["OMEHR_RUNTIME_ROOT"] = str(calisma_dizini)
+    env["OMEHR_MAIL_DRY_RUN"] = "1"
 
     sonuc = subprocess.run(
         [sys.executable, "main.py"], cwd=proje_kok, env=env,

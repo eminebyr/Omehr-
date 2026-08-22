@@ -26,8 +26,8 @@ def _kutuphane_pdf_var_mi():
 
 @pytest.mark.skipif(not _kutuphane_pdf_var_mi(), reason="pypdf gerekli")
 def test_subscription_opt_out_genuinely_blocks_send(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "input").mkdir()
     (tmp_path / "output").mkdir()
 
@@ -38,7 +38,7 @@ def test_subscription_opt_out_genuinely_blocks_send(tmp_path, monkeypatch):
     from pypdf import PdfWriter
     w = PdfWriter()
     w.add_blank_page(width=200, height=200)
-    with open(rme._output_dir() / "BASDAS_Yonetici_Raporu.pdf", "wb") as f:
+    with open(rme._output_dir() / "OMEHR_Yonetici_Raporu.pdf", "wb") as f:
         w.write(f)
 
     df_mail = pd.DataFrame([
@@ -66,8 +66,8 @@ def test_subscription_opt_out_genuinely_blocks_send(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not _kutuphane_pdf_var_mi(), reason="pypdf gerekli")
 def test_no_subscription_column_preserves_old_behavior(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "input").mkdir()
     (tmp_path / "output").mkdir()
 
@@ -78,7 +78,7 @@ def test_no_subscription_column_preserves_old_behavior(tmp_path, monkeypatch):
     from pypdf import PdfWriter
     w = PdfWriter()
     w.add_blank_page(width=200, height=200)
-    with open(rme._output_dir() / "BASDAS_Yonetici_Raporu.pdf", "wb") as f:
+    with open(rme._output_dir() / "OMEHR_Yonetici_Raporu.pdf", "wb") as f:
         w.write(f)
 
     df_mail = pd.DataFrame([

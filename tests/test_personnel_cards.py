@@ -14,14 +14,14 @@ import pytest
 
 
 def _ornek_dosya() -> Path:
-    return Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    return Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
 
 # ------------------------------------------------------------------
 # EXCEL MODU
 # ------------------------------------------------------------------
 def test_excel_modunda_islem_gormesi_gereken_veri_yolu(isolated_root, monkeypatch):
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     from services.settings import input_path
     hedef = input_path(isolated_root)
     hedef.parent.mkdir(parents=True, exist_ok=True)
@@ -54,7 +54,7 @@ def test_excel_modunda_islem_gormesi_gereken_veri_yolu(isolated_root, monkeypatc
 
 
 def test_excel_modunda_ikinci_cikis_reddedilir(isolated_root, monkeypatch):
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     from services.settings import input_path
     hedef = input_path(isolated_root)
     hedef.parent.mkdir(parents=True, exist_ok=True)
@@ -88,8 +88,8 @@ def test_excel_modunda_main_py_islenmis_veriyle_dogru_kpi_uretir(isolated_root, 
     azalmalı. (NOT: state() kendisi aktif/pasif filtrelemesi YAPMAZ —
     bu filtreleme src.data_loading.load() içindedir; bu yüzden test o
     gerçek fonksiyonu kullanır, ham sayfayı doğrudan state()'e vermez.)"""
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
-    monkeypatch.setenv("BASDAS_PREPARE_INPUT", "0")
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
+    monkeypatch.setenv("OMEHR_PREPARE_INPUT", "0")
     from services.settings import input_path
     hedef = input_path(isolated_root)
     hedef.parent.mkdir(parents=True, exist_ok=True)
@@ -125,8 +125,8 @@ def test_excel_modunda_main_py_islenmis_veriyle_dogru_kpi_uretir(isolated_root, 
 # VERİTABANI MODU
 # ------------------------------------------------------------------
 def test_db_modunda_islem_gormesi_gereken_veri_yolu(isolated_root, monkeypatch):
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (isolated_root / "input").mkdir(parents=True, exist_ok=True)
     (isolated_root / "data").mkdir(parents=True, exist_ok=True)
 
@@ -166,7 +166,7 @@ def test_db_modunda_islem_gormesi_gereken_veri_yolu(isolated_root, monkeypatch):
 def test_her_iki_modda_da_ayni_kisiye_ayni_sonuc(isolated_root, monkeypatch):
     """Excel ve veritabanı modlarının AYNI ham veriyle AYNI davranışı
     (aktif kişi sayısı, sütun kümesi) ürettiğini doğrular."""
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     from services.settings import input_path
     hedef = input_path(isolated_root)
     hedef.parent.mkdir(parents=True, exist_ok=True)
@@ -174,8 +174,8 @@ def test_her_iki_modda_da_ayni_kisiye_ayni_sonuc(isolated_root, monkeypatch):
     from services.personnel_exit import load_personnel_view as _load
     staff_excel, *_ = _load(hedef)
 
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (isolated_root / "data").mkdir(parents=True, exist_ok=True)
     from services.input_excel_migration import migrate_excel_to_db
     migrate_excel_to_db(str(_ornek_dosya()))

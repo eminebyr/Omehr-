@@ -14,7 +14,7 @@ bir testte yapılandırılmış olduğu için caplog'un handler'ı hiç devreye
 girmeyebilir). Bunun yerine, log_swallowed()/swallow()'un asıl ürettiği
 KALICI yan etkiyi — gerçek log dosyasını — doğrudan okuyoruz. Bu hem daha
 sağlam (pytest iç mekaniğine bağımlı değil) hem de daha anlamlıdır: asıl
-garanti edilen şey "bir yerlere caplog yakalar" değil, "logs/BASDAS_CURRENT.log
+garanti edilen şey "bir yerlere caplog yakalar" değil, "logs/OMEHR_CURRENT.log
 dosyasına gerçekten yazılır"dır.
 """
 from __future__ import annotations

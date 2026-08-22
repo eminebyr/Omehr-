@@ -36,7 +36,7 @@ def test_ai_output_respects_closed_global_data_gate(isolated_root):
     from services.settings import input_path
 
     kod_kok = Path(__file__).resolve().parents[1]
-    ornek = kod_kok / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    ornek = kod_kok / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     (isolated_root / "input").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ornek, input_path(isolated_root))
 

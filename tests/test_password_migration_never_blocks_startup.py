@@ -3,7 +3,7 @@ from __future__ import annotations
 """Kurulum sırasında şifre taşıma hatası — regresyon testleri.
 
 Önceden herhangi bir Mail_Listesi okuma sorunu (bozuk Excel, kilitli
-dosya) INITIAL_PASSWORD_IMPORT.py üzerinden BASDAS_CURRENT_BASLAT.bat'ın
+dosya) INITIAL_PASSWORD_IMPORT.py üzerinden OMEHR_CURRENT_BASLAT.bat'ın
 TÜM kurulum/başlatma sürecini "HATA: Kullanici guvenlik aktarimi
 basarisiz oldu" mesajıyla DURDURMASINA yol açıyordu. Şifre taşıma
 yalnız bir kolaylıktır (admin her zaman .env'deki varsayılan şifreyle
@@ -15,9 +15,9 @@ import pytest
 
 
 def test_corrupt_excel_file_does_not_raise(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "input").mkdir()
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     hedef.write_bytes(b"GECERLI BIR EXCEL DOSYASI DEGIL")
 
     from services.security import migrate_legacy_input
@@ -26,9 +26,9 @@ def test_corrupt_excel_file_does_not_raise(tmp_path, monkeypatch):
 
 
 def test_missing_mail_listesi_sheet_does_not_raise(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "input").mkdir()
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     df = pd.DataFrame([{"X": 1}])
     with pd.ExcelWriter(hedef) as w:
         df.to_excel(w, sheet_name="BaskaSayfa", index=False)
@@ -42,9 +42,9 @@ def test_initial_password_import_main_never_returns_nonzero_on_migration_error(t
     """İkinci güvenlik katmanı: migrate_legacy_input BEKLENMEDİK bir
     istisna (ör. veritabanı hatası) fırlatsa bile, INITIAL_PASSWORD_
     IMPORT.py'nin main() fonksiyonu 0 dönmeli (kurulumu durdurmamalı)."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "input").mkdir()
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     df = pd.DataFrame([{"Web Kullanıcı": "test1", "Web Şifre": "GecicSifre123"}])
     with pd.ExcelWriter(hedef) as w:
         df.to_excel(w, sheet_name="Mail_Listesi", index=False)

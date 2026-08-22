@@ -30,10 +30,12 @@ def test_engine_state_web_aliases_and_kpi():
         for source, target in aliases.items():
             df[target] = pd.to_numeric(df[source], errors='coerce').fillna(0).astype(int)
         assert {'Mevcut', 'Norm', 'Eksik', 'Fazla'}.issubset(df.columns)
+    # DÜZELTME (20.08.2026): 49/23/-26, REFERENTIAL_CONTROL'ün canlı hesabı
+    # sessizce ezdiği dönemden kalma donmuş değerlerdi. Doğru değerler 48/37/-11.
     assert ec.kpis(stores) == {
         'Aktif Mevcut': 596,
         'Toplam Norm': 607,
-        'Norm Eksiği': 49,
-        'Norm Fazlası': 23,
-        'Net İhtiyaç': -26,
+        'Norm Eksiği': 48,
+        'Norm Fazlası': 37,
+        'Net İhtiyaç': -11,
     }

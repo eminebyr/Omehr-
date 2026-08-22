@@ -36,7 +36,7 @@ def test_build_dashboard_model_works_for_tenant_with_unrelated_region_names():
     from pathlib import Path
 
     sheets = pd.read_excel(
-        Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+        Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
         sheet_name=None,
     )
     for sheet in ("Fact_Mevcut", "Fact_Norm"):
@@ -60,7 +60,7 @@ def test_dashboard_model_produces_identical_results_for_original_tenant():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    sheets = pd.read_excel(root / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name=None)
+    sheets = pd.read_excel(root / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name=None)
     fm, detail, stores, kpis = build_dashboard_model(sheets, root / "reference" / "NORM_KAPSAM_BAZI.json")
     assert kpis["Aktif Mevcut"] == 596
     assert kpis["Toplam Norm"] == 607

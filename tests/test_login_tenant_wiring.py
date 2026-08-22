@@ -42,7 +42,7 @@ def test_set_session_tenant_sonrasi_current_tenant_id_dogru_doner(sahte_streamli
     kullanıcı bir firma seçer -> set_session_tenant() çağrılır ->
     current_tenant_id() ARTIK o firmayı döndürmeli (ortam değişkeninden
     ÖNCELİKLİ, bkz. services/tenant_context.py öncelik sırası)."""
-    monkeypatch.setenv("BASDAS_TENANT", "YANLIS_KIRACI")  # işlem-geneli bağlam kasıtlı YANLIŞ
+    monkeypatch.setenv("OMEHR_TENANT", "YANLIS_KIRACI")  # işlem-geneli bağlam kasıtlı YANLIŞ
     from services.tenant_context import current_tenant_id, set_session_tenant
 
     assert current_tenant_id() == "YANLIS_KIRACI", "oturum boşken ortam değişkenine düşmeli"
@@ -61,7 +61,7 @@ def test_iki_ayri_sahte_oturum_birbirinden_bagimsiz(monkeypatch):
     (iki ayrı session_state nesnesi — Streamlit'te her tarayıcı
     sekmesinin GERÇEKTE sahip olduğu şey budur). Biri diğerini ASLA
     etkilememeli."""
-    monkeypatch.delenv("BASDAS_TENANT", raising=False)
+    monkeypatch.delenv("OMEHR_TENANT", raising=False)
     from services.tenant_context import current_tenant_id, set_session_tenant
     import streamlit as st_gercek  # bu noktada henüz yamalanmadı
 

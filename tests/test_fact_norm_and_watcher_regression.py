@@ -20,10 +20,10 @@ import pytest
 
 @pytest.fixture()
 def gecici_input(tmp_path, isolated_root):
-    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     hedef_dizin = isolated_root / "input"
     hedef_dizin.mkdir(parents=True, exist_ok=True)
-    hedef = hedef_dizin / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = hedef_dizin / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copyfile(kaynak, hedef)
     return hedef
 

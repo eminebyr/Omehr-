@@ -89,8 +89,8 @@ def test_config_from_env_raises_clear_error_when_missing(monkeypatch):
     from services.powerbi_push import PowerBIConfig
     from services.exceptions import ConfigurationError
 
-    for ad in ("BASDAS_POWERBI_TENANT_ID", "BASDAS_POWERBI_CLIENT_ID",
-               "BASDAS_POWERBI_CLIENT_SECRET", "BASDAS_POWERBI_WORKSPACE_ID"):
+    for ad in ("OMEHR_POWERBI_TENANT_ID", "OMEHR_POWERBI_CLIENT_ID",
+               "OMEHR_POWERBI_CLIENT_SECRET", "OMEHR_POWERBI_WORKSPACE_ID"):
         monkeypatch.delenv(ad, raising=False)
 
     with pytest.raises(ConfigurationError):
@@ -100,10 +100,10 @@ def test_config_from_env_raises_clear_error_when_missing(monkeypatch):
 def test_config_from_env_reads_all_values(monkeypatch):
     from services.powerbi_push import PowerBIConfig
 
-    monkeypatch.setenv("BASDAS_POWERBI_TENANT_ID", "tenant-123")
-    monkeypatch.setenv("BASDAS_POWERBI_CLIENT_ID", "client-456")
-    monkeypatch.setenv("BASDAS_POWERBI_CLIENT_SECRET", "gizli-sir")
-    monkeypatch.setenv("BASDAS_POWERBI_WORKSPACE_ID", "ws-789")
+    monkeypatch.setenv("OMEHR_POWERBI_TENANT_ID", "tenant-123")
+    monkeypatch.setenv("OMEHR_POWERBI_CLIENT_ID", "client-456")
+    monkeypatch.setenv("OMEHR_POWERBI_CLIENT_SECRET", "gizli-sir")
+    monkeypatch.setenv("OMEHR_POWERBI_WORKSPACE_ID", "ws-789")
 
     config = PowerBIConfig.from_env()
     assert config.tenant_id == "tenant-123"

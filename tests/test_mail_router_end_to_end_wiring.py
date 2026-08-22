@@ -14,8 +14,8 @@ import pandas as pd
 
 
 def test_subscription_filter_actually_excludes_opted_out_recipient(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "input").mkdir()
     (tmp_path / "output").mkdir()
 
@@ -23,7 +23,7 @@ def test_subscription_filter_actually_excludes_opted_out_recipient(tmp_path, mon
         {"Web Kullanıcı": "abone_kisi", "E-posta": "abone@test.com", "Aktif": "evet", "Bölge": "TÜMÜ", "Norm_Genel": "Evet"},
         {"Web Kullanıcı": "abone_degil_kisi", "E-posta": "abone_degil@test.com", "Aktif": "evet", "Bölge": "TÜMÜ", "Norm_Genel": "Hayır"},
     ])
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     with pd.ExcelWriter(hedef) as w:
         mail_listesi.to_excel(w, sheet_name="Mail_Listesi", index=False)
 
@@ -34,7 +34,7 @@ def test_subscription_filter_actually_excludes_opted_out_recipient(tmp_path, mon
     rme.send_reports_via_outlook(hedef, display_only=False)
 
     import json
-    kayitlar = json.loads((tmp_path / "logs" / "BASDAS_Outlook_Gonderim_Log.json").read_text())
+    kayitlar = json.loads((tmp_path / "logs" / "OMEHR_Outlook_Gonderim_Log.json").read_text())
     islenen_alicilar = [k["to"] for k in kayitlar]
 
     assert "abone_degil@test.com" not in islenen_alicilar, (

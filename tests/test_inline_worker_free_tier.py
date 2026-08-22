@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-"""BASDAS_WORKER_INLINE — ücretsiz katman dağıtımı için senkron iş işleme.
+"""OMEHR_WORKER_INLINE — ücretsiz katman dağıtımı için senkron iş işleme.
 
 worker.py'nin AYRI bir süreç olarak çalıştırılamadığı platformlarda
-(Streamlit Community Cloud gibi), web/app.py'nin BASDAS_WORKER_INLINE=1
+(Streamlit Community Cloud gibi), web/app.py'nin OMEHR_WORKER_INLINE=1
 ayarlıyken kuyruktaki bekleyen işleri kendisi işlediğini doğrular.
 """
 
@@ -11,8 +11,8 @@ import shutil
 
 
 def test_inline_worker_processes_pending_job(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "input").mkdir()
 
     from services.job_queue import enqueue, status
@@ -31,11 +31,11 @@ def test_inline_worker_processes_pending_job(tmp_path, monkeypatch):
 
 
 def test_worker_inline_env_flag_default_off_does_not_process(tmp_path, monkeypatch):
-    """BASDAS_WORKER_INLINE ayarlanmadığında (normal Docker/VPS dağıtımı),
+    """OMEHR_WORKER_INLINE ayarlanmadığında (normal Docker/VPS dağıtımı),
     web/app.py'nin BU KOD YOLUNU hiç çalıştırmaması gerektiğini — yani
     varsayılanın 'kapalı' olduğunu doğrular (kod incelemesiyle)."""
     kaynak = open("web/app.py", encoding="utf-8").read()
-    assert 'os.getenv("BASDAS_WORKER_INLINE", "0") == "1"' in kaynak, (
+    assert 'os.getenv("OMEHR_WORKER_INLINE", "0") == "1"' in kaynak, (
         "REGRESYON: inline worker varsayılan olarak KAPALI olmalı "
-        "(yalnız açıkça BASDAS_WORKER_INLINE=1 ayarlandığında çalışmalı)."
+        "(yalnız açıkça OMEHR_WORKER_INLINE=1 ayarlandığında çalışmalı)."
     )

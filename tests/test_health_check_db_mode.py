@@ -10,14 +10,14 @@ import sys
 
 
 def test_missing_input_not_critical_in_db_mode(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.delenv("BASDAS_MAIL_DRY_RUN", raising=False)
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.delenv("OMEHR_MAIL_DRY_RUN", raising=False)
 
     sonuc = subprocess.run(
         [sys.executable, "system_health_check.py"],
         capture_output=True, text=True, cwd=".",
-        env={**__import__("os").environ, "BASDAS_RUNTIME_ROOT": str(tmp_path), "BASDAS_INPUT_SOURCE": "db"},
+        env={**__import__("os").environ, "OMEHR_RUNTIME_ROOT": str(tmp_path), "OMEHR_INPUT_SOURCE": "db"},
     )
     assert sonuc.returncode == 0, (
         f"REGRESYON: DB modunda eksik input dosyası hâlâ kurulumu durduruyor.\n{sonuc.stdout}"
@@ -25,13 +25,13 @@ def test_missing_input_not_critical_in_db_mode(tmp_path, monkeypatch):
 
 
 def test_missing_input_still_critical_in_excel_mode(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
 
     import os
     env = dict(os.environ)
-    env["BASDAS_RUNTIME_ROOT"] = str(tmp_path)
-    env.pop("BASDAS_INPUT_SOURCE", None)
+    env["OMEHR_RUNTIME_ROOT"] = str(tmp_path)
+    env.pop("OMEHR_INPUT_SOURCE", None)
 
     sonuc = subprocess.run(
         [sys.executable, "system_health_check.py"],

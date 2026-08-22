@@ -74,7 +74,7 @@ def test_kayit_sonrasi_gercek_giris_akisi_mail_listesinde_bulunur(isolated_root,
     from web.accounts import accounts
     _reload("services.onboarding", "services.tenant_registry", "services.input_data_access")
 
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
     onboarding.register_tenant("GERCEKGIRIS", "Gerçek Giriş Test A.Ş.")
     onboarding.register_first_admin("GERCEKGIRIS", "yonetici1", "GucluSifre2026x", e_posta="test@ornek.com")
 

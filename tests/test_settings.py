@@ -17,12 +17,12 @@ def test_input_path_joins_root_input_and_filename(tmp_path):
 
 
 def test_env_var_overrides_default_filename(monkeypatch):
-    monkeypatch.setenv("BASDAS_INPUT_FILE", "OZEL_INPUT.xlsx")
+    monkeypatch.setenv("OMEHR_INPUT_FILE", "OZEL_INPUT.xlsx")
     assert input_file_name() == "OZEL_INPUT.xlsx"
 
 
 def test_blank_env_var_falls_back_to_default(monkeypatch):
-    monkeypatch.setenv("BASDAS_INPUT_FILE", "   ")
+    monkeypatch.setenv("OMEHR_INPUT_FILE", "   ")
     assert input_file_name() == DEFAULT_INPUT_FILE_NAME
 
 

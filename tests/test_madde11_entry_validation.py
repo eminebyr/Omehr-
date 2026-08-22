@@ -16,15 +16,15 @@ import pytest
 def _hazirlanmis_dizin(tmp_path):
     (tmp_path / "input").mkdir()
     shutil.copyfile(
-        "ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
-        tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+        "ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
+        tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
     )
     return tmp_path
 
 
 def test_add_personnel_rejects_unknown_store(_hazirlanmis_dizin):
     from services.personnel_exit import load_personnel_view, add_personnel
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, _ = load_personnel_view(hedef)
     with pytest.raises(ValueError, match="Mağaza"):
         add_personnel(input_path=hedef, root=_hazirlanmis_dizin, staff=staff, yeni_kayit={
@@ -35,7 +35,7 @@ def test_add_personnel_rejects_unknown_store(_hazirlanmis_dizin):
 
 def test_add_personnel_rejects_unknown_title(_hazirlanmis_dizin):
     from services.personnel_exit import load_personnel_view, add_personnel
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, _ = load_personnel_view(hedef)
     with pytest.raises(ValueError, match="Unvan"):
         add_personnel(input_path=hedef, root=_hazirlanmis_dizin, staff=staff, yeni_kayit={
@@ -46,7 +46,7 @@ def test_add_personnel_rejects_unknown_title(_hazirlanmis_dizin):
 
 def test_add_personnel_rejects_empty_name(_hazirlanmis_dizin):
     from services.personnel_exit import load_personnel_view, add_personnel
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, _ = load_personnel_view(hedef)
     with pytest.raises(ValueError, match="İsim"):
         add_personnel(input_path=hedef, root=_hazirlanmis_dizin, staff=staff, yeni_kayit={
@@ -57,7 +57,7 @@ def test_add_personnel_rejects_empty_name(_hazirlanmis_dizin):
 
 def test_add_personnel_rejects_duplicate_active_person(_hazirlanmis_dizin):
     from services.personnel_exit import load_personnel_view, add_personnel
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, _ = load_personnel_view(hedef)
     mevcut = staff[staff["İşten Çıkış"].isna()].iloc[0]
     with pytest.raises(ValueError, match="AKTİF"):
@@ -69,7 +69,7 @@ def test_add_personnel_rejects_duplicate_active_person(_hazirlanmis_dizin):
 
 def test_add_personnel_accepts_valid_entry(_hazirlanmis_dizin):
     from services.personnel_exit import load_personnel_view, add_personnel
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, _ = load_personnel_view(hedef)
     add_personnel(input_path=hedef, root=_hazirlanmis_dizin, staff=staff, yeni_kayit={
         "İsim Soyisim": "GEÇERLİ TEST KİŞİ", "MağazaID": magaza["MağazaID"].iloc[0],

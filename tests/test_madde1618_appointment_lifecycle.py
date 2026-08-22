@@ -16,14 +16,14 @@ from datetime import date, timedelta
 def _hazirla(tmp_path):
     (tmp_path / "input").mkdir()
     shutil.copyfile(
-        "ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
-        tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx",
+        "ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
+        tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx",
     )
-    return tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    return tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
 
 def test_appointment_gets_unique_atama_no(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.personnel_exit import load_personnel_view
     from services.appointment_lifecycle import create_appointment
 
@@ -43,7 +43,7 @@ def test_appointment_gets_unique_atama_no(tmp_path, monkeypatch):
 def test_today_dated_appointment_actually_updates_fact_mevcut(tmp_path, monkeypatch):
     """REGRESYON: önceden APPLIED hesaplanıyordu ama Fact_Mevcut hiç
     güncellenmiyordu."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.personnel_exit import load_personnel_view
     from services.appointment_lifecycle import create_appointment
 
@@ -65,7 +65,7 @@ def test_today_dated_appointment_actually_updates_fact_mevcut(tmp_path, monkeypa
 
 
 def test_future_dated_appointment_does_not_touch_fact_mevcut(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.personnel_exit import load_personnel_view
     from services.appointment_lifecycle import create_appointment
 
@@ -87,7 +87,7 @@ def test_future_dated_appointment_does_not_touch_fact_mevcut(tmp_path, monkeypat
 
 
 def test_apply_due_appointments_activates_when_date_arrives(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.personnel_exit import load_personnel_view
     from services.appointment_lifecycle import create_appointment, apply_due_appointments
     from services.web_runtime import connect_web_db

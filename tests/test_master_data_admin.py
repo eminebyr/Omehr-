@@ -9,7 +9,7 @@ from services.master_data_admin import read_tables, save_tables, validate_tables
 def test_panel_master_data_roundtrip(tmp_path):
     root = tmp_path / "pkg"
     (root / "input").mkdir(parents=True)
-    source = Path(__file__).resolve().parents[1] / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    source = Path(__file__).resolve().parents[1] / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     target = root / "input" / source.name
     shutil.copy2(source, target)
 

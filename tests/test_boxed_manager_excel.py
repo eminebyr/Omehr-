@@ -28,7 +28,7 @@ def test_boxed_manager_excel_has_person_rows_and_expected_sheets(tmp_path: Path)
         {'Mağaza':'D Mağazası','Departman':'REYON','Unvan':'REYON','İsim Soyisim':'D Kişi','İşe Giriş':'2026-01-01'},
         {'Mağaza':'E Mağazası','Departman':'MANAV','Unvan':'MANAV','İsim Soyisim':'E Kişi','İşe Giriş':'2026-01-01'},
     ])
-    out = build_boxed_manager_excel(st, norm, staff, {}, tmp_path/'BASDAS_Kutucuklu_Yonetici_Raporu.xlsx')
+    out = build_boxed_manager_excel(st, norm, staff, {}, tmp_path/'OMEHR_Kutucuklu_Yonetici_Raporu.xlsx')
     wb = load_workbook(out, read_only=False, data_only=True)
     # DÜZELTME: sayfalar artık TENANT'IN KENDİ verisindeki gerçek "Bölge
     # Sorumlusu" değerlerinden dinamik türetiliyor (bkz. src/excel_report.py

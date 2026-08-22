@@ -20,14 +20,14 @@ import pytest
 def gecici_input(tmp_path, isolated_root):
     hedef_dizin = tmp_path / "input"
     hedef_dizin.mkdir(exist_ok=True)
-    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
-    hedef = hedef_dizin / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = hedef_dizin / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copyfile(kaynak, hedef)
     return hedef
 
 
 def test_unrelated_sheets_are_not_reread_after_steady_state_write(gecici_input, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(gecici_input.parent.parent))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(gecici_input.parent.parent))
     from services.cached_excel_reader import read_sheet_cached, son_degisen_sayfalar, _SAYFA_ONBELLEGI
     from services.personnel_exit import load_personnel_view, add_personnel
 

@@ -11,7 +11,7 @@ import time
 
 
 def test_old_staging_files_are_deleted_recent_ones_kept(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     import importlib
     import report_mail_engine as rme
     importlib.reload(rme)

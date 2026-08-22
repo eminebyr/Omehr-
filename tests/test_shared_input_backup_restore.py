@@ -22,7 +22,7 @@ def test_shared_input_file_restored_even_if_subprocess_fails(tmp_path, monkeypat
     proje_kok = tmp_path / "sahte_proje"
     (proje_kok / "input").mkdir(parents=True)
     orijinal_icerik = b"ORIJINAL_ICERIK_KORUNMALI"
-    hedef = proje_kok / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = proje_kok / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     hedef.write_bytes(orijinal_icerik)
 
     yedek = tmp_path / "input_yedek.xlsx"

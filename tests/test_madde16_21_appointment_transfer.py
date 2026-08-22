@@ -8,14 +8,14 @@ from datetime import date, timedelta
 
 
 def test_appointment_no_format_and_sequence(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.appointment_lifecycle import yeni_atama_no
     no1 = yeni_atama_no()
     assert re.match(r"^ATM-\d{8}-\d{5}$", no1)
 
 
 def test_transfer_no_format_and_sequence(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.web_runtime import yeni_transfer_no, connect_web_db
     no1 = yeni_transfer_no()
     assert re.match(r"^TRF-\d{8}-\d{5}$", no1)
@@ -28,10 +28,10 @@ def test_transfer_no_format_and_sequence(tmp_path, monkeypatch):
 
 
 def test_appointment_today_applies_immediately_and_future_stays_planned(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "input").mkdir()
-    shutil.copyfile("ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    shutil.copyfile("ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
     from services.appointment_lifecycle import create_appointment
     from services.personnel_exit import load_personnel_view

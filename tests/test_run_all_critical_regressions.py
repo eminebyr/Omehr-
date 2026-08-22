@@ -250,7 +250,7 @@ def test_system_health_check_detects_truncated_corrupted_xlsx(isolated_root):
         f.truncate(tam_boyut // 2)  # yarım kopyalamayı simüle et
 
     import os
-    env = {**os.environ, "BASDAS_RUNTIME_ROOT": str(isolated_root)}
+    env = {**os.environ, "OMEHR_RUNTIME_ROOT": str(isolated_root)}
     kok = Path(__file__).resolve().parents[1]
     sonuc = subprocess.run(
         [sys.executable, str(kok / "system_health_check.py")],
@@ -302,9 +302,8 @@ def test_build_dashboard_model_works_without_legacy_baseline_file(isolated_root)
     import pandas as pd
     from services.dashboard_model import build_dashboard_model, CONTROL_FILENAME
 
-    # DÜZELTME: sabit REGIONS sabiti kaldırıldı (kullanılmıyordu) — burada
-    # sadece test verisi için rastgele bir bölge müdürü adı yeterli, sistem
-    # bölge isminin ne olduğuna bağlı olarak davranış değiştirmemeli.
+    # DÜZELTME: sabit REGIONS sabiti kaldırıldı (kullanılmıyordu) — test
+    # verisi için rastgele bir bölge müdürü adı yeterli.
     ornek_bolge = "Örnek Bölge Müdürü"
     norm = pd.DataFrame([
         {"MağazaID": 1, "Mağaza": "A Mağazası", "Bölge Sorumlusu": ornek_bolge,

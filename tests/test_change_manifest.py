@@ -53,10 +53,10 @@ def test_process_exit_writes_change_manifest_log(isolated_root):
     from datetime import date
     import json
 
-    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     hedef_dizin = isolated_root / "input"
     hedef_dizin.mkdir(parents=True, exist_ok=True)
-    hedef = hedef_dizin / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = hedef_dizin / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copyfile(kaynak, hedef)
 
     from services.personnel_exit import load_personnel_view, process_exit

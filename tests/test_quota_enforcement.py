@@ -15,8 +15,8 @@ import pytest
 
 @pytest.fixture
 def kota_ortami(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     for mod in ("services.runtime_paths", "services.tenant_registry", "services.tenant_context", "services.security"):
         if mod in sys.modules:
             importlib.reload(sys.modules[mod])
@@ -64,13 +64,13 @@ def test_sube_kotasi_asilinca_kayit_reddedilir(kota_ortami, tmp_path):
     from pathlib import Path
     import shutil
 
-    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     (tmp_path / "input").mkdir(exist_ok=True)
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copy2(kaynak, hedef)
 
     import os
-    os.environ["BASDAS_TENANT"] = "KUCUKFIRMA"
+    os.environ["OMEHR_TENANT"] = "KUCUKFIRMA"
     try:
         tables = read_tables(hedef)
         # KUCUKFIRMA kotası 2 mağaza — gerçek örnek veride 53 mağaza var,
@@ -79,4 +79,4 @@ def test_sube_kotasi_asilinca_kayit_reddedilir(kota_ortami, tmp_path):
         with pytest.raises(ValueError, match="şube"):
             save_tables(tmp_path, hedef, tables, username="test")
     finally:
-        os.environ.pop("BASDAS_TENANT", None)
+        os.environ.pop("OMEHR_TENANT", None)

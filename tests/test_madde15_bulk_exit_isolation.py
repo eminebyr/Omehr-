@@ -16,8 +16,8 @@ def test_bulk_exit_partial_failure_does_not_cancel_valid_rows(tmp_path):
     from services.personnel_exit import load_personnel_view, process_exits_bulk
 
     (tmp_path / "input").mkdir()
-    shutil.copyfile("ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    shutil.copyfile("ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
     staff, magaza, unvan, cikis_nedeni = load_personnel_view(hedef)
     aktif = staff[staff["İşten Çıkış"].isna()]
@@ -52,8 +52,8 @@ def test_bulk_exit_all_valid_still_works_as_single_write(tmp_path):
     from services.personnel_exit import load_personnel_view, process_exits_bulk
 
     (tmp_path / "input").mkdir()
-    shutil.copyfile("ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    shutil.copyfile("ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
 
     staff, magaza, unvan, cikis_nedeni = load_personnel_view(hedef)
     aktif = staff[staff["İşten Çıkış"].isna()]

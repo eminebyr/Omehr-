@@ -23,9 +23,9 @@ from src.kpi_engine import kpis
 
 @pytest.fixture
 def gercek_veri_kok(tmp_path):
-    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    kaynak = Path(__file__).resolve().parents[1] / "ORNEK_TEST_VERISI" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     (tmp_path / "input").mkdir()
-    hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copyfile(kaynak, hedef)
     (tmp_path / "output").mkdir()
     (tmp_path / "backup").mkdir()

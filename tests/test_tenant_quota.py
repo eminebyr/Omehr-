@@ -19,8 +19,8 @@ def kota_ortami(tmp_path, monkeypatch):
     root = tmp_path
     (root / "input").mkdir()
     (root / "data").mkdir()
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(root))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(root))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     for mod_name in (
         "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
         "services.tenant_registry", "services.tenant_quota", "services.tenant_context",

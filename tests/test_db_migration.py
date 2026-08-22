@@ -1,6 +1,6 @@
 """SQLite -> PostgreSQL VERİ TAŞIMA ARACI — testler (services/db_migration.py).
 
-PostgreSQL sunucusu yoksa BASDAS_TEST_POSTGRES_DSN tanımlı olmadığı için
+PostgreSQL sunucusu yoksa OMEHR_TEST_POSTGRES_DSN tanımlı olmadığı için
 bu dosyadaki tüm testler nazikçe atlanır (bkz. tests/conftest.py
 postgres_dsn fixture'ı).
 """

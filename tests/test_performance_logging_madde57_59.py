@@ -6,7 +6,7 @@ import time
 
 
 def test_track_page_render_writes_log_entry(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.performance_log import track_page_render
 
     with track_page_render("TEST_SAYFA", cache_hit=True):
@@ -27,7 +27,7 @@ def test_performance_logging_never_raises_even_if_log_dir_unwritable(monkeypatch
 
 
 def test_cache_hit_rate_computed_correctly(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.performance_log import track_page_render, cache_hit_rate
 
     with track_page_render("A", cache_hit=True):

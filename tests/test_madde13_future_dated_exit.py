@@ -31,7 +31,7 @@ def test_iso_date_string_parsed_correctly_not_swapped():
 def _hazirlanmis_dizin(tmp_path):
     for d in ("input", "templates", "reference", "assets/fonts"):
         (tmp_path / d).mkdir(parents=True)
-    shutil.copyfile("ORNEK_TEST_VERISI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
+    shutil.copyfile("ORNEK_TEST_VERISI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tmp_path / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
     from pathlib import Path
     for f in Path("templates").glob("*.docx"):
         shutil.copyfile(f, tmp_path / "templates" / f.name)
@@ -46,12 +46,12 @@ def _hazirlanmis_dizin(tmp_path):
 def test_future_dated_exit_keeps_official_kpi_active_count_unchanged(_hazirlanmis_dizin, monkeypatch):
     """Uçtan uca: main.py'nin RESMİ KPI motoru (data_loading.py üzerinden),
     gelecek tarihli bir çıkışı Aktif Mevcut sayısından DÜŞÜRMEMELİ."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(_hazirlanmis_dizin))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(_hazirlanmis_dizin))
     from services.personnel_exit import load_personnel_view, process_exit
     from src.data_loading import load
     from pathlib import Path
 
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, cikis_nedeni = load_personnel_view(hedef)
     _, _, _, staff_onceki, _ = load(prepare=False)
     onceki_aktif_sayisi = len(staff_onceki)
@@ -73,11 +73,11 @@ def test_future_dated_exit_keeps_official_kpi_active_count_unchanged(_hazirlanmi
 
 def test_past_dated_exit_reduces_official_kpi_active_count(_hazirlanmis_dizin, monkeypatch):
     """Karşı senaryo: geçmiş tarihli çıkış GERÇEKTEN düşürmeli."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(_hazirlanmis_dizin))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(_hazirlanmis_dizin))
     from services.personnel_exit import load_personnel_view, process_exit
     from src.data_loading import load
 
-    hedef = _hazirlanmis_dizin / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
+    hedef = _hazirlanmis_dizin / "input" / "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx"
     staff, magaza, unvan, cikis_nedeni = load_personnel_view(hedef)
     # DÜZELTME: "önceki" sayı, DOĞRULANACAK aynı load() mekanizmasıyla
     # hesaplanır (staff["İşten Çıkış"].isna() gibi ESKİ, tarih-duyarsız

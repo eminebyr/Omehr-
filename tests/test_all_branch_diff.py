@@ -6,19 +6,24 @@ from src.kpi_engine import kpis
 
 
 def _input_path() -> Path:
-    return Path(__file__).resolve().parents[1] / 'input' / 'BASDAS_AI_NORM_TRANSFER_INPUT.xlsx'
+    return Path(__file__).resolve().parents[1] / 'input' / 'OMEHR_AI_NORM_TRANSFER_INPUT.xlsx'
 
 
 def test_all_branch_kpis_and_family_consistency():
     sheets = pd.read_excel(_input_path(), sheet_name=None)
     stores, detail = state(sheets['Fact_Norm'], sheets['Fact_Mevcut'], sheets)
     kp = kpis(stores)
+    # DÜZELTME (20.08.2026): önceki 49/23/-26 beklentisi, REFERENTIAL_CONTROL
+    # sayfasının canlı hesabı SESSİZCE ezdiği bir dönemden kalma DONMUŞ bir
+    # değerdi — canlıda bizzat doğrulandı: personel eklense/çıkarılsa bile bu
+    # sayı hiç değişmiyordu. Artık varsayılan olarak canlı Mevcut/Norm hesabı
+    # kullanılıyor; doğru (ve gerçekte hesaplanan) değerler 48/37/-11'dir.
     assert kp == {
         'Aktif Mevcut': 596,
         'Toplam Norm': 607,
-        'Norm Eksiği': 49,
-        'Norm Fazlası': 23,
-        'Net İhtiyaç': -26,
+        'Norm Eksiği': 48,
+        'Norm Fazlası': 37,
+        'Net İhtiyaç': -11,
     }
     store_names = set(stores['Mağaza'].dropna().astype(str).str.strip())
     assert len(store_names) == 48

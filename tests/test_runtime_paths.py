@@ -22,14 +22,14 @@ def test_runtime_root_uses_env_override(isolated_root):
 def test_tenant_code_default_is_basdas(monkeypatch):
     from services import runtime_paths
 
-    monkeypatch.delenv("BASDAS_TENANT", raising=False)
+    monkeypatch.delenv("OMEHR_TENANT", raising=False)
     assert runtime_paths.tenant_code() == "BASDAS"
 
 
 def test_tenant_code_accepts_valid_custom_code(monkeypatch):
     from services import runtime_paths
 
-    monkeypatch.setenv("BASDAS_TENANT", "MUSTERI_2")
+    monkeypatch.setenv("OMEHR_TENANT", "MUSTERI_2")
     assert runtime_paths.tenant_code() == "MUSTERI_2"
 
 
@@ -38,7 +38,7 @@ def test_tenant_code_rejects_lowercase_or_invalid_chars(monkeypatch):
 
     # küçük harfle yazılmış bir kod, büyük harfe çevrildiğinde orijinaliyle
     # eşleşmiyor -> ValueError (kod, sadece zaten-normalize edilmiş girdileri kabul eder)
-    monkeypatch.setenv("BASDAS_TENANT", "gecersiz kod!")
+    monkeypatch.setenv("OMEHR_TENANT", "gecersiz kod!")
     with pytest.raises(ValueError):
         runtime_paths.tenant_code()
 

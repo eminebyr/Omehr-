@@ -12,14 +12,14 @@ import pytest
 
 def test_engine_core_report_copy_does_not_crash_on_identical_paths(tmp_path):
     """REGRESYON: enhanced_pdf_reports() bir önceki sürümde doğrudan
-    BASDAS_Yonetici_Raporu.pdf'e yazacak şekilde yeniden adlandırıldı;
+    OMEHR_Yonetici_Raporu.pdf'e yazacak şekilde yeniden adlandırıldı;
     bu da 'v18 uyumluluk kopyası' adımının kaynak==hedef olmasına ve
     shutil.copy2'nin SameFileError ile çökmesine yol açıyordu. Bu test,
     src/engine_core.py'nin artık bu durumu (kaynak ve hedef aynı dosya
     olduğunda kopyalamayı ATLAYARAK) güvenle idare ettiğini doğrular."""
     import shutil
 
-    kaynak = tmp_path / "BASDAS_Yonetici_Raporu.pdf"
+    kaynak = tmp_path / "OMEHR_Yonetici_Raporu.pdf"
     kaynak.write_bytes(b"%PDF-1.4 sahte icerik")
     hedef = kaynak  # KASITLI: aynı dosya (gerçek regresyon senaryosu)
 

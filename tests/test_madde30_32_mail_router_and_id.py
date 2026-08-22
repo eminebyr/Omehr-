@@ -52,8 +52,8 @@ def test_mail_router_region_report_only_own_region():
 
 
 def test_mail_id_generated_and_unique(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     from services.mail_idempotency import send_idempotent, stats
     send_idempotent("TEST1", "Konu 1", "Gövde", ["a@test.com"])
     send_idempotent("TEST2", "Konu 2", "Gövde", ["b@test.com"])
@@ -68,8 +68,8 @@ def test_mail_id_migration_does_not_crash_on_old_schema(tmp_path, monkeypatch):
     INSERT bunu hesaba katmazsa eski (göç edilmiş) veritabanlarında
     çöker. Sütun adları açıkça belirtilerek bu önlendi."""
     import sqlite3
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_MAIL_DRY_RUN", "1")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_MAIL_DRY_RUN", "1")
     (tmp_path / "data").mkdir(exist_ok=True)
     con = sqlite3.connect(tmp_path / "data" / "mail_idempotency.db")
     con.execute("""CREATE TABLE mail_sends (

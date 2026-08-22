@@ -85,5 +85,8 @@ def test_all_real_input_branches_follow_family_rules():
         f"(gerçek bir hesaplama hatası olabilir): {izlenemeyen}"
     )
 
-    assert st.attrs['kpi_override']['Norm Eksiği'] == 49
-    assert st.attrs['kpi_override']['Norm Fazlası'] == 23
+    # DÜZELTME (20.08.2026): 49/23, REFERENTIAL_CONTROL'ün canlı hesabı
+    # sessizce ezdiği dönemden kalma donmuş değerlerdi. Artık canlı hesap
+    # varsayılan; doğru değerler 48/37.
+    assert st.attrs['kpi_override']['Norm Eksiği'] == 48
+    assert st.attrs['kpi_override']['Norm Fazlası'] == 37
