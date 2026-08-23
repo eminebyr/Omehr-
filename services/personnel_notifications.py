@@ -222,6 +222,6 @@ def send_personnel_event_mail(*, input_path: Path | None, event: str, person: di
         "report_type": f"PERSONEL_{event}",
         "subject": subject, "body": body, "recipients": recipients,
         "attachments": attachments or [],
-    }, tenant=tenant_id or "BASDAS")
+    }, tenant=tenant_id or "OMEHR")
     status = "QUEUED"
     return {"status": status, "subject": subject, **rec}

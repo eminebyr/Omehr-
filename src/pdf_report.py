@@ -878,3 +878,117 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
             if not (is_last_region and is_last_page): story.append(PageBreak())
     doc.build(story,onFirstPage=_footer,onLaterPages=_footer)
     make_outlook_safe_pdf(path)
+
+
+def region_plain_pdf(path, region, kpi, st, tt):
+    """SADE (AI önerisi içermeyen) bölge raporu — kutucuklu (AI'lı) PDF ve
+    Excel raporlarına EK olarak üretilir, onları DEĞİŞTİRMEZ.
+
+    Tablo yapısı src/excel_report.py::_region_excel ile aynı mantığı taşır
+    (mağaza bazlı Mevcut/Norm/Eksik/Fazla + unvan bazlı Eksik/Fazla
+    detayları), sadece PDF formatında. `output/Bolge_Raporlari/` klasörüne
+    dosya adında bölge adı geçecek şekilde kaydedilirse
+    (services/region_access.py::region_report_paths), mevcut mail
+    dağıtım mekanizması bunu OTOMATİK olarak ilgili bölge sorumlusunun
+    mailine ekler — mail_router/worker.py'de ayrı bir değişiklik gerekmez.
+    """
+    f=font();styles=getSampleStyleSheet()
+    title=ParagraphStyle('t',parent=styles['Title'],fontName=f,fontSize=15,textColor=colors.HexColor('#102F64'))
+    h=ParagraphStyle('h',parent=styles['BodyText'],fontName=font(True),fontSize=10,textColor=colors.HexColor('#102F64'),spaceBefore=4*mm,spaceAfter=1.5*mm)
+    body=ParagraphStyle('b',parent=styles['BodyText'],fontName=f,fontSize=7,leading=9)
+    note=ParagraphStyle('note',parent=body,fontName=f,fontSize=6.5,textColor=colors.HexColor('#555555'))
+
+    rs=st[st['Bölge Sorumlusu'].map(canon)==canon(region)].copy()
+    rt=tt[tt['Bölge Sorumlusu'].map(canon)==canon(region)].copy()
+
+    doc=SimpleDocTemplate(str(path),pagesize=A4,leftMargin=12*mm,rightMargin=12*mm,topMargin=12*mm,bottomMargin=12*mm)
+    story=[
+        Paragraph(_pdf_text(product_name().upper()+' — SADE BÖLGE RAPORU'),title),
+        Paragraph(_pdf_text('Bölge Sorumlusu: '+txt(region)),h),
+        Paragraph('Bu rapor AI önerisi İÇERMEZ; yalnız resmi norm/mevcut/eksik/fazla '
+                  'rakamlarının şube bazlı görünümüdür.',note),
+        Spacer(1,3*mm),
+    ]
+
+    ozet=[
+        ['Aktif Mevcut',int(rs['Aktif Mevcut'].sum())],
+        ['Yönetim Normu',int(rs['Norm Kadro'].sum())],
+        ['Norm Eksiği',int(rs['Norm Eksiği'].sum())],
+        ['Norm Fazlası',int(rs['Norm Fazlası'].sum())],
+    ]
+    ot=Table(ozet,colWidths=[60*mm,40*mm])
+    ot.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(-1,-1),colors.HexColor('#EDF3F8')),
+        ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(0,-1),font(True)),
+        ('FONTSIZE',(0,0),(-1,-1),8),('GRID',(0,0),(-1,-1),.3,colors.grey),
+        ('LEFTPADDING',(0,0),(-1,-1),4),('TOPPADDING',(0,0),(-1,-1),2),('BOTTOMPADDING',(0,0),(-1,-1),2),
+    ]))
+    story += [ot, Spacer(1,4*mm)]
+
+    story.append(Paragraph('Mağaza Bazlı Görünüm',h))
+    rows=[['Mağaza','Mevcut','Norm','Eksik','Fazla','Net']]+[
+        [txt(r['Mağaza']),int(r['Aktif Mevcut']),int(r['Norm Kadro']),int(r['Norm Eksiği']),int(r['Norm Fazlası']),int(r['Net Fark'])]
+        for _,r in rs.sort_values('Mağaza').iterrows()
+    ]
+    tb=Table(rows,colWidths=[62*mm,25*mm,25*mm,20*mm,20*mm,20*mm],repeatRows=1)
+    tb.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#102F64')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+        ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),('FONTSIZE',(0,0),(-1,-1),7),
+        ('GRID',(0,0),(-1,-1),.3,colors.grey),('ALIGN',(1,0),(-1,-1),'CENTER'),
+    ]))
+    story += [tb, Spacer(1,4*mm)]
+
+    eksik=rt[rt['Norm Eksiği']>0].sort_values(['Mağaza','Norm Eksiği'],ascending=[True,False])
+    story.append(Paragraph('Norm Eksikleri (Şube — Unvan)',h))
+    if eksik.empty:
+        story.append(Paragraph('Bu bölgede açık norm bulunmuyor.',body))
+    else:
+        rows=[['Mağaza','Unvan','Mevcut','Norm','Eksik']]+[
+            [txt(r['Mağaza']),txt(r['Unvan']),int(r['Aktif Mevcut']),int(r['Norm Kadro']),int(r['Norm Eksiği'])]
+            for _,r in eksik.iterrows()
+        ]
+        tb=Table(rows,colWidths=[55*mm,55*mm,20*mm,20*mm,22*mm],repeatRows=1)
+        tb.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#9B2D2D')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),('FONTSIZE',(0,0),(-1,-1),7),
+            ('GRID',(0,0),(-1,-1),.3,colors.grey),('ALIGN',(2,0),(-1,-1),'CENTER'),
+        ]))
+        story.append(tb)
+    story.append(Spacer(1,4*mm))
+
+    fazla=rt[rt['Norm Fazlası']>0].sort_values(['Mağaza','Norm Fazlası'],ascending=[True,False])
+    story.append(Paragraph('Norm Fazlaları (Şube — Unvan)',h))
+    if fazla.empty:
+        story.append(Paragraph('Bu bölgede norm üstü personel bulunmuyor.',body))
+    else:
+        rows=[['Mağaza','Unvan','Mevcut','Norm','Fazla']]+[
+            [txt(r['Mağaza']),txt(r['Unvan']),int(r['Aktif Mevcut']),int(r['Norm Kadro']),int(r['Norm Fazlası'])]
+            for _,r in fazla.iterrows()
+        ]
+        tb=Table(rows,colWidths=[55*mm,55*mm,20*mm,20*mm,22*mm],repeatRows=1)
+        tb.setStyle(TableStyle([
+            ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#2F7A4F')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),('FONTSIZE',(0,0),(-1,-1),7),
+            ('GRID',(0,0),(-1,-1),.3,colors.grey),('ALIGN',(2,0),(-1,-1),'CENTER'),
+        ]))
+        story.append(tb)
+
+    doc.build(story)
+    make_outlook_safe_pdf(path)
+    return path
+
+
+def build_region_plain_reports(kpi, st, tt):
+    """Tüm bölgeler için SADE PDF üretir ve output/Bolge_Raporlari/ klasörüne
+    (mevcut kutucuklu PDF ve Excel dosyalarının YANINA, onları SİLMEDEN)
+    yazar. Dosya adı bölge sorumlusunun adını içerdiği için
+    services/region_access.py::region_report_paths() bunu otomatik
+    olarak bulur ve ilgili bölge sorumlusunun mailine ek olarak ekler."""
+    outdir=runtime_root()/'output'/'Bolge_Raporlari'; outdir.mkdir(parents=True,exist_ok=True)
+    temp_dir=runtime_root()/'output'/'Bolge_Sade_Yeni'; shutil.rmtree(temp_dir,ignore_errors=True); temp_dir.mkdir(parents=True,exist_ok=True)
+    for region in sorted({txt(v) for v in st['Bölge Sorumlusu'].dropna() if txt(v).strip()}):
+        safe=''.join(c if c.isalnum() else '_' for c in region).strip('_')
+        region_plain_pdf(temp_dir/f'OMEHR_Bolge_{safe}_Sade.pdf',region,kpi,st,tt)
+    for old in outdir.glob('*_Sade.pdf'): old.unlink()
+    for fresh in temp_dir.glob('*_Sade.pdf'): fresh.replace(outdir/fresh.name)
+    shutil.rmtree(temp_dir,ignore_errors=True)

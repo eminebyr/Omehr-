@@ -18,7 +18,7 @@ from services.security import authenticate as secure_authenticate
 from web.formatting import norm_text
 
 # DÜZELTME (çok kiracılı SaaS): önceden burada 4 SABİT, gerçek bir
-# firmaya (@basdasmarket.com) ait e-posta adresi HER transfer
+# firmaya (@omehrmarket.com) ait e-posta adresi HER transfer
 # bildirimine otomatik CC olarak ekleniyordu — ÇOK KİRACILI bir SaaS'ta
 # bu, her firmanın transfer bildirimlerinin bambaşka bir firmaya ait
 # adreslere gitmesi anlamına gelirdi (veri gizliliği ihlali). Kaldırıldı;
@@ -46,7 +46,7 @@ def region_email_list(account_frame, region):
     emails = []
     for value in rows.get("E-posta", pd.Series(dtype=str)).dropna().astype(str):
         value = value.strip()
-        if "@" in value and "dummy.basdas.local" not in value.casefold(): emails.append(value)
+        if "@" in value and "dummy.omehr.local" not in value.casefold(): emails.append(value)
     return list(dict.fromkeys(emails))
 
 def branch_email_list(sheet_frames, *stores):

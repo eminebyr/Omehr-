@@ -33,7 +33,7 @@ def configure_logging(root: Path):
     logging altyapısı KURMAZ, var olanı kullanır."""
     from services.observability import get_logger
 
-    return get_logger("basdas.runtime")
+    return get_logger("omehr.runtime")
 
 
 def runtime_metadata() -> dict:

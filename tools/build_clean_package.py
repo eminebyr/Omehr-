@@ -20,7 +20,7 @@ EXCLUDED_DIRS = {
     # DÜZELTME (KRİTİK — bizzat bulundu): 'input' ve 'ORNEK_TEST_VERISI'
     # önceden bu listede YOKTU. Bu klasörlerdeki örnek Excel dosyası
     # (Mail_Listesi sayfası) GERÇEK GÖRÜNEN düz metin şifreler ("Admin1",
-    # "Ertan1", "Halit1" vb.), gerçek bir şirket domaini (@basdasmarket.com)
+    # "Ertan1", "Halit1" vb.), gerçek bir şirket domaini (@omehrmarket.com)
     # ve gerçek görünen kişi isimleri (bunlardan biri şirketin adıyla aynı
     # soyadı taşıyor) içeriyordu — kaynağı KESİN olarak doğrulanamadı.
     # Belirsizlik durumunda EN GÜVENLİ varsayılan: bu veriyi paketten

@@ -122,7 +122,7 @@ def _invalidate_current_reports(root: Path) -> None:
             pass
     # Tüm yeniden üretilebilir yönetici/bölge çıktıları eski personel adını
     # taşımasın. Arşiv ve rotasyon belgelerine dokunulmaz.
-    for pattern in ('BASDAS_*Yonetici*.*', 'OMEHR_Executive_Data.xlsx', 'CURRENT_*Yonetici*.*', 'TUMU_*Yonetici*.*'):
+    for pattern in ('OMEHR_*Yonetici*.*', 'OMEHR_Executive_Data.xlsx', 'CURRENT_*Yonetici*.*', 'TUMU_*Yonetici*.*'):
         for fp in output.glob(pattern):
             if fp.is_file() and fp.suffix.lower() in {'.pdf','.xlsx'}:
                 try:
@@ -178,7 +178,7 @@ def _save_full_staff_frame(*, input_path: Path, root: Path, df: pd.DataFrame, us
     try:
         from services.job_queue import enqueue
         from services.tenant_context import current_tenant_id
-        enqueue("RECALCULATE_FORMULAS", {"input_path": str(input_path)}, tenant=current_tenant_id() or "BASDAS")
+        enqueue("RECALCULATE_FORMULAS", {"input_path": str(input_path)}, tenant=current_tenant_id() or "OMEHR")
     except Exception as _exc:
         from services.safe_exec import log_swallowed
         log_swallowed("personnel_exit._save_full_staff_frame: formül yeniden hesaplama kuyruğa alınamadı", _exc)

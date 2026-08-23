@@ -55,6 +55,7 @@ from src.pdf_report import (
     font, _pdf_text, _pdf_plain_text, pdf_report, _pdf_styles, _footer,
     enhanced_pdf_reports, _chart_label, _tr_chart_value, _pdf_empty_chart,
     _pdf_bar_chart, _pdf_grouped_chart, _pdf_visual_story, _build_store_pdf,
+    build_region_plain_reports,
 )
 from src.veri_kalitesi_raporu import generate_data_quality_report
 
@@ -147,6 +148,20 @@ def run_all():
     wb.save(outx)
     outp=enhanced_pdf_reports(kp,norm,staff,sheets,scens,ai,validation_summary)
     enhanced_excel_reports(kp,st,tt,ai,staff)
+    # SADE BÖLGE RAPORU (AI önerisi içermez) — kutucuklu (AI'lı) PDF/Excel
+    # raporlarına EK olarak üretilir, onları değiştirmez. output/
+    # Bolge_Raporlari/ klasörüne yazıldığı için mevcut mail dağıtım
+    # mekanizması (services/region_access.py::region_report_paths) bunu
+    # otomatik olarak ilgili bölge sorumlusunun mailine ekler.
+    try:
+        build_region_plain_reports(kp,st,tt)
+    except Exception as _exc:
+        from services.safe_exec import log_swallowed
+        log_swallowed(
+            "engine_core.run_all: sade bölge PDF raporları üretilemedi — "
+            "ana rapor üretimi (kutucuklu PDF/Excel) bundan etkilenmeden devam ediyor",
+            _exc, level="ERROR",
+        )
     boxed_manager_excel=build_boxed_manager_excel(st,norm,staff,kp)
     outdir=runtime_root()/'output'
     # VERİ KALİTESİ RAPORU (V19.9 — dış inceleme sonrası eklendi): dummy

@@ -6,7 +6,7 @@
 **şunları düz metin olarak içeriyordu**:
 - 12 kullanıcının gerçek görünen giriş şifreleri (Admin1, Ertan1,
   Halit1, Faruk1 vb.)
-- Gerçek bir şirket domaini (@basdasmarket.com)
+- Gerçek bir şirket domaini (@omehrmarket.com)
 - Gerçek görünen kişi isimleri (biri şirketin adıyla aynı soyadı
   taşıyor)
 

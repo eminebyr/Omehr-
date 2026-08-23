@@ -66,8 +66,8 @@ def region_report_paths(region: str, add_pdf: bool = True, add_excel: bool = Tru
     wanted = slug(region)
     if not wanted or wanted in {"tumu", "tum", "all", "test", "genel"}:
         paths=[]
-        if add_pdf: paths.append(_output_dir() / "BASDAS_Yonetici_Raporu.pdf")
-        if add_excel: paths.append(_output_dir() / "BASDAS_Executive_Data.xlsx")
+        if add_pdf: paths.append(_output_dir() / "OMEHR_Yonetici_Raporu.pdf")
+        if add_excel: paths.append(_output_dir() / "OMEHR_Executive_Data.xlsx")
         return _existing(paths)
 
     paths=[]

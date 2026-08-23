@@ -35,7 +35,7 @@ def test_iki_farkli_kiracida_ayni_kullanici_adi_carpismaz(isolated_root, monkeyp
 def test_eski_semadan_guvenli_goc(isolated_root, monkeypatch):
     """Eski (V19.21.28 öncesi, tenant_id'siz) bir credentials tablosu
     varsa, yeni şemaya geçerken mevcut şifreler KAYBOLMAMALI ve
-    varsayılan 'BASDAS' kiracısına atanmalı."""
+    varsayılan 'OMEHR' kiracısına atanmalı."""
     from services import security
     import importlib
     importlib.reload(security)
@@ -61,7 +61,7 @@ def test_eski_semadan_guvenli_goc(isolated_root, monkeypatch):
     con.commit()
     con.close()
 
-    ok, msg, _ = security.authenticate("eskikullanici", "EskiSifre123456", tenant_id="BASDAS")
+    ok, msg, _ = security.authenticate("eskikullanici", "EskiSifre123456", tenant_id="OMEHR")
     assert ok is True, msg
 
 
@@ -100,7 +100,7 @@ def test_yanlis_sifre_hala_reddedilir(isolated_root, monkeypatch):
     import importlib
     importlib.reload(security)
 
-    security.set_password("normal", "DogruSifre1234", tenant_id="BASDAS")
-    ok, msg, _ = security.authenticate("normal", "YanlisSifre999", tenant_id="BASDAS")
+    security.set_password("normal", "DogruSifre1234", tenant_id="OMEHR")
+    ok, msg, _ = security.authenticate("normal", "YanlisSifre999", tenant_id="OMEHR")
     assert ok is False
     assert "hatalı" in msg.lower()

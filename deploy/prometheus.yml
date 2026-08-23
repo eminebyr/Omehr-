@@ -7,7 +7,7 @@ alerting:
     - static_configs:
         - targets: ["alertmanager:9093"]
 scrape_configs:
-  - job_name: basdas
+  - job_name: omehr
     metrics_path: /metrics
     static_configs:
       - targets: ["monitor:9108"]

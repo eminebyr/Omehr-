@@ -7,4 +7,4 @@
 - `Gezici` yazılırsa kişi sarı vurgulanır; mevcut durum açıklamasına `Ad Soyad gezicidir.` yazılır.
 - `20.08.2026 ayrılacak` yazılırsa kişi PDF ve Excel'de kırmızı vurgulanır; mevcut durum açıklamasına `Ad Soyad 20.08.2026 tarihinde ayrılacaktır.` yazılır.
 - Diğer serbest açıklamalar kişi adıyla birleştirilerek mevcut durum açıklamasına aktarılır.
-- Aynı kurallar bütün şubeler, kutucuklu Excel ve `BASDAS_Executive_Data.xlsx > Mağaza-Unvan Bazlı` sayfası için geçerlidir.
+- Aynı kurallar bütün şubeler, kutucuklu Excel ve `OMEHR_Executive_Data.xlsx > Mağaza-Unvan Bazlı` sayfası için geçerlidir.

@@ -42,7 +42,7 @@ def _input_path():
 
 def default_config() -> dict[str, Any]:
     return {
-        "company": {"name": "Başdaş Marketler", "logo_path": ""},
+        "company": {"name": "Omehr Marketler", "logo_path": ""},
         "security": {
             "password_storage": "data/security.db",
             "algorithm": "PBKDF2-HMAC-SHA256",
@@ -82,7 +82,7 @@ def _users_from_input() -> list[dict[str, Any]]:
         region = str(row.get("Bölge", "") or "").strip()
         role = str(row.get("Rol", "") or "").strip().upper()
         scope = str(row.get("Yetki Kapsamı", "") or "").strip()
-        # DÜZELTME (çok kiracılı SaaS): "feyzi başdaş" adı özel durumu
+        # DÜZELTME (çok kiracılı SaaS): "feyzi omehr" adı özel durumu
         # kaldırıldı — ÇOK KİRACILI bir SaaS'ta bu, HER firmanın CEO
         # rolündeki kullanıcısını (kendi gerçek adı ne olursa olsun)
         # yanlışlıkla bu belirli kişi olarak GÖSTERİRDİ. Yalnız genel,
@@ -483,7 +483,7 @@ def _sync_transfer_requests_to_excel() -> tuple[bool, str]:
         df = list_transfer_requests({"role":"HR_DIRECTOR","scope":"ALL","username":"system"})
         headers = ["Talep No","Talep Tarihi","Kaynak Mağaza","Hedef Mağaza","Personel ID","Personel","Unvan","Hedef Unvan","Bölge Müdürü","Kaynak Bölge","Hedef Bölge","Durum","İK Onayı","İK Notu","Onay Tarihi","Fact_Mevcut Durumu","Fact_Mevcut Kontrol Tarihi","Tamamlanma Tarihi","Outlook Gönderildi mi","Outlook Gönderim Tarihi","Son Güncelleme"]
         keys = ["request_key","requested_at","source_store","target_store","personnel_id","personnel_name","current_title","target_title","requested_by_name","source_region","target_region","hr_status","hr_decided_by","hr_note","hr_decided_at","fact_status","fact_checked_at","completed_at","outlook_sent","outlook_sent_at","updated_at"]
-        targets = [_input_path(), runtime_root() / "tenants" / "BASDAS" / "input" / _input_path().name]
+        targets = [_input_path(), runtime_root() / "tenants" / "OMEHR" / "input" / _input_path().name]
         updated = 0
         for target in targets:
             if not target.exists():
@@ -514,7 +514,7 @@ def _export_transfer_tracking_pdf() -> Path | None:
         from reportlab.lib.styles import ParagraphStyle
         from reportlab.lib.units import mm
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from src.pdf_fonts import font as _basdas_font
+        from src.pdf_fonts import font as _omehr_font
         # NOT (FONT_TURKCE_DOGRULAMA.md): burada eskiden ayrı, Windows'a özgü
         # bir font arama zinciri vardı (WINDIR/Fonts, matplotlib paketi,
         # /usr/share/fonts...) ve TÜRKÇE GLİF DOĞRULAMASI yapmıyordu — bulduğu
@@ -523,8 +523,8 @@ def _export_transfer_tracking_pdf() -> Path | None:
         # kullanılıyor: font paket dışı bir kaynağa asla düşmez, gerekli
         # Türkçe glifler (ÇĞİÖŞÜçğıöşü₺) yoksa PDF üretimi RuntimeError ile
         # açıkça durur (sessizce None dönüp kullanıcıyı yanıltmaz).
-        font_regular = _basdas_font(bold=False)
-        font_bold = _basdas_font(bold=True)
+        font_regular = _omehr_font(bold=False)
+        font_bold = _omehr_font(bold=True)
         _output_dir().mkdir(parents=True, exist_ok=True)
         out = _output_dir() / "OMEHR_Transfer_Takip_Raporu.pdf"
         df = list_transfer_requests({"role":"HR_DIRECTOR","scope":"ALL","username":"system"})

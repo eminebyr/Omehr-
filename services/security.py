@@ -29,7 +29,7 @@ def _connect() -> sqlite3.Connection:
     con.executescript(
         """
         CREATE TABLE IF NOT EXISTS credentials(
-            tenant_id TEXT NOT NULL DEFAULT 'BASDAS',
+            tenant_id TEXT NOT NULL DEFAULT 'OMEHR',
             username TEXT NOT NULL,
             salt BLOB NOT NULL,
             password_hash BLOB NOT NULL,
@@ -55,14 +55,14 @@ def _connect() -> sqlite3.Connection:
     # aynı kullanıcı adını (ör. "ik1") kullanırsa şifre kaydı ÇAKIŞIRDI.
     # Var olan bir kurulumda hâlâ eski şema varsa (tenant_id sütunu yok),
     # veri kaybetmeden yeni şemaya taşı: tüm eski kayıtlar varsayılan
-    # 'BASDAS' kiracısına ait kabul edilir (geriye dönük uyumluluk).
+    # 'OMEHR' kiracısına ait kabul edilir (geriye dönük uyumluluk).
     mevcut_sutunlar = {row["name"] for row in con.execute("PRAGMA table_info(credentials)")}
     if "tenant_id" not in mevcut_sutunlar:
         con.executescript(
             """
             ALTER TABLE credentials RENAME TO credentials_v1_gecis;
             CREATE TABLE credentials(
-                tenant_id TEXT NOT NULL DEFAULT 'BASDAS',
+                tenant_id TEXT NOT NULL DEFAULT 'OMEHR',
                 username TEXT NOT NULL,
                 salt BLOB NOT NULL,
                 password_hash BLOB NOT NULL,
@@ -75,7 +75,7 @@ def _connect() -> sqlite3.Connection:
             );
             INSERT INTO credentials(tenant_id,username,salt,password_hash,iterations,
                 must_change,failed_attempts,locked_until,changed_at)
-            SELECT 'BASDAS',username,salt,password_hash,iterations,
+            SELECT 'OMEHR',username,salt,password_hash,iterations,
                 must_change,failed_attempts,locked_until,changed_at
             FROM credentials_v1_gecis;
             DROP TABLE credentials_v1_gecis;
@@ -93,7 +93,7 @@ def _varsayilan_kiraci() -> str:
         from services.tenant_context import current_tenant_id
         return current_tenant_id()
     except Exception:
-        return "BASDAS"
+        return "OMEHR"
 
 
 def _audit(con: sqlite3.Connection, username: str, event: str, detail: str = "", tenant_id: str | None = None) -> None:

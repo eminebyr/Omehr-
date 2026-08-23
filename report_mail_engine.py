@@ -173,7 +173,7 @@ def send_reports_via_outlook(input_file: Path | None = None, display_only: bool=
     if df.empty: result["reason"]="Mail_Listesi okunamadı veya boş."; return result
     if "Aktif" not in df.columns: result["reason"]="Mail_Listesi içinde Aktif sütunu yok."; return result
     active=df[df["Aktif"].map(yes)].copy()
-    active=active[~active.get("E-posta",pd.Series("",index=active.index)).astype(str).str.contains("dummy.basdas.local",case=False,na=False)]
+    active=active[~active.get("E-posta",pd.Series("",index=active.index)).astype(str).str.contains("dummy.omehr.local",case=False,na=False)]
     if active.empty: result["reason"]="Aktif alıcı yok."; return result
     # DÜZELTME (Madde 30-31 — mail_router.py bağlandı): bu akışta ÖNCEDEN
     # yalnız "Aktif" sütunu kontrol ediliyordu, hiçbir ABONELİK (Norm_Genel/

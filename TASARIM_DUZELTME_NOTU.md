@@ -17,7 +17,7 @@ yorumlar). Artık:
   hafif gölgelerle "kağıttan kalkmış" hissi veriyor.
 - **Etkileşim durumları**: buton hover/active/focus-visible (klavye
   odağı görünür — erişilebilirlik), form alanı odaklanma rengi eklendi.
-- **Ölü kod temizlendi**: `.basdas-page-tab*` sınıfları hiçbir Python
+- **Ölü kod temizlendi**: `.omehr-page-tab*` sınıfları hiçbir Python
   dosyasında kullanılmıyordu (navigasyon `st.radio`'ya taşınmış),
   kaldırıldı; gerçek `st.radio` widget'ı artık pill-sekme gibi
   giydiriliyor.

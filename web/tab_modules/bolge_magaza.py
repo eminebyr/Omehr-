@@ -60,3 +60,21 @@ def render(ctx: PageContext) -> None:
         use_container_width=True,
         hide_index=True,
     )
+
+    # AÇIKLAMA MOTORU (kutucuklu Excel/PDF raporlarındaki "MEVCUT DURUM
+    # AÇIKLAMASI" ile aynı denge cümlesi — src/state_engine.py::
+    # family_balance_notes). Bir mağazada ana/yardımcı unvan ailesi
+    # arasında Kural A dengelemesi uygulandıysa (ör. fazla Yönetici,
+    # boş Yönetici Yardımcısı normunu örtüyorsa) burada açıkça gösterilir.
+    st.markdown("##### Norm Dengesi Açıklaması")
+    magaza_secenekleri = sorted(store_view["Mağaza"].dropna().astype(str).unique())
+    if magaza_secenekleri:
+        secili_magaza = st.selectbox("Mağaza seçin", magaza_secenekleri, key="fb_notes_magaza")
+        from services.family_balance import family_balance_notes
+        notlar = family_balance_notes(detail, secili_magaza)
+        if notlar:
+            for n in notlar:
+                st.info(n)
+        else:
+            st.caption("Bu mağazada ana/yardımcı unvan ailesi arasında bir denge uygulanmadı.")
+

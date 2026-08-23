@@ -8,8 +8,8 @@ def test_pdf_fonts_use_windows_compatible_ascii_subset():
     from src.pdf_fonts import font
 
     assert rl_config.ttfAsciiReadable == 1
-    assert font() == "BasdasPDF"
-    assert font(True) == "BasdasPDF-Bold"
+    assert font() == "OmehrPDF"
+    assert font(True) == "OmehrPDF-Bold"
 
 
 def test_pdf_font_files_are_packaged():

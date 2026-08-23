@@ -39,7 +39,7 @@ def _atomic_replace(temp_path: Path, final_path: Path) -> None:
     os.replace(temp_path, final_path)
 
 
-from src.pdf_fonts import font as _basdas_font
+from src.pdf_fonts import font as _omehr_font
 
 
 def _font_name() -> str:
@@ -48,11 +48,11 @@ def _font_name() -> str:
     daha zayıf bir kayıt vardı (Türkçe glif doğrulaması yok, sadece regular
     ağırlık, düşük boyut eşiği) — kaldırıldı, tekilleştirildi (bkz.
     FONT_TURKCE_DOGRULAMA.md)."""
-    return _basdas_font(bold=False)
+    return _omehr_font(bold=False)
 
 
 def _font_name_bold() -> str:
-    return _basdas_font(bold=True)
+    return _omehr_font(bold=True)
 
 
 def _write_cell(cell, text: str) -> None:
@@ -158,3 +158,48 @@ def create_rotation_documents(transfer: Mapping[str, object]) -> dict[str, str]:
         _atomic_replace(tmp_pdf, final_pdf)
 
     return {"docx": str(final_docx), "pdf": str(final_pdf)}
+
+
+def create_rotation_documents_and_notify(
+    transfer: Mapping[str, object],
+    *,
+    account_frame=None,
+    sheet_frames: Mapping[str, object] | None = None,
+    tenant: str = "OMEHR",
+) -> dict[str, str]:
+    """create_rotation_documents() + otomatik mail — TEK ÇAĞRIDA, worker.py
+    dışındaki herhangi bir çağrı yerinden de (script, gelecekteki otomasyon)
+    kullanılabilir.
+
+    DÜZELTME (dayanıklılık): create_rotation_documents() saf bir belge
+    üreticidir, mail göndermez — üretim akışında (web paneli -> onay ekranı)
+    mail ayrıca worker.py'nin TRANSFER_DECISION işleyicisi tarafından
+    gönderilir. Bu, o zincirin DIŞINDA çağrılan kodun mailsiz kalması
+    riskini taşır. Bu fonksiyon, belge üretimini ve mail kuyruklamayı
+    (services.job_queue + services.transfer_recipients, worker.py'nin
+    SEND_EMAIL işleyicisiyle AYNI mekanizma) tek, kendi kendine yeten bir
+    çağrıda birleştirir. Mevcut create_rotation_documents() ve worker.py
+    TRANSFER_DECISION akışı DEĞİŞTİRİLMEDİ — bu, EK bir erişim noktasıdır.
+    """
+    documents = create_rotation_documents(transfer)
+    from services.transfer_recipients import transfer_recipients
+    from services.job_queue import enqueue as _enqueue_job
+    recipients = transfer_recipients(account_frame, transfer, sheet_frames)
+    if not recipients:
+        return {**documents, "mail_status": "SKIPPED_NO_RECIPIENTS"}
+    kisi = transfer.get("person_name") or transfer.get("person_id") or "Belirtilmemiş"
+    kaynak = transfer.get("source_store") or "?"
+    hedef = transfer.get("target_store") or "?"
+    subject = f"Rotasyon Belgesi | {kisi} | {kaynak} -> {hedef}"
+    body = (
+        f"Personel: {kisi}\nDevreden şube (mevcut): {kaynak}\nDevralan şube (yeni): {hedef}\n\n"
+        "Bu e-postaya rotasyon belgesi (DOCX ve PDF) eklenmiştir — hem devreden "
+        "hem devralan şube yetkilisi tarafından imzalanıp İK'ya iletilmelidir.\n\n"
+        "Bu e-posta, hem devreden hem devralan şubeye otomatik olarak gönderilmiştir."
+    )
+    attachments = [v for k, v in documents.items() if k in {"pdf", "docx"} and v]
+    _enqueue_job("SEND_EMAIL", {
+        "report_type": "ROTASYON_BELGESI", "subject": subject, "body": body,
+        "recipients": recipients, "attachments": attachments,
+    }, tenant=tenant)
+    return {**documents, "mail_status": "QUEUED"}

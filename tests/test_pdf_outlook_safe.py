@@ -10,7 +10,7 @@ from services.pdf_compat import make_outlook_safe_pdf
 def test_make_outlook_safe_pdf_preserves_pages_and_flattens_text(tmp_path: Path):
     pdf = tmp_path / "turkce.pdf"
     c = canvas.Canvas(str(pdf), pagesize=A4)
-    c.drawString(72, 760, "BASDAS TEST")
+    c.drawString(72, 760, "OMEHR TEST")
     c.showPage()
     c.drawString(72, 760, "IKINCI SAYFA")
     c.save()

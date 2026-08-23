@@ -91,7 +91,7 @@ def create_table_ddl(tablo: str, kolonlar: list[tuple[str, str]], backend: str) 
         id_tanimi = "id INTEGER PRIMARY KEY AUTOINCREMENT"
     sabit_kolonlar = [
         id_tanimi,
-        "tenant_id TEXT NOT NULL DEFAULT 'BASDAS'",
+        "tenant_id TEXT NOT NULL DEFAULT 'OMEHR'",
         "_sira INTEGER NOT NULL",
         "_guncelleyen TEXT",
         "_guncelleme_zamani TEXT",

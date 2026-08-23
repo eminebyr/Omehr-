@@ -4,7 +4,7 @@ from __future__ import annotations
 
 input/ ve ORNEK_TEST_VERISI/ klasörleri, gerçek görünen düz metin
 şifreler ("Admin1", "Ertan1" vb.), gerçek bir şirket domaini
-(@basdasmarket.com) ve gerçek görünen kişi isimleri içeren bir örnek
+(@omehrmarket.com) ve gerçek görünen kişi isimleri içeren bir örnek
 Excel dosyası taşıyordu — kaynağı KESİN olarak doğrulanamadı. Bu iki
 klasör artık paketten HARİÇ TUTULUYOR; bu test bunun bir daha
 sessizce geri gelmemesini sağlar.

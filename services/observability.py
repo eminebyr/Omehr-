@@ -14,7 +14,7 @@ def _log_dir():
     return runtime_root() / "logs"
 
 
-def get_logger(name: str = "basdas") -> logging.Logger:
+def get_logger(name: str = "omehr") -> logging.Logger:
     _log_dir().mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger(name)
     if logger.handlers:

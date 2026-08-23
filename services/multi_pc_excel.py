@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 import json, os, socket, time, uuid
 
-LOCK_SUFFIX = '.basdas.lock'
+LOCK_SUFFIX = '.omehr.lock'
 
 
 def lock_path(input_path: Path) -> Path:

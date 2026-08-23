@@ -141,7 +141,7 @@ def test_no_hardcoded_personal_or_company_email_in_shared_code():
         "services/management_center.py", "web/accounts.py", "web/app.py",
         "services/puantaj_hatirlatma.py",
     ]
-    yasakli = ["omer.arasin@basdasmarket.com", '"M. Feyzi Başdaş"', "ikd@basdasmarket.com\""]
+    yasakli = ["omer.arasin@omehrmarket.com", '"M. Feyzi Omehr"', "ikd@omehrmarket.com\""]
     for dosya in kontrol_edilecek:
         icerik = (kod_kok / dosya).read_text(encoding="utf-8")
         for kod_disinda_metin in ["NOTIFY_TO = [\"ika", "APPROVERS = {\"insan"]:

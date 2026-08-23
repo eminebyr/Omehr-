@@ -448,3 +448,48 @@ def state(norm,staff,sheets):
         'Net İhtiyaç':int(tt['Norm Fazlası'].sum()-tt['Norm Eksiği'].sum()),
     }
     return st,tt
+
+
+def family_balance_notes(tt, store_key):
+    """Bir mağaza için ana/yardımcı unvan ailesi arasında Kural A'nın
+    (_reconcile_main_family_rules) uyguladığı dengelemeyi, kullanıcıya
+    gösterilecek açıklama cümleleri olarak üretir.
+
+    Metin kalıbı, kutucuklu Excel/PDF raporlarındaki (src/pdf_report.py,
+    "MEVCUT DURUM AÇIKLAMASI") aynı denge cümlesiyle BİREBİR aynıdır —
+    web ve raporlar arasında tutarlılık için ortak bu fonksiyondan üretilir.
+    `tt`, state()'in döndürdüğü unvan-seviyeli tablodur (Mağaza/Unvan/
+    Norm Kadro/Aktif Mevcut sütunlarını taşımalıdır).
+    """
+    from services.norm_rule_config import load_norm_rules
+    balance = load_norm_rules().get('assistant_balance') or {}
+    pairs = list((balance.get('pairs') or {}).items())
+    if not pairs or tt is None or tt.empty:
+        return []
+    magaza_col = 'Mağaza' if 'Mağaza' in tt.columns else 'MağazaID'
+    sub = tt[tt[magaza_col].astype(str) == str(store_key)]
+    if sub.empty:
+        return []
+    notes = []
+    for ana, yrd in pairs:
+        ana_row = sub[sub['Unvan'].astype(str).str.upper() == str(ana).upper()]
+        yrd_row = sub[sub['Unvan'].astype(str).str.upper() == str(yrd).upper()]
+        if ana_row.empty or yrd_row.empty:
+            continue
+        ana_norm = int(numeric(ana_row['Norm Kadro']).fillna(0).iloc[0])
+        ana_mevcut = int(numeric(ana_row['Aktif Mevcut']).fillna(0).iloc[0])
+        yrd_norm = int(numeric(yrd_row['Norm Kadro']).fillna(0).iloc[0])
+        yrd_mevcut = int(numeric(yrd_row['Aktif Mevcut']).fillna(0).iloc[0])
+        aile_normu = ana_norm + yrd_norm
+        aile_mevcut = ana_mevcut + yrd_mevcut
+        dagilim_farkli = (ana_mevcut != ana_norm or yrd_mevcut != yrd_norm)
+        if aile_normu > 0 and aile_mevcut >= aile_normu and dagilim_farkli:
+            from src.text_utils import tr_title
+            ana_t, yrd_t = tr_title(ana), tr_title(yrd)
+            notes.append(
+                f'{ana_t} normu {ana_norm}, {yrd_t} normu {yrd_norm}; '
+                f'şubede {ana_mevcut} {ana_t} ve {yrd_mevcut} {yrd_t} mevcuttur. '
+                'Aynı aile içindeki mevcut kapasiteyle norm dengesi korunabilir; '
+                'bu denge norm eksiği toplamına dahil edilmemiştir.'
+            )
+    return notes

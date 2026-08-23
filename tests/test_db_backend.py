@@ -70,18 +70,18 @@ def test_postgres_connect_execute_and_row_access(postgres_dsn, monkeypatch):
     from services.db_backend import connect, ddl_for_backend
 
     con = connect("/unused")
-    con.execute("DROP TABLE IF EXISTS basdas_test_t")
+    con.execute("DROP TABLE IF EXISTS omehr_test_t")
     con.execute(ddl_for_backend(
-        "CREATE TABLE basdas_test_t(id INTEGER PRIMARY KEY AUTOINCREMENT, ad TEXT)",
-        "CREATE TABLE basdas_test_t(id SERIAL PRIMARY KEY, ad TEXT)",
+        "CREATE TABLE omehr_test_t(id INTEGER PRIMARY KEY AUTOINCREMENT, ad TEXT)",
+        "CREATE TABLE omehr_test_t(id SERIAL PRIMARY KEY, ad TEXT)",
     ))
     con.commit()
-    con.execute("INSERT INTO basdas_test_t(ad) VALUES (?)", ("test",))
+    con.execute("INSERT INTO omehr_test_t(ad) VALUES (?)", ("test",))
     con.commit()
-    row = con.execute("SELECT * FROM basdas_test_t").fetchone()
+    row = con.execute("SELECT * FROM omehr_test_t").fetchone()
     assert row["ad"] == "test"
     assert row[1] == "test"
-    con.execute("DROP TABLE basdas_test_t")
+    con.execute("DROP TABLE omehr_test_t")
     con.commit()
     con.close()
 
@@ -92,13 +92,13 @@ def test_postgres_lastrowid_via_returning(postgres_dsn, monkeypatch):
     from services.db_backend import connect
 
     con = connect("/unused")
-    con.execute("DROP TABLE IF EXISTS basdas_test_t2")
-    con.execute("CREATE TABLE basdas_test_t2(id SERIAL PRIMARY KEY, ad TEXT)")
+    con.execute("DROP TABLE IF EXISTS omehr_test_t2")
+    con.execute("CREATE TABLE omehr_test_t2(id SERIAL PRIMARY KEY, ad TEXT)")
     con.commit()
-    cur = con.execute("INSERT INTO basdas_test_t2(ad) VALUES (?) RETURNING id", ("birinci",))
+    cur = con.execute("INSERT INTO omehr_test_t2(ad) VALUES (?) RETURNING id", ("birinci",))
     con.commit()
     assert cur.lastrowid == 1
-    con.execute("DROP TABLE basdas_test_t2")
+    con.execute("DROP TABLE omehr_test_t2")
     con.commit()
     con.close()
 
@@ -112,28 +112,28 @@ def test_postgres_immutability_trigger_blocks_update_and_delete(postgres_dsn, mo
     from services.db_backend import connect
 
     con = connect("/unused")
-    con.execute("DROP TABLE IF EXISTS basdas_test_immutable")
-    con.execute("CREATE TABLE basdas_test_immutable(id SERIAL PRIMARY KEY, deger TEXT)")
-    con.execute("""CREATE OR REPLACE FUNCTION basdas_test_immutable_fn() RETURNS TRIGGER AS $$
+    con.execute("DROP TABLE IF EXISTS omehr_test_immutable")
+    con.execute("CREATE TABLE omehr_test_immutable(id SERIAL PRIMARY KEY, deger TEXT)")
+    con.execute("""CREATE OR REPLACE FUNCTION omehr_test_immutable_fn() RETURNS TRIGGER AS $$
 BEGIN
     RAISE EXCEPTION 'degistirilemez: % reddedildi', TG_OP;
 END;
 $$ LANGUAGE plpgsql""")
-    con.execute("DROP TRIGGER IF EXISTS basdas_test_immutable_upd ON basdas_test_immutable")
-    con.execute("CREATE TRIGGER basdas_test_immutable_upd BEFORE UPDATE ON basdas_test_immutable FOR EACH ROW EXECUTE FUNCTION basdas_test_immutable_fn()")
+    con.execute("DROP TRIGGER IF EXISTS omehr_test_immutable_upd ON omehr_test_immutable")
+    con.execute("CREATE TRIGGER omehr_test_immutable_upd BEFORE UPDATE ON omehr_test_immutable FOR EACH ROW EXECUTE FUNCTION omehr_test_immutable_fn()")
     con.commit()
 
-    con.execute("INSERT INTO basdas_test_immutable(deger) VALUES (?)", ("orijinal",))
+    con.execute("INSERT INTO omehr_test_immutable(deger) VALUES (?)", ("orijinal",))
     con.commit()
 
     with pytest.raises(Exception):
-        con.execute("UPDATE basdas_test_immutable SET deger='hacklendi' WHERE id=1")
+        con.execute("UPDATE omehr_test_immutable SET deger='hacklendi' WHERE id=1")
         con.commit()
     con.rollback()
 
-    row = con.execute("SELECT deger FROM basdas_test_immutable WHERE id=1").fetchone()
+    row = con.execute("SELECT deger FROM omehr_test_immutable WHERE id=1").fetchone()
     assert row["deger"] == "orijinal"
 
-    con.execute("DROP TABLE basdas_test_immutable")
+    con.execute("DROP TABLE omehr_test_immutable")
     con.commit()
     con.close()

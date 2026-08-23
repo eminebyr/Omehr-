@@ -9,7 +9,7 @@ belirler. 3 PC aynı Excel'i (ve dolayısıyla aynı yetki dosyasını) paylaşt
 için tüm PC'lerde tutarlıdır.
 
 DÜZELTME (çok kiracılı SaaS): Bu modül önceden 3 SABİT, gerçek bir firmaya
-(@basdasmarket.com) ait e-posta adresini varsayılan yetki sahibi olarak koda
+(@omehrmarket.com) ait e-posta adresini varsayılan yetki sahibi olarak koda
 gömüyordu (`ikasistan@...`, `ikd@...`, `insankaynaklari@...`). Bu, HER
 kiracının bu adreslerle eşleşen (ya da eşleşmeyen) kullanıcılarını yanlış
 şekilde etkilerdi. Alttaki mekanizma (yapılandırılabilir, JSON tabanlı, admin
@@ -42,7 +42,7 @@ DEFAULTS: dict[str, list[str]] = {}
 
 def _path(input_path: Path) -> Path:
     p = Path(input_path)
-    return p.with_name('.basdas_user_permissions.json')
+    return p.with_name('.omehr_user_permissions.json')
 
 
 def _norm_email(email: str) -> str:
@@ -108,7 +108,7 @@ def save_user_permissions(input_path: Path, users: dict[str, list[str]]) -> None
     for email, perms in users.items():
         merged[_norm_email(email)] = [x for x in perms if x in PERMISSIONS]
     payload = {'version': 1, 'users': merged}
-    fd, tmp = tempfile.mkstemp(prefix='basdas_perm_', suffix='.json', dir=str(p.parent))
+    fd, tmp = tempfile.mkstemp(prefix='omehr_perm_', suffix='.json', dir=str(p.parent))
     os.close(fd)
     try:
         Path(tmp).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')

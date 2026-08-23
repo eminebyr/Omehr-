@@ -53,7 +53,7 @@ def _db():
 # fonksiyonlarını DOĞRUDAN çağırıyor, her seferinde taze çözümleniyor.
 
 # DÜZELTME (çok kiracılı SaaS): önceden burada 3 SABİT, gerçek bir
-# firmaya (@basdasmarket.com) ait e-posta adresi onay yetkisi verirdi —
+# firmaya (@omehrmarket.com) ait e-posta adresi onay yetkisi verirdi —
 # ÇOK KİRACILI bir SaaS'ta bu, hem başka kiracıların gerçek yöneticileri
 # için hiçbir işe yaramaz (adresleri asla eşleşmez) hem de mimari olarak
 # yanlıştır (paylaşılan kodun içine tek bir firmanın e-postaları
@@ -118,8 +118,10 @@ def _render_main_title() -> None:
     st.markdown('<div class="omehr-title-gap"></div>', unsafe_allow_html=True)
 
 
-from web.styles import CSS_STYLES
-st.markdown(CSS_STYLES, unsafe_allow_html=True)
+from web.styles import get_theme_css
+if "dark_mode" not in st.session_state:
+    st.session_state["dark_mode"] = False
+st.markdown(get_theme_css(st.session_state["dark_mode"]), unsafe_allow_html=True)
 
 BD_RENK = {
     # DÜZELTME (marka değişikliği): eski "Çam & Amber" -> OMEHR lacivert/teal.
@@ -200,7 +202,7 @@ def _build_model_from_sheets(sheets):
         #   Mevcut / Norm / Eksik / Fazla
         # Her iki ad grubunu birlikte taşıyarak bütün sekmeleri aynı Python
         # hesabına bağlarız. Böylece LibreOffice/Excel formül önbelleğine bağlı
-        # kalmadan Genel Özet dahil tüm sayfalar aynı 47/23 sonucunu kullanır.
+        # kalmadan Genel Özet dahil tüm sayfalar aynı 48/37 sonucunu kullanır.
         fm = _staff.copy()
         detail = _tt.copy()
         stores = _st.copy()
@@ -542,7 +544,7 @@ if st.session_state.get("_recalc_uyari"):
 
 # ------------------------------------------------------------------
 # GİRİŞ AKIŞI — SaaS çok kiracılı temel: kullanıcı, hangi FİRMA için
-# giriş yaptığını AÇIKÇA seçer (veya varsayılan tek-kiracı 'BASDAS').
+# giriş yaptığını AÇIKÇA seçer (veya varsayılan tek-kiracı 'OMEHR').
 # Kiracı seçimi doğrulanan girişten HEMEN SONRA, herhangi bir kiracıya
 # özgü veri (Mail_Listesi dahil) okunmadan ÖNCE oturuma yazılır —
 # services.tenant_context::current_tenant_id() bunu önceliklendirir.
@@ -556,14 +558,14 @@ if st.session_state.get("_recalc_uyari"):
 from services.tenant_context import current_tenant_id, set_session_tenant
 
 if "user" not in st.session_state:
-    _kiraci_secenekleri = ["BASDAS"]
+    _kiraci_secenekleri = ["OMEHR"]
     try:
         from services.tenant_registry import list_tenants
         _kayitlilar = [t["tenant_id"] for t in list_tenants() if t.get("durum") == "aktif"]
         if _kayitlilar:
             _kiraci_secenekleri = sorted(_kayitlilar)
     except Exception as _exc:
-        log_swallowed("web.app: tenant_registry okunamadı, varsayılan BASDAS kullanılıyor", _exc)
+        log_swallowed("web.app: tenant_registry okunamadı, varsayılan OMEHR kullanılıyor", _exc)
 
     if input_source() != "db" and len(_kiraci_secenekleri) > 1:
         st.warning(
@@ -751,6 +753,10 @@ with st.sidebar:
     with _bilgi_col:
         st.markdown(f"**{user.get('Sorumlu','Kullanıcı')}**")
         st.caption(f"{role} · {scope}")
+    _dark_on = st.checkbox("🌙 Karanlık Mod", value=st.session_state.get("dark_mode", False), key="dark_mode_toggle")
+    if _dark_on != st.session_state.get("dark_mode", False):
+        st.session_state["dark_mode"] = _dark_on
+        st.rerun()
     if st.button("Tüm tabloları şimdi yenile", use_container_width=True):
         with st.spinner("Tüm raporlar yeniden oluşturuluyor..."): refresh_all()
         st.success("Yenileme tamamlandı"); st.rerun()

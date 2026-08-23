@@ -3,7 +3,7 @@ from __future__ import annotations
 """
 MERKEZİ CSS/STİL MODÜLÜ — OMEHR Tasarım Sistemi v3 (marka değişikliği)
 =====================================================================
-Bu dosya, ürünün BAŞDAŞ'tan OMEHR'e marka değişikliği kapsamında,
+Bu dosya, ürünün OMEHR'tan OMEHR'e marka değişikliği kapsamında,
 tasarım jetonlarını yeni logo paletiyle (lacivert/teal/altın) uyumlu
 hale getirir. Önceki "Çam & Amber" paleti tamamen değiştirildi.
 
@@ -18,7 +18,7 @@ davranışlar (bkz. ilgili yorum satırları):
   - Tek/kararlı kaydırma alanı (100vh + stMain overflow-y:auto)
   - Harici Google Fonts CDN'i ASLA eklenmez (bkz. tests/test_turkish_display_regression.py)
 
-Ölü/kullanılmayan kod TEMİZLENDİ: .basdas-page-tab* sınıfları hiçbir
+Ölü/kullanılmayan kod TEMİZLENDİ: .omehr-page-tab* sınıfları hiçbir
 Python dosyasında referans edilmiyordu (navigasyon st.radio'ya taşınmış),
 kaldırıldı.
 """
@@ -441,3 +441,98 @@ CSS_STYLES = """
     .omehr-title-gap { height: 0.35rem !important; }
     </style>
     """
+
+# ============================================================
+# KARANLIK MOD (dark theme) — CSS_STYLES'tan SONRA enjekte edilir,
+# böylece aynı seçicilerle (daha sonra geldiği için) sabit kodlanmış
+# açık-tema renklerinin üzerine yazar. Değişkenler (--bd-*) koyu
+# değerlerle yeniden tanımlanır; değişken kullanan her kural otomatik
+# koyu temaya döner. Az sayıda sabit-kodlu (#FFFFFF vb.) kural ayrıca
+# açıkça ezilir.
+# ============================================================
+DARK_MODE_CSS = """
+    <style>
+    :root {
+        --bd-primary: #3E7BC4 !important;
+        --bd-primary-deep: #1B4A7A !important;
+        --bd-primary-light: #5C93D6 !important;
+        --bd-primary-tint: #172436 !important;
+        --bd-accent: #2FBAC4 !important;
+        --bd-accent-deep: #24949C !important;
+        --bd-accent-tint: #12282A !important;
+        --bd-selected-yellow: #4A431E !important;
+        --bd-gold: #E0B96E !important;
+        --bd-gold-tint: #2A2416 !important;
+        --bd-bg: #0F1620 !important;
+        --bd-surface: #182231 !important;
+        --bd-surface-sunken: #131B27 !important;
+        --bd-ink: #E7ECF3 !important;
+        --bd-ink-soft: #A6B2C2 !important;
+        --bd-ink-faint: #7A8797 !important;
+        --bd-border: #2A3547 !important;
+        --bd-border-strong: #3A4A5C !important;
+        --bd-danger: #E27878 !important;
+        --bd-danger-tint: #2E1A1A !important;
+        --bd-success: #57C98B !important;
+        --bd-success-tint: #16281F !important;
+    }
+    html, body, .stApp { background-color: var(--bd-bg) !important; }
+
+    div[data-testid="stTextArea"] textarea,
+    div[data-testid="stTextArea"] textarea:disabled {
+        color: var(--bd-ink) !important;
+        -webkit-text-fill-color: var(--bd-ink) !important;
+        background-color: var(--bd-surface) !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stDateInput"] input {
+        background-color: var(--bd-surface) !important;
+        color: var(--bd-ink) !important;
+        border-color: var(--bd-border-strong) !important;
+    }
+    div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] { background-color: var(--bd-surface) !important; }
+    div[data-testid="stDataFrame"] * { color: var(--bd-ink) !important; }
+    div[data-testid="stDataFrame"] thead tr th { color: #0B1420 !important; }
+    div[data-testid="stDataFrame"] tbody tr:nth-child(even) { background-color: var(--bd-surface-sunken) !important; }
+
+    h1, h2, h3 { color: #7FB8F0 !important; }
+    h4 { color: var(--bd-ink-soft) !important; }
+
+    div[data-testid="stMetric"], div[data-testid="stExpander"], div[data-testid="stForm"] {
+        background-color: var(--bd-surface) !important;
+        border-color: var(--bd-border) !important;
+    }
+    div[data-testid="stMetricValue"] { color: #7FB8F0 !important; }
+
+    div.stButton > button, div.stDownloadButton > button {
+        background-color: var(--bd-primary) !important;
+        color: #0B1420 !important;
+    }
+    div.stButton > button:hover, div.stDownloadButton > button:hover {
+        background-color: var(--bd-primary-light) !important;
+    }
+
+    section[data-testid="stSidebar"] { background-color: #0A1017 !important; }
+    section[data-testid="stSidebar"] input {
+        background-color: #16202C !important;
+        color: #E7ECF3 !important;
+    }
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] { background-color: #16202C !important; }
+
+    button[data-testid="stTab"] { color: var(--bd-ink-soft) !important; }
+    button[data-testid="stTab"][aria-selected="true"] { color: #7FB8F0 !important; }
+    </style>
+"""
+
+
+def get_theme_css(dark_mode: bool = False) -> str:
+    """Aktif tema için tam CSS bloğunu döndürür.
+
+    dark_mode=False iken davranış mevcut sürümle birebir aynıdır (yalnız
+    CSS_STYLES). dark_mode=True iken DARK_MODE_CSS, CSS_STYLES'tan SONRA
+    eklenir, böylece aynı seçicilerdeki sabit renkleri güvenle ezer.
+    """
+    if dark_mode:
+        return CSS_STYLES + DARK_MODE_CSS
+    return CSS_STYLES

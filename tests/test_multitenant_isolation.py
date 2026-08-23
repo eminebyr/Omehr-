@@ -166,10 +166,10 @@ def test_tenant_registry_crud(isolated_root, monkeypatch):
 
 def test_tenant_context_env_fallback(monkeypatch):
     """Web oturumu yoksa (main.py toplu çalıştırma, worker, testler),
-    OMEHR_TENANT ortam değişkenine düşmeli; o da yoksa varsayılan 'BASDAS'."""
+    OMEHR_TENANT ortam değişkenine düşmeli; o da yoksa varsayılan 'OMEHR'."""
     monkeypatch.delenv("OMEHR_TENANT", raising=False)
     from services.tenant_context import current_tenant_id
-    assert current_tenant_id() == "BASDAS"
+    assert current_tenant_id() == "OMEHR"
 
     monkeypatch.setenv("OMEHR_TENANT", "OZEL_KOD")
     assert current_tenant_id() == "OZEL_KOD"

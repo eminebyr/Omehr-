@@ -12,7 +12,7 @@ yutuyorlar, hiçbir yerde iz bırakmıyorlar. Bu, gerçek bir sorun oluştuğund
 yol açar.
 
 Bu modül, "pass" yerine kullanılacak bir CONTEXT MANAGER sağlar: hatayı
-YİNE YUTAR (akışı bozmaz, davranış aynı kalır) ama artık logs/BASDAS_CURRENT.log
+YİNE YUTAR (akışı bozmaz, davranış aynı kalır) ama artık logs/OMEHR_CURRENT.log
 dosyasına HANGİ bağlamda, HANGİ hatanın oluştuğunu yazar. Böylece "sessiz"
 olan sadece kullanıcı arayüzüdür — geliştirici/denetim için hiçbir şey
 sessiz değildir.
@@ -23,7 +23,7 @@ from contextlib import contextmanager
 
 from services.observability import get_logger
 
-_LOGGER = get_logger("basdas.sessiz_hata")
+_LOGGER = get_logger("omehr.sessiz_hata")
 
 
 @contextmanager
@@ -35,7 +35,7 @@ def swallow(context: str, level: str = "WARNING", reraise: bool = False):
             refresh_home_proximity(path)
 
     Hata oluşursa AKIŞ BOZULMAZ (pass ile aynı davranış) ama
-    logs/BASDAS_CURRENT.log'a bağlam + hata tipi + mesaj yazılır.
+    logs/OMEHR_CURRENT.log'a bağlam + hata tipi + mesaj yazılır.
     reraise=True verilirse, loglama sonrası hata yeniden fırlatılır
     (gerçekten KRİTİK noktalarda "sessizce devam etme" yerine durdurmak
     için kullanılır).

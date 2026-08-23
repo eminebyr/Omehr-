@@ -9,10 +9,10 @@ bilgisi içermez. 596 personel kaydı, gerçek bir şirketin yapısından
 
 Kullanım:
 1. Bu dosyayı ana paketin input/ klasörüne
-   "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx" adıyla kopyalayın
-2. KURULUM.bat / BASDAS_CURRENT_BASLAT.bat çalıştırın
+   "OMEHR_AI_NORM_TRANSFER_INPUT.xlsx" adıyla kopyalayın
+2. KURULUM.bat / OMEHR_CURRENT_BASLAT.bat çalıştırın
 3. Sistemin çalıştığını (KPI: Aktif Mevcut 596, Toplam Norm 607,
-   Norm Eksiği 49, Norm Fazlası 23) gördükten sonra, bu dosyayı
+   Norm Eksiği 48, Norm Fazlası 37) gördükten sonra, bu dosyayı
    GERÇEK şirket verinizle değiştirin.
 
 Giriş bilgileri (Ayarlar ekranından bulunan örnek kullanıcılar):

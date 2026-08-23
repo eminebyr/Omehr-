@@ -2,7 +2,7 @@
 
 ## 1. Paket yapısı hatası — iç içe tam kopya
 Yüklenen zip, tüm projenin (269 dosya, 7.4MB) YANLIŞLIKLA bir
-`basdas_toolbar_fix/` alt klasörüne kopyalanıp öyle paketlenmiş halini
+`omehr_toolbar_fix/` alt klasörüne kopyalanıp öyle paketlenmiş halini
 içeriyordu — dış kök eski (04:32), iç klasör güncel (21:40, gerçek
 toolbar düzeltmesini içeriyordu). İç (doğru/güncel) kopya taban alındı,
 dış bayat kopya atıldı.

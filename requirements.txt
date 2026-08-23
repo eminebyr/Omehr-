@@ -7,7 +7,7 @@ reportlab>=4.2,<5
 pypdf>=5,<7
 # DÜZELTME: streamlit>=1.57 paketin içine streamlit/.agents/skills/... adında
 # ÇOK DERİN (tek başına 115+ karakter) bir örnek şablon klasörü ekliyor —
-# BASDAS bunu HİÇ kullanmıyor ama Windows'ta C:\BASDAS gibi kısa bir kurulum
+# OMEHR bunu HİÇ kullanmıyor ama Windows'ta C:\OMEHR gibi kısa bir kurulum
 # yolunda bile WinError 206 (yol çok uzun) hatasına yol açabiliyor; uzun
 # masaüstü yollarında/klasör ismi yanlışlıkla iki kez iç içe çıkarılmışsa
 # kesin çöküyor. Üst sınır BİLEREK 1.57'nin altında tutulmuştur — gerçek

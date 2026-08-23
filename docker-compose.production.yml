@@ -7,7 +7,7 @@ x-app: &app
     OMEHR_RUNTIME_ROOT: /runtime
     OMEHR_RUN_ENGINE_ON_START: "0"
   volumes:
-    - ${OMEHR_TENANT_DATA:-./tenant_data/BASDAS}:/runtime
+    - ${OMEHR_TENANT_DATA:-./tenant_data/OMEHR}:/runtime
   restart: unless-stopped
 
 services:
@@ -65,6 +65,6 @@ services:
     command: ["-config.file=/etc/promtail/config.yml"]
     volumes:
       - ./deploy/promtail.yml:/etc/promtail/config.yml:ro
-      - ${OMEHR_TENANT_DATA:-./tenant_data/BASDAS}:/runtime:ro
+      - ${OMEHR_TENANT_DATA:-./tenant_data/OMEHR}:/runtime:ro
     depends_on: [loki]
     restart: unless-stopped

@@ -17,7 +17,7 @@ import unicodedata
 import numpy as np
 import pandas as pd
 
-OUTPUT_FILE_NAME = "BASDAS_Magaza_Unvan_Isgucu_Tahmini.xlsx"
+OUTPUT_FILE_NAME = "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
 FORECAST_MODE = "decision_support_only"
 MAXIMUM_NORM_EFFECT = 0.0
 MAXIMUM_TRANSFER_EFFECT = 0.0

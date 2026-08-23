@@ -20,7 +20,7 @@ def _root(): return runtime_root()
 def _output(): return _root()/'output'
 def _logs(): return _root()/'logs'
 def _input(): return input_path(_root())
-LOGGER=get_logger("basdas.main")
+LOGGER=get_logger("omehr.main")
 def main():
     from services.version import APP_VERSION as _APP_VERSION
     started=datetime.now(); audit={'version':'CURRENT','application_version':_APP_VERSION,'started_at':started.isoformat(timespec='seconds'),'status':'RUNNING'}

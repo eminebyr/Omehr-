@@ -11,7 +11,7 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 
 
 def tenant_code() -> str:
-    raw = os.getenv("OMEHR_TENANT", "BASDAS").strip().upper()
+    raw = os.getenv("OMEHR_TENANT", "OMEHR").strip().upper()
     code = re.sub(r"[^A-Z0-9_-]", "", raw)
     if not code or code != raw:
         raise ValueError("Geçersiz OMEHR_TENANT kodu.")

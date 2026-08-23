@@ -4,7 +4,7 @@ REM Bu, eski "YESIL_PAKET_TESTI.bat"in tam yerine gecmez (bkz. tests/README.md
 REM "Kapsam DISI" bolumu) - yalniz bu turda eklenen testleri calistirir.
 cd /d "%~dp0"
 
-echo BASDAS - baslangic test iskeleti calistiriliyor...
+echo OMEHR - baslangic test iskeleti calistiriliyor...
 python -m pytest tests/ %*
 
 if %ERRORLEVEL% EQU 0 (

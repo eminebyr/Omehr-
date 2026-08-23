@@ -331,7 +331,7 @@ def enhanced_excel_reports(kpi,st,tt,ai,staff):
 # ============================================================================
 # OUTPUT ORCHESTRATION
 # Adds executive dashboard, scenario impact, cost-ready optimization,
-# stronger explainability and version/audit outputs while preserving the current BASDAS outputs.
+# stronger explainability and version/audit outputs while preserving the current OMEHR outputs.
 # ============================================================================
 
 
@@ -712,7 +712,7 @@ def _build_admin_report_pack(kpi, st, tt, ai, input_path, main_pdf, main_excel):
     ai_pdf=extract_pdf('OMEHR_AI_Karar_Analizi.pdf',[0,1])
     operation_pdf=extract_pdf('OMEHR_Operasyon_Verimlilik_Analizi.pdf',[0,1])
     cost_pdf=extract_pdf('OMEHR_Maliyet_Analizi.pdf',[1,2])
-    # Tüm yönetici çıktıları doğrudan kurumsal BASDAS adlarıyla üretilir.
+    # Tüm yönetici çıktıları doğrudan kurumsal OMEHR adlarıyla üretilir.
     return [admin_pdf,ai_pdf,operation_pdf,cost_pdf,norm_path,finance_path,Path(main_excel)]
 
 

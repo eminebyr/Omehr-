@@ -14,7 +14,7 @@ Her mağazaya AYRI bir e-posta gider (alıcılar birbirini görmez) — bu,
 DÜZELTME (çok kiracılı SaaS): Bu modül önceden (1) yalnız Excel modunu
 destekliyordu, (2) e-posta gövdesinde SABİT bir firmanın adresini
 ve imzasında SABİT bir firma adını
-("Başdaş Market") koda gömüyordu. ÇOK KİRACILI bir SaaS'ta bu, HER
+("Omehr Market") koda gömüyordu. ÇOK KİRACILI bir SaaS'ta bu, HER
 kiracının mağazalarının, kendileriyle hiçbir ilgisi olmayan başka bir
 firmanın İK adresine puantaj göndermesi TALİMATINI içeren bir e-posta
 almasına yol açardı — hem yanlış hem veri gizliliği açısından riskli.
@@ -57,7 +57,7 @@ Bu e-posta, OMEHR İş Gücü Yönetimi ve Karar Destek Platformu tarafından he
 
 
 def _db_modu() -> bool:
-    return os.environ.get("BASDAS_INPUT_SOURCE", "excel").strip().lower() == "db"
+    return os.environ.get("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
 
 
 def _read_sheet(sheet_adi: str) -> pd.DataFrame:
@@ -101,7 +101,7 @@ def _alici_listesi() -> pd.DataFrame:
     if "Günlük Gönderim" in branch.columns:
         branch = branch[branch["Günlük Gönderim"].astype(str).str.strip().str.casefold() == "evet"]
     branch = branch[branch[email_col].astype(str).str.contains("@", na=False)]
-    branch = branch[~branch[email_col].astype(str).str.contains("dummy.basdas.local", case=False, na=False)]
+    branch = branch[~branch[email_col].astype(str).str.contains("dummy.omehr.local", case=False, na=False)]
     branch = branch.rename(columns={email_col: "_email"})
     return branch
 

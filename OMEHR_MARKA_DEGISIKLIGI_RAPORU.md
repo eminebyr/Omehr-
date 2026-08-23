@@ -2,7 +2,7 @@
 
 ## Kapsam kararı
 Kullanıcı-görünür marka metni/logosu (web başlığı, sayfa başlığı,
-PDF/Excel rapor başlıkları, kılavuz) BAŞDAŞ → OMEHR olarak değiştirildi.
+PDF/Excel rapor başlıkları, kılavuz) OMEHR → OMEHR olarak değiştirildi.
 Teknik/dahili isimlendirmelere (ortam değişkenleri OMEHR_RUNTIME_ROOT
 vb., dosya adları OMEHR_AI_NORM_TRANSFER_INPUT.xlsx, .bat betikleri,
 veritabanı tablo önekleri) BİLİNÇLİ olarak dokunulmadı — bunları
@@ -23,11 +23,11 @@ yerleştirildi. Görsel olarak render edip kontrol ettim.
   gösteriyor, grafik renkleri yeni paletle uyumlu.
 - **Excel raporları**: gerçek üretilen dosyada "OMEHR..." başlığını
   bizzat buldum.
-- **Kılavuz**: gövde metninde 0 BAŞDAŞ, alt bilgide "OMEHR V19.21.28..."
+- **Kılavuz**: gövde metninde 0 OMEHR, alt bilgide "OMEHR V19.21.28..."
 
 ## Bulduğum ve düzelttiğim tek gerçek eksik
 `tests/test_turkish_display_regression.py` senkron dışı kalmıştı —
-eski SVG mekanizmasını ve "BAŞDAŞ" metnini bekliyordu. Yeni PNG logo
+eski SVG mekanizmasını ve "OMEHR" metnini bekliyordu. Yeni PNG logo
 mekanizmasını doğrulayacak şekilde güncellendi (dosya varlığı + boyut
 makullüğü kontrolü, artık metin araması değil çünkü logo artık
 üretilen bir SVG değil, gerçek bir görsel dosya).

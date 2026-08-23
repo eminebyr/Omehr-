@@ -3,7 +3,7 @@ düzeltme doğrulaması.
 
 DÜZELTME ÖNCESİ: CEO rolündeki (Bölge veya Sorumlu alanı "CEO" olan)
 HER kullanıcının görünen adı, gerçek verisi ne olursa olsun SABİT
-"M. Feyzi Başdaş" metnine zorlanıyordu — çok kiracılı bir SaaS'ta bu,
+"M. Feyzi Omehr" metnine zorlanıyordu — çok kiracılı bir SaaS'ta bu,
 her firmanın kendi CEO'sunu yanlış bir isimle gösterirdi.
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ def test_ceo_role_shows_tenants_own_name_not_hardcoded_person(isolated_root):
     assert len(kullanicilar) == 1
     assert kullanicilar[0]["name"] == "Ayşe Yılmaz", (
         "CEO rolündeki kullanıcının GERÇEK adı gösterilmeli — hardcoded "
-        "'M. Feyzi Başdaş' değeri artık dönmemeli."
+        "'M. Feyzi Omehr' değeri artık dönmemeli."
     )
     assert kullanicilar[0]["role"] == "GM"
     assert kullanicilar[0]["scope"] == "ALL"

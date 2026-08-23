@@ -74,6 +74,25 @@ def _store_key(v):
     return aliases.get(k,k)
 def numeric(s): return pd.to_numeric(s,errors='coerce').fillna(0)
 
+
+def tr_title(value):
+    """Python'un str.title()'ı Türkçe büyük İ/I harflerini yanlış küçültür
+    (örn. 'YÖNETİCİ'.title() -> 'Yöneti̇ci̇', birleşik nokta karakteriyle
+    bozuk görünür). Bu fonksiyon her kelimenin ilk harfini olduğu gibi
+    bırakıp geri kalanını Türkçe harf eşlemesiyle küçültür (İ->i, I->ı,
+    Ş->ş, Ğ->ğ, Ü->ü, Ö->ö, Ç->ç), böylece 'YÖNETİCİ' -> 'Yönetici' olur.
+    """
+    if value is None:
+        return ''
+    s = str(value)
+    tr_lower = {'İ':'i','I':'ı','Ş':'ş','Ğ':'ğ','Ü':'ü','Ö':'ö','Ç':'ç'}
+    def _kelime(w):
+        if not w:
+            return w
+        rest = ''.join(tr_lower.get(c, c.lower()) for c in w[1:])
+        return w[0] + rest
+    return ' '.join(_kelime(w) for w in s.split(' '))
+
 # Mağaza raporlarında kullanılacak kurumsal unvan sırası.
 # Aynı unvanın "YÖNETİCİ ELİT" / "ELİT YÖNETİCİ" gibi farklı yazımları
 # tek sırada değerlendirilir. Listede bulunmayan unvanlar en altta alfabetik kalır.

@@ -97,3 +97,14 @@ def balance_detail_table(tt: pd.DataFrame) -> pd.DataFrame:
     if 'Net Fark' in out.columns:
         out['Net Fark'] = pd.to_numeric(out['Norm Fazlası'], errors='coerce').fillna(0).astype(int) - pd.to_numeric(out['Norm Eksiği'], errors='coerce').fillna(0).astype(int)
     return out
+
+
+def family_balance_notes(tt: pd.DataFrame, store_key: str) -> list[str]:
+    """Servis katmanı köprüsü — web/ katmanı src/ dosyalarını doğrudan import
+    edemez (bkz. tools/check_architecture.py). Gerçek üretim mantığı
+    src.state_engine.family_balance_notes içindedir (kutucuklu Excel/PDF
+    raporlarındaki "MEVCUT DURUM AÇIKLAMASI" ile aynı metin kalıbı); bu
+    fonksiyon sadece web/tab_modules için izin verilen bir erişim noktasıdır.
+    """
+    from src.state_engine import family_balance_notes as _impl
+    return _impl(tt, store_key)

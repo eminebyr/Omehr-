@@ -100,7 +100,7 @@ kopyalamaya gerek yok:
 1. Giriş yaptıktan sonra **Ayarlar** sekmesine gidin
 2. En altta **"Excel Verisi Yükle"** bölümünü göreceksiniz
 3. **Test/demo amaçlı**, tamamen güvenli, uydurma isim/e-posta içeren
-   bir örnek dosya bu paketin içinde: `ORNEK_VERI_GUVENLI/BASDAS_AI_
+   bir örnek dosya bu paketin içinde: `ORNEK_VERI_GUVENLI/OMEHR_AI_
    NORM_TRANSFER_INPUT.xlsx` — bunu seçip yükleyebilirsiniz (596 sahte
    personel, gerçek gibi KPI'lar üretir: 596/607/49/23/-26). **Gerçek
    şirketinizin verisini** kullanmak için kendi Excel dosyanızı (aynı

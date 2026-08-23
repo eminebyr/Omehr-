@@ -22,7 +22,7 @@ firmaya sızması anlamına gelirdi. 6 ayrı yerde düzelttim:
 | `message_personalization.py` | "ik1" kullanıcısı ve CEO, belirli bir kişinin adıyla eşleştiriliyordu | Genel rol tabanlı mantığa çevrildi |
 | `web/accounts.py` | `NOTIFY_TO` sabit listesi HER transfer bildirimine 4 adres CC'liyordu | Kaldırıldı |
 | `web/app.py` | `APPROVERS` sabit e-posta listesi onay yetkisi veriyordu | Kaldırıldı (rol tabanlı kontrol zaten yeterliydi) |
-| `puantaj_hatirlatma.py` | Otomatik e-postada sabit adres + "Başdaş Market" imzası | Kiracının kendi verisinden dinamik çözümleme + OMEHR markası |
+| `puantaj_hatirlatma.py` | Otomatik e-postada sabit adres + "Omehr Market" imzası | Kiracının kendi verisinden dinamik çözümleme + OMEHR markası |
 | `management_center.py` | CEO rolündeki HER kullanıcı belirli bir kişinin adıyla gösteriliyordu | Düzeltildi |
 
 ## Doğrulama

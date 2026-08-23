@@ -3,9 +3,9 @@ positions: {filename: /tmp/positions.yaml}
 clients:
   - url: http://loki:3100/loki/api/v1/push
 scrape_configs:
-  - job_name: basdas
+  - job_name: omehr
     static_configs:
       - targets: [localhost]
         labels:
-          job: basdas
+          job: omehr
           __path__: /runtime/logs/*.log

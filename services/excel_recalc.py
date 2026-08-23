@@ -133,7 +133,7 @@ def recalculate_workbook(path: Path, timeout: int = RECALC_TIMEOUT_SECONDS) -> b
     if binary is None:
         return False
 
-    with tempfile.TemporaryDirectory(prefix="basdas_recalc_") as tmp_dir:
+    with tempfile.TemporaryDirectory(prefix="omehr_recalc_") as tmp_dir:
         cmd = [
             binary,
             "--headless",

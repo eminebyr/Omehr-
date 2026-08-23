@@ -19,39 +19,39 @@ Kullanım ilkesi:
 from __future__ import annotations
 
 
-class BasdasError(Exception):
+class OmehrError(Exception):
     """Tüm OMEHR'e özel hataların ortak temel sınıfı.
 
-    `except BasdasError` ile "bilinen/beklenen" hata türlerinin tamamı tek
+    `except OmehrError` ile "bilinen/beklenen" hata türlerinin tamamı tek
     seferde yakalanabilir; gerçekten beklenmeyen (programlama) hatalar bu
     sınıfın dışında kalıp yükselmeye devam eder.
     """
 
 
-class WorkbookError(BasdasError):
+class WorkbookError(OmehrError):
     """Input/rapor Excel dosyasının okunması, kilitlenmesi, yedeklenmesi
     veya geri yüklenmesiyle ilgili hatalar (bozuk dosya, kilitli dosya,
     beklenmeyen sayfa/sütun eksikliği vb.)."""
 
 
-class MailDeliveryError(BasdasError):
+class MailDeliveryError(OmehrError):
     """Outlook COM veya SMTP üzerinden e-posta gönderiminin başarısız
     olduğu durumlar (sunucu erişilemez, kimlik doğrulama hatası, geçersiz
     alıcı/ek dosya vb.)."""
 
 
-class TransferConflictError(BasdasError):
+class TransferConflictError(OmehrError):
     """Bir transfer talebinin normal iş kurallarına göre işlenemediği
     durumlar (örn. hedef mağazada artık norm eksiği kalmamış, personel
     zaten başka bir bekleyen transferde, kaynak kayıt bulunamadı vb.)."""
 
 
-class ConfigurationError(BasdasError):
+class ConfigurationError(OmehrError):
     """Yapılandırma dosyalarının (config_*.json, .env, tenants.json)
     okunamadığı, eksik/geçersiz olduğu durumlar."""
 
 
-class AuthorizationError(BasdasError):
+class AuthorizationError(OmehrError):
     """Bir kullanıcının rolü/yetki kapsamı, istediği işlem için yeterli
     olmadığında (örn. onay yetkisi olmayan kullanıcının transferi
     onaylamaya çalışması) fırlatılır."""

@@ -11,7 +11,7 @@ Kullanım (main.py'den veya elle):
     from services.db_migration import migrate_database
     sonuc = migrate_database(
         sqlite_path=Path("data/v16_management.db"),
-        postgres_dsn="postgresql://kullanici:parola@sunucu:5432/basdas",
+        postgres_dsn="postgresql://kullanici:parola@sunucu:5432/omehr",
     )
     print(sonuc)  # {'audit_log': {'sqlite_satir': 42, 'postgres_satir': 42, 'eslesti': True}, ...}
 

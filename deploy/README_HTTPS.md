@@ -14,14 +14,14 @@ Tarayıcı "güvensiz bağlantı" uyarısı verir — bu YEREL TEST için normal
 gerçek müşteriye bu şekilde gösterilmemelidir.
 
 ## Üretim kurulumu (Let's Encrypt / certbot)
-1. Alan adınızı (ör. `basdas.sizinfirmaniz.com`) sunucunuzun IP'sine yönlendirin.
+1. Alan adınızı (ör. `omehr.sizinfirmaniz.com`) sunucunuzun IP'sine yönlendirin.
 2. certbot ile gerçek sertifika alın (webroot yöntemi, `certbot_webroot`
    volume'u zaten `docker-compose.yml`'de nginx'e bağlı):
    ```bash
-   docker run --rm -v basdas_certbot_webroot:/var/www/certbot \
+   docker run --rm -v omehr_certbot_webroot:/var/www/certbot \
      -v $(pwd)/deploy/certs:/etc/letsencrypt \
      certbot/certbot certonly --webroot -w /var/www/certbot \
-     -d basdas.sizinfirmaniz.com --email destek@sizinfirmaniz.com --agree-tos
+     -d omehr.sizinfirmaniz.com --email destek@sizinfirmaniz.com --agree-tos
    ```
 3. `deploy/certs/fullchain.pem` ve `deploy/certs/privkey.pem` dosyalarının
    certbot'un ürettiği gerçek sertifikaya işaret ettiğinden emin olun.

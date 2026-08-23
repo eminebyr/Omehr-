@@ -3,9 +3,9 @@
 ## Doğrulanmış KPI
 - Aktif Mevcut: **596**
 - Toplam Norm: **607**
-- Norm Eksiği: **49**
-- Norm Fazlası: **23**
-- Net İhtiyaç: **-26**
+- Norm Eksiği: **48**
+- Norm Fazlası: **37**
+- Net İhtiyaç: **-11**
 
 ## Bu sürümde profesyonelleştirilen başlıklar
 1. **KPI ve doküman senkronu:** Kılavuz, web mutabakat paneli, doğrulama raporu ve Python motoru aynı KPI sözlüğünü kullanır.

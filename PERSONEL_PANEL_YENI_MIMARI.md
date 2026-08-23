@@ -20,4 +20,4 @@ Bu paket hazırlanırken mevcut Excel'deki 596 personel satırı sicile gömülm
 5. Hatalı çıkış işlemi `Sicil / Geçmiş` ekranından geri alınabilir.
 
 ## Tek doğru kaynak
-Varsayılan `BASDAS_PERSONNEL_SOURCE=panel` davranışıdır. Eski davranışa zorunlu dönüş gerekirse ortam değişkeni `BASDAS_PERSONNEL_SOURCE=excel` yapılabilir.
+Varsayılan `OMEHR_PERSONNEL_SOURCE=panel` davranışıdır. Eski davranışa zorunlu dönüş gerekirse ortam değişkeni `OMEHR_PERSONNEL_SOURCE=excel` yapılabilir.

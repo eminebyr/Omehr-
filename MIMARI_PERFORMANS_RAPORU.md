@@ -26,7 +26,7 @@ otomasyonuyla kontrol ediyor — bu doğası gereği birkaç saniye sürebilir.
 Önceden bu, "Kaydet ve Bildir" butonunun İÇİNDE, senkron çalışıyordu —
 buton bu süre boyunca donmuş görünüyordu.
 
-**Düzeltme:** Zaten sürekli arka planda çalışan (`BASDAS_CURRENT_
+**Düzeltme:** Zaten sürekli arka planda çalışan (`OMEHR_CURRENT_
 BASLAT.bat`'ta otomatik başlayan) `worker.py` kuyruk mekanizmasını
 keşfedip personel bildirimlerini buna yönlendirdim. Ayrıca
 `personnel_notifications.py`'nin KENDİ İÇİNDEKİ okumaların da

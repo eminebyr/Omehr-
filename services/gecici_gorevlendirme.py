@@ -33,7 +33,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from services.pdf_compat import make_outlook_safe_pdf
 from services.runtime_paths import runtime_root
-from src.pdf_fonts import font as _basdas_font
+from src.pdf_fonts import font as _omehr_font
 
 def _template():
     from services.runtime_paths import runtime_root
@@ -144,8 +144,8 @@ def create_temporary_assignment_documents(assignment: Mapping[str, object]) -> d
         if not tmp_docx.is_file() or tmp_docx.stat().st_size < 1000:
             raise IOError("Geçici görevlendirme DOCX dosyası oluşturulamadı.")
 
-        font = _basdas_font(bold=False)
-        font_bold = _basdas_font(bold=True)
+        font = _omehr_font(bold=False)
+        font_bold = _omehr_font(bold=True)
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle("gg_title", parent=styles["Heading1"], fontName=font_bold, fontSize=13, leading=17, alignment=TA_CENTER, spaceAfter=10, textColor=colors.HexColor("#143C36"))
         body_style = ParagraphStyle("gg_body", parent=styles["BodyText"], fontName=font, fontSize=9, leading=13, alignment=TA_LEFT)
@@ -200,3 +200,45 @@ def create_temporary_assignment_documents(assignment: Mapping[str, object]) -> d
         os.replace(tmp_pdf, final_pdf)
 
     return {"docx": str(final_docx), "pdf": str(final_pdf)}
+
+
+def create_temporary_assignment_documents_and_notify(
+    assignment: Mapping[str, object],
+    *,
+    account_frame=None,
+    sheet_frames: Mapping[str, object] | None = None,
+    tenant: str = "OMEHR",
+) -> dict[str, str]:
+    """create_temporary_assignment_documents() + otomatik mail — TEK ÇAĞRIDA.
+
+    DÜZELTME (dayanıklılık) — services/rotation_document.py::
+    create_rotation_documents_and_notify ile AYNI gerekçe: mevcut üretim
+    akışında (web -> onay -> worker.py TRANSFER_DECISION) mail zaten
+    otomatik gider; bu fonksiyon o zincirin DIŞINDAKİ çağrı yerleri için
+    (script, gelecekteki otomasyon) EK, kendi kendine yeten bir erişim
+    noktasıdır. Mevcut create_temporary_assignment_documents() ve
+    worker.py akışı DEĞİŞTİRİLMEDİ.
+    """
+    documents = create_temporary_assignment_documents(assignment)
+    from services.transfer_recipients import transfer_recipients
+    from services.job_queue import enqueue as _enqueue_job
+    recipients = transfer_recipients(account_frame, assignment, sheet_frames)
+    if not recipients:
+        return {**documents, "mail_status": "SKIPPED_NO_RECIPIENTS"}
+    kisi = assignment.get("person_name") or assignment.get("person_id") or "Belirtilmemiş"
+    kaynak = assignment.get("source_store") or "?"
+    hedef = assignment.get("target_store") or "?"
+    subject = f"Geçici Görevlendirme / Şube Destek Formu | {kisi} | {kaynak} -> {hedef}"
+    body = (
+        f"Personel: {kisi}\nDevreden şube (mevcut): {kaynak}\nDestek verilecek şube (geçici): {hedef}\n\n"
+        "Bu e-postaya Geçici Görevlendirme / Şube Destek Formu (DOCX ve PDF) eklenmiştir — "
+        "hem devreden hem destek alan şube yetkilisi tarafından imzalanıp İK'ya iletilmelidir. "
+        "Not: Bu görevlendirme personelin norm ve asıl mağaza kaydını değiştirmez.\n\n"
+        "Bu e-posta, hem devreden hem destek alan şubeye otomatik olarak gönderilmiştir."
+    )
+    attachments = [v for k, v in documents.items() if k in {"pdf", "docx"} and v]
+    _enqueue_job("SEND_EMAIL", {
+        "report_type": "GECICI_GOREVLENDIRME", "subject": subject, "body": body,
+        "recipients": recipients, "attachments": attachments,
+    }, tenant=tenant)
+    return {**documents, "mail_status": "QUEUED"}

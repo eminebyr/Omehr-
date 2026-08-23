@@ -37,10 +37,10 @@ def font(bold: bool=False)->str:
     if not _PDF_FONTS_READY:
         try:
             regular,bold_path=_find_pair()
-            pdfmetrics.registerFont(TTFont('BasdasPDF',str(regular),validate=1,asciiReadable=True))
-            pdfmetrics.registerFont(TTFont('BasdasPDF-Bold',str(bold_path),validate=1,asciiReadable=True))
-            pdfmetrics.registerFontFamily('BasdasPDF',normal='BasdasPDF',bold='BasdasPDF-Bold',italic='BasdasPDF',boldItalic='BasdasPDF-Bold')
-            face=pdfmetrics.getFont('BasdasPDF').face
+            pdfmetrics.registerFont(TTFont('OmehrPDF',str(regular),validate=1,asciiReadable=True))
+            pdfmetrics.registerFont(TTFont('OmehrPDF-Bold',str(bold_path),validate=1,asciiReadable=True))
+            pdfmetrics.registerFontFamily('OmehrPDF',normal='OmehrPDF',bold='OmehrPDF-Bold',italic='OmehrPDF',boldItalic='OmehrPDF-Bold')
+            face=pdfmetrics.getFont('OmehrPDF').face
             absent=[ch for ch in REQUIRED_TURKISH_GLYPHS if ord(ch) not in face.charWidths]
             if absent:
                 raise RuntimeError('Seçilen sistem fontunda Türkçe glif eksik: '+''.join(absent))
@@ -49,7 +49,7 @@ def font(bold: bool=False)->str:
         except Exception as exc:
             _PDF_FONT_ERROR=str(exc)
             raise RuntimeError('PDF font kaydı başarısız: '+str(exc)) from exc
-    return 'BasdasPDF-Bold' if bold else 'BasdasPDF'
+    return 'OmehrPDF-Bold' if bold else 'OmehrPDF'
 
 def font_status()->dict:
     return {'ready':_PDF_FONTS_READY,'error':_PDF_FONT_ERROR,'files':[{'name':Path(p).name,'path':p,'exists':Path(p).is_file()} for p in _SELECTED_FILES]}

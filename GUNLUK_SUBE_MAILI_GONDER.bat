@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title BASDAS CURRENT - Gunluk Sube Maili
+title OMEHR CURRENT - Gunluk Sube Maili
 
 if not exist ".venv\Scripts\python.exe" (
   echo HATA: Once OMEHR_CURRENT_BASLAT.bat dosyasini bir kez calistirin.

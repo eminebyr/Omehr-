@@ -16,7 +16,7 @@ def test_get_settings_returns_documented_defaults(isolated_root):
     from services.app_settings import get_settings
 
     s = get_settings()
-    assert s["company"] == {"name": "Başdaş Marketler", "logo_path": ""}
+    assert s["company"] == {"name": "Omehr Marketler", "logo_path": ""}
     assert s["backup"] == {"max_backups": 20}
     assert s["notifications"]["smtp"]["enabled"] is False
 

@@ -6,7 +6,7 @@ anda çok kullanıcıya satılacaksa, kod tabanını YENİDEN YAZMADAN, yalnız
 ortam değişkenleriyle PostgreSQL'e geçilebilir:
 
     OMEHR_DB_BACKEND=postgres
-    OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
+    OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/omehr
 
 Tasarım kararı: Var olan tüm modüller `?` yer tutucularıyla (sqlite3
 tarzı) ve sqlite3.Row benzeri sözlük-erişimli satırlarla yazılmıştı. Bu

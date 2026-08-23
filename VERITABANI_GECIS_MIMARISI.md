@@ -56,7 +56,7 @@ OMEHR_CURRENT_BASLAT.bat
 
 # PostgreSQL için:
 set OMEHR_DB_BACKEND=postgres
-set OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/basdas
+set OMEHR_POSTGRES_DSN=postgresql://kullanici:parola@sunucu:5432/omehr
 ```
 
 ## Bilerek YAPILMAYAN, dürüstçe kapsam dışı bırakılan kısımlar

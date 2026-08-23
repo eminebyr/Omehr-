@@ -4,7 +4,7 @@
 - Açıklama bulunan personelin PDF satırı sarı gösterilir.
 - Personel açıklaması ilgili mağazanın `MEVCUT DURUM AÇIKLAMASI` metnine eklenir.
 - Açıklama ayrıca PDF'de sarı `AÇIKLAMA` satırında gösterilir.
-- `BASDAS_Executive_Data.xlsx` içindeki `Mağaza-Unvan Bazlı` sayfasına `Açıklama` sütunu eklenir.
+- `OMEHR_Executive_Data.xlsx` içindeki `Mağaza-Unvan Bazlı` sayfasına `Açıklama` sütunu eklenir.
 - Açıklama bulunan Excel satırı sarı renklendirilir ve `Personel Adı Soyadı` hücresine fareyle görünür Excel notu eklenir.
 - Ana Veri Yönetimi panelindeki Personel tablosuna `Açıklama` alanı eklenmiştir.
 - Panelden kayıtta Fact_Mevcut H sütunu `Açıklama`, I sütunu `İsim Soyisim` olacak şekilde formüller güncellenir.

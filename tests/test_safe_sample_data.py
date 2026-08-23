@@ -25,7 +25,7 @@ def test_safe_sample_data_contains_no_real_looking_names():
 
 def test_safe_sample_data_contains_no_real_domain():
     df = pd.read_excel("ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", sheet_name="Mail_Listesi")
-    assert not df["E-posta"].astype(str).str.contains("basdasmarket", case=False).any(), (
+    assert not df["E-posta"].astype(str).str.contains("omehrmarket", case=False).any(), (
         "REGRESYON: güvenli örnek veride gerçek şirket domaini bulundu."
     )
 

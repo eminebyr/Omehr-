@@ -17,7 +17,7 @@ from services.runtime_paths import code_root
 from services.web_runtime import connect_web_db
 from services.safe_exec import log_swallowed
 
-LOGGER = get_logger("basdas.worker")
+LOGGER = get_logger("omehr.worker")
 
 def _admin_copy_recipients() -> list[str]:
     """Rotasyon evrakının bir kopyasını Mail_Listesi'ndeki admin hesabına ekler."""

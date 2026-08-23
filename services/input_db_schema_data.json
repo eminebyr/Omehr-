@@ -362,7 +362,7 @@
   "KULLANIM_REHBERI": {
     "header_row": 1,
     "headers": [
-      "BAŞDAŞ AI İŞ GÜCÜ & KAPASİTE OPTİMİZASYONU – GİRDİ REHBERİ"
+      "OMEHR AI İŞ GÜCÜ & KAPASİTE OPTİMİZASYONU – GİRDİ REHBERİ"
     ]
   },
   "Standart_Sure_Kutuphanesi": {
@@ -837,13 +837,13 @@
   "00_AI_SIZ_GIRIS_REHBERI": {
     "header_row": 1,
     "headers": [
-      "BAŞDAŞ V19 GERÇEK INPUT DOSYASI - RENK REHBERİ"
+      "OMEHR V19 GERÇEK INPUT DOSYASI - RENK REHBERİ"
     ]
   },
   "00_TUM_SAYFALAR_REHBERI": {
     "header_row": 1,
     "headers": [
-      "BAŞDAŞ V19 - TÜM 62 SAYFA KULLANIM VE RENK REHBERİ"
+      "OMEHR V19 - TÜM 62 SAYFA KULLANIM VE RENK REHBERİ"
     ]
   }
 }

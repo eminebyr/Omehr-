@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal
 cls
 echo ============================================================
-echo   BASDAS / OMEHR - 3 PC ORTAK EXCEL AYARI
+echo   OMEHR / OMEHR - 3 PC ORTAK EXCEL AYARI
 echo ============================================================
 echo.
 echo Ornek yol: \\SUNUCU\OMEHR\OMEHR_AI_NORM_TRANSFER_INPUT.xlsx

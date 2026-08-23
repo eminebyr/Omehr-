@@ -26,7 +26,7 @@ if not errorlevel 1 (
         echo  DOGRU YONTEM:
         echo   1^) Bu ZIP/RAR dosyasina SAG TIKLAYIN
         echo   2^) "Buraya Cikart" veya "Extract All" secin
-        echo   3^) Cikan GERCEK klasore girin ^(orn. C:\BASDAS^)
+        echo   3^) Cikan GERCEK klasore girin ^(orn. C:\OMEHR^)
         echo   4^) KURULUM.bat'i O KLASORDEN calistirin
         echo.
         pause
@@ -53,13 +53,13 @@ set "VENV_DIR=%LOCALAPPDATA%\OMEHR_RUNTIME\venv"
 set "VENVPY=%VENV_DIR%\Scripts\python.exe"
 
 rem =====================================================================
-rem BASDAS V19.21.28 - MASAUSTU UYUMLU ILK KURULUM
+rem OMEHR V19.21.28 - MASAUSTU UYUMLU ILK KURULUM
 rem Uygulama klasoru Masaustunde kalabilir. Uzun yol sorununu onlemek icin
 rem sanal ortam kisa bir sistem klasorunde tutulur.
 rem =====================================================================
 
 echo ================================================================
-echo  BASDAS V19.21.28 - Masaustu Uyumlu Ilk Kurulum
+echo  OMEHR V19.21.28 - Masaustu Uyumlu Ilk Kurulum
 echo ================================================================
 echo.
 echo  Uygulama konumu: %cd%
@@ -171,7 +171,7 @@ if errorlevel 1 (
 )
 
 echo [6/8] Masaustu kisayolu olusturuluyor...
-set "KISAYOL=%USERPROFILE%\Desktop\BASDAS Norm Kadro Sistemi.bat"
+set "KISAYOL=%USERPROFILE%\Desktop\OMEHR Norm Kadro Sistemi.bat"
 > "%KISAYOL%" echo @echo off
 >> "%KISAYOL%" echo cd /d "%cd%"
 >> "%KISAYOL%" echo call "%cd%\OMEHR_CURRENT_BASLAT.bat"

@@ -21,9 +21,9 @@ def _resolve_excel(result: dict) -> Path:
     if isinstance(result, dict) and result.get("excel"):
         candidates.append(Path(result["excel"]))
     candidates += [
-        _output() / "BASDAS_Executive_Data.xlsx",
+        _output() / "OMEHR_Executive_Data.xlsx",
         _output() / "V19_Executive_Data.xlsx",
-        _output() / "BASDAS_Executive_Data.xlsx",
+        _output() / "OMEHR_Executive_Data.xlsx",
     ]
     candidates += sorted(_output().glob("*_Executive_Data.xlsx"), key=lambda x: x.stat().st_mtime if x.exists() else 0, reverse=True)
     for path in candidates:

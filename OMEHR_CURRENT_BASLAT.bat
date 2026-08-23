@@ -26,7 +26,7 @@ set "BASEPY=%VENV_DIR%\Scripts\python.exe"
 if not exist "logs" mkdir "logs"
 
 echo ================================================================
-echo  BASDAS V19.21.28 - Gunluk Baslatma
+echo  OMEHR V19.21.28 - Gunluk Baslatma
 echo ================================================================
 echo.
 
@@ -79,10 +79,10 @@ for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8501" ^| findstr "LISTENING
     taskkill /PID %%P /F >nul 2>nul
 )
 timeout /t 2 /nobreak >nul
-start "BASDAS Worker" /MIN cmd /c ""%BASEPY%" "%cd%\worker.py" >> "%cd%\logs\CURRENT_Worker_Console.log" 2>&1"
-start "BASDAS Monitoring" /MIN cmd /c ""%BASEPY%" -m uvicorn monitoring_server:app --host 127.0.0.1 --port 9108 >> "%cd%\logs\CURRENT_Monitoring_Console.log" 2>&1"
-start "BASDAS Alerts" /MIN cmd /c ""%BASEPY%" "%cd%\alert_watcher.py" >> "%cd%\logs\CURRENT_Alerts_Console.log" 2>&1"
-start "BASDAS Web" /MIN cmd /c "cd /d "%cd%" && "%BASEPY%" -m streamlit run "%cd%\web\app.py" --server.port 8501 --server.headless true >> "%cd%\logs\CURRENT_Web_Console.log" 2>&1"
+start "OMEHR Worker" /MIN cmd /c ""%BASEPY%" "%cd%\worker.py" >> "%cd%\logs\CURRENT_Worker_Console.log" 2>&1"
+start "OMEHR Monitoring" /MIN cmd /c ""%BASEPY%" -m uvicorn monitoring_server:app --host 127.0.0.1 --port 9108 >> "%cd%\logs\CURRENT_Monitoring_Console.log" 2>&1"
+start "OMEHR Alerts" /MIN cmd /c ""%BASEPY%" "%cd%\alert_watcher.py" >> "%cd%\logs\CURRENT_Alerts_Console.log" 2>&1"
+start "OMEHR Web" /MIN cmd /c "cd /d "%cd%" && "%BASEPY%" -m streamlit run "%cd%\web\app.py" --server.port 8501 --server.headless true >> "%cd%\logs\CURRENT_Web_Console.log" 2>&1"
 
 echo [5/5] Web paneli bekleniyor...
 set "DENEME=0"

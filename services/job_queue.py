@@ -22,7 +22,7 @@ def connect() -> sqlite3.Connection:
     return con
 
 
-def enqueue(job_type: str, payload: dict | None = None, tenant: str = "BASDAS") -> int:
+def enqueue(job_type: str, payload: dict | None = None, tenant: str = "OMEHR") -> int:
     with connect() as con:
         cur = con.execute(
             "INSERT INTO jobs(tenant,job_type,payload,status,created_at) VALUES(?,?,?,?,?)",

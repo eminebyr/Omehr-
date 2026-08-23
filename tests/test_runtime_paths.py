@@ -19,11 +19,11 @@ def test_runtime_root_uses_env_override(isolated_root):
     assert runtime_paths.runtime_root() == isolated_root
 
 
-def test_tenant_code_default_is_basdas(monkeypatch):
+def test_tenant_code_default_is_omehr(monkeypatch):
     from services import runtime_paths
 
     monkeypatch.delenv("OMEHR_TENANT", raising=False)
-    assert runtime_paths.tenant_code() == "BASDAS"
+    assert runtime_paths.tenant_code() == "OMEHR"
 
 
 def test_tenant_code_accepts_valid_custom_code(monkeypatch):

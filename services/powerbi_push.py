@@ -20,7 +20,7 @@ hemen düzeltirim.
 sizin/BT ekibinizin Azure portalında elle yapması gerekir):
 
 1. https://portal.azure.com > Azure Active Directory > Uygulama kayıtları
-   > Yeni kayıt. Bir isim verin (ör. "BASDAS Power BI Push").
+   > Yeni kayıt. Bir isim verin (ör. "OMEHR Power BI Push").
 2. Kaydedilen uygulamanın "Uygulama (istemci) Kimliği" ve
    "Dizin (kiracı) Kimliği" değerlerini not edin.
 3. Sertifikalar ve gizli anahtarlar > Yeni istemci gizli anahtarı
@@ -35,7 +35,7 @@ sizin/BT ekibinizin Azure portalında elle yapması gerekir):
 6. Çalışma alanının ID'sini URL'den alın (app.powerbi.com/groups/{BURASI}).
 
 Bu 6 bilgi (tenant_id, client_id, client_secret, workspace_id) ortam
-değişkenleriyle (BASDAS_POWERBI_*) sisteme tanıtılır — bkz. aşağıdaki
+değişkenleriyle (OMEHR_POWERBI_*) sisteme tanıtılır — bkz. aşağıdaki
 Config sınıfı.
 """
 from __future__ import annotations
@@ -69,7 +69,7 @@ class PowerBIConfig:
     client_id: str
     client_secret: str
     workspace_id: str
-    dataset_name: str = "BASDAS Norm Kadro Modeli"
+    dataset_name: str = "OMEHR Norm Kadro Modeli"
 
     @classmethod
     def from_env(cls) -> "PowerBIConfig":
@@ -77,8 +77,8 @@ class PowerBIConfig:
         bilgiler (SMTP parolası vb.) bu projede aynı desenle — config
         dosyasında DEĞİL, ortam değişkeninde — tutuluyor."""
         eksikler = [
-            ad for ad in ("BASDAS_POWERBI_TENANT_ID", "BASDAS_POWERBI_CLIENT_ID",
-                          "BASDAS_POWERBI_CLIENT_SECRET", "BASDAS_POWERBI_WORKSPACE_ID")
+            ad for ad in ("OMEHR_POWERBI_TENANT_ID", "OMEHR_POWERBI_CLIENT_ID",
+                          "OMEHR_POWERBI_CLIENT_SECRET", "OMEHR_POWERBI_WORKSPACE_ID")
             if not os.environ.get(ad, "").strip()
         ]
         if eksikler:
@@ -87,11 +87,11 @@ class PowerBIConfig:
                 " — bkz. services/powerbi_push.py modül docstring'indeki Azure AD kurulum adımları."
             )
         return cls(
-            tenant_id=os.environ["BASDAS_POWERBI_TENANT_ID"].strip(),
-            client_id=os.environ["BASDAS_POWERBI_CLIENT_ID"].strip(),
-            client_secret=os.environ["BASDAS_POWERBI_CLIENT_SECRET"].strip(),
-            workspace_id=os.environ["BASDAS_POWERBI_WORKSPACE_ID"].strip(),
-            dataset_name=os.environ.get("BASDAS_POWERBI_DATASET_NAME", "BASDAS Norm Kadro Modeli").strip(),
+            tenant_id=os.environ["OMEHR_POWERBI_TENANT_ID"].strip(),
+            client_id=os.environ["OMEHR_POWERBI_CLIENT_ID"].strip(),
+            client_secret=os.environ["OMEHR_POWERBI_CLIENT_SECRET"].strip(),
+            workspace_id=os.environ["OMEHR_POWERBI_WORKSPACE_ID"].strip(),
+            dataset_name=os.environ.get("OMEHR_POWERBI_DATASET_NAME", "OMEHR Norm Kadro Modeli").strip(),
         )
 
 

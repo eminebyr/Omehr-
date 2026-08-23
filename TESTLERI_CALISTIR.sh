@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "BAŞDAŞ — başlangıç test iskeleti çalıştırılıyor..."
+echo "OMEHR — başlangıç test iskeleti çalıştırılıyor..."
 python3 -m pytest tests/ "$@"
 sonuc=$?
 

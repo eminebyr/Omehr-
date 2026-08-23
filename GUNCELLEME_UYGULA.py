@@ -5,7 +5,7 @@ Kullanım:
     python GUNCELLEME_UYGULA.py <guncelleme_paketi_klasoru> <yeni_surum>
 
 Örnek:
-    python GUNCELLEME_UYGULA.py C:\\indirilenler\\basdas_v19_21_3_paket 19.21.3
+    python GUNCELLEME_UYGULA.py C:\\indirilenler\\omehr_v19_21_3_paket 19.21.3
 
 Bu betik services/updater.py'yi çağırır (bkz. o modülün docstring'i için
 kapsam ve sınırlar). OMEHR_CURRENT_BASLAT.bat/.sh ile AYNI desende,

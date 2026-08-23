@@ -25,7 +25,7 @@ def recipient_name(row: Any) -> str:
     """Mail_Listesi satırını kurumsal hitap adına dönüştürür.
 
     DÜZELTME (çok kiracılı SaaS): önceden burada belirli bir gerçek
-    kişinin adı/e-postası ("Ömer Arasın", "M. Feyzi Başdaş") koda GÖMÜLÜ
+    kişinin adı/e-postası ("Ömer Arasın", "M. Feyzi Omehr") koda GÖMÜLÜ
     özel durum olarak işleniyordu — bu, ÇOK KİRACILI bir SaaS'ta her
     firmanın kendi "ik1" kullanıcısını veya CEO'sunu yanlışlıkla bu
     belirli kişi olarak adlandırırdı. Artık yalnız verinin KENDİSİNDEKİ

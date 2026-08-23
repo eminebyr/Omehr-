@@ -1,7 +1,7 @@
-BASDAS V19.21.29 MASAUSTU KURULUMU
+OMEHR V19.21.29 MASAUSTU KURULUMU
 
 1. ZIP dosyasini Masaustunde istediginiz klasore cikarin.
 2. KURULUM.bat dosyasini bir kez calistirin.
 3. Program klasoru Masaustunde kalabilir.
-4. Sonraki kullanimlarda BASDAS_CURRENT_BASLAT.bat dosyasini calistirin.
+4. Sonraki kullanimlarda OMEHR_CURRENT_BASLAT.bat dosyasini calistirin.
 5. Sanal ortam otomatik olarak LocalAppData altindaki kisa yolda tutulur.

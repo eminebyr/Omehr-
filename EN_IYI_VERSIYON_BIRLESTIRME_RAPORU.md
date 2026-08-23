@@ -22,7 +22,7 @@ paralel, çakışan yeni bir sistem koymuştu:
 - Ayrı bir `data/personnel_registry.db` — **pakette 139 KB'lık dolu bir
   ikili veritabanı dosyası olarak gömülüydü** (kod değil, çalışma zamanı
   verisi — paket hijyeni ihlali).
-- Yeni bir ortam değişkeni `BASDAS_PERSONNEL_SOURCE`, **varsayılan
+- Yeni bir ortam değişkeni `OMEHR_PERSONNEL_SOURCE`, **varsayılan
   olarak "panel"** — yani normal Excel modunda ÇALIŞIRKEN BİLE
   Fact_Mevcut artık sessizce bu ayrı dosyadan okunuyordu. Bu, mevcut
   belgelenmiş "Excel'den personel gir/çıkar" iş akışını (Bölüm 8.2)
@@ -42,5 +42,5 @@ alındı; ikili veritabanı dosyası ve paralel modül tamamen kaldırıldı.
 - Personel Kartları sistemi (ekleme + çıkış) birleştirilmiş pakette
   bizzat uçtan uca test edildi — 596 → 597 → doğru KPI artışı.
 - Kod tabanında `personnel_registry`/`personel_yonetimi`/
-  `BASDAS_PERSONNEL_SOURCE` kalıntısı kalmadığı kapsamlı taramayla
+  `OMEHR_PERSONNEL_SOURCE` kalıntısı kalmadığı kapsamlı taramayla
   doğrulandı.

@@ -2,7 +2,7 @@
 
 Amaç: input Excel'indeki (Dim_Magaza, Dim_Unvan, Fact_Norm, Fact_Mevcut)
 sayfalarını, Power BI'a DOĞRUDAN bağlanabilecek TEMİZ bir star şema
-olarak `output/BASDAS_PowerBI_Model.xlsx` dosyasına yazar.
+olarak `output/OMEHR_PowerBI_Model.xlsx` dosyasına yazar.
 
 Neden ayrı bir dosya (kaynak input'u DEĞİL): Power BI ilişkileri,
 katılan (join) sütunların TİPİNİN (metin/sayı) ve İÇERİĞİNİN (yetim ID
@@ -42,7 +42,7 @@ import pandas as pd
 
 from services.exceptions import WorkbookError
 
-OUTPUT_FILE_NAME = "BASDAS_PowerBI_Model.xlsx"
+OUTPUT_FILE_NAME = "OMEHR_PowerBI_Model.xlsx"
 
 
 def _metin_id(seri: pd.Series) -> pd.Series:
@@ -201,7 +201,7 @@ def build_powerbi_model(sheets: dict[str, pd.DataFrame]) -> dict[str, Any]:
 
 def export_powerbi_workbook(sheets: dict[str, pd.DataFrame], output_dir: Path) -> dict[str, Any]:
     """build_powerbi_model()'i çalıştırıp sonucu tek bir Excel dosyasına
-    (output/BASDAS_PowerBI_Model.xlsx) yazar. Dönüş: özet + dosya yolu."""
+    (output/OMEHR_PowerBI_Model.xlsx) yazar. Dönüş: özet + dosya yolu."""
     model = build_powerbi_model(sheets)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

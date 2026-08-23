@@ -24,7 +24,7 @@ kurulamaz/test edilemez):
     modül docstring'i) hiçbir gerçek lisanslama kavramı yok; bu ayrı bir
     ürün kararı gerektirir.
 
-Bu modül, KURULUM.bat/BASDAS_CURRENT_BASLAT.bat ile AYNI "batch launcher +
+Bu modül, KURULUM.bat/OMEHR_CURRENT_BASLAT.bat ile AYNI "batch launcher +
 Python mantığı" desenini izler — GUNCELLEME_UYGULA.bat/.sh bu modülü
 çağırır (bkz. proje kökü).
 """

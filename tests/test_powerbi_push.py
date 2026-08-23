@@ -110,7 +110,7 @@ def test_config_from_env_reads_all_values(monkeypatch):
     assert config.client_id == "client-456"
     assert config.client_secret == "gizli-sir"
     assert config.workspace_id == "ws-789"
-    assert config.dataset_name == "BASDAS Norm Kadro Modeli"  # varsayılan
+    assert config.dataset_name == "OMEHR Norm Kadro Modeli"  # varsayılan
 
 
 # ------------------------------------------------------------------

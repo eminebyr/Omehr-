@@ -81,42 +81,42 @@ def prometheus_text() -> str:
     data = snapshot()
     statuses = ("PENDING", "RUNNING", "SUCCESS", "FAILED")
     rows = [
-        "# HELP basdas_health Application health (1 healthy, 0 unhealthy)",
-        "# TYPE basdas_health gauge",
-        f'basdas_health{{tenant="{data["tenant"]}"}} {1 if data["healthy"] else 0}',
-        "# HELP basdas_disk_free_ratio Free disk ratio",
-        "# TYPE basdas_disk_free_ratio gauge",
-        f'basdas_disk_free_ratio{{tenant="{data["tenant"]}"}} {data["disk"]["free_ratio"]:.6f}',
+        "# HELP omehr_health Application health (1 healthy, 0 unhealthy)",
+        "# TYPE omehr_health gauge",
+        f'omehr_health{{tenant="{data["tenant"]}"}} {1 if data["healthy"] else 0}',
+        "# HELP omehr_disk_free_ratio Free disk ratio",
+        "# TYPE omehr_disk_free_ratio gauge",
+        f'omehr_disk_free_ratio{{tenant="{data["tenant"]}"}} {data["disk"]["free_ratio"]:.6f}',
     ]
     for status in statuses:
-        rows.append(f'basdas_jobs_total{{tenant="{data["tenant"]}",status="{status}"}} {data["jobs"].get(status,0)}')
-    rows.append(f'basdas_alerts_total{{tenant="{data["tenant"]}"}} {len(data["alerts"])}')
+        rows.append(f'omehr_jobs_total{{tenant="{data["tenant"]}",status="{status}"}} {data["jobs"].get(status,0)}')
+    rows.append(f'omehr_alerts_total{{tenant="{data["tenant"]}"}} {len(data["alerts"])}')
 
     # --- P1: İŞ METRİKLERİ (business_kpis) ---
     bk = data.get("business_kpis") or {}
     if bk:
-        rows.append("# HELP basdas_norm_eksigi Şirket geneli toplam norm eksiği (kişi)")
-        rows.append("# TYPE basdas_norm_eksigi gauge")
-        rows.append(f'basdas_norm_eksigi{{tenant="{data["tenant"]}"}} {bk.get("Norm Eksiği", 0)}')
-        rows.append("# HELP basdas_norm_fazlasi Şirket geneli toplam norm fazlası (kişi)")
-        rows.append("# TYPE basdas_norm_fazlasi gauge")
-        rows.append(f'basdas_norm_fazlasi{{tenant="{data["tenant"]}"}} {bk.get("Norm Fazlası", 0)}')
-        rows.append("# HELP basdas_net_ihtiyac Net pozisyon farkı (fazla-eksik)")
-        rows.append("# TYPE basdas_net_ihtiyac gauge")
-        rows.append(f'basdas_net_ihtiyac{{tenant="{data["tenant"]}"}} {bk.get("Net İhtiyaç", 0)}')
-        rows.append("# HELP basdas_aktif_mevcut Toplam aktif personel sayısı")
-        rows.append("# TYPE basdas_aktif_mevcut gauge")
-        rows.append(f'basdas_aktif_mevcut{{tenant="{data["tenant"]}"}} {bk.get("Aktif Mevcut", 0)}')
+        rows.append("# HELP omehr_norm_eksigi Şirket geneli toplam norm eksiği (kişi)")
+        rows.append("# TYPE omehr_norm_eksigi gauge")
+        rows.append(f'omehr_norm_eksigi{{tenant="{data["tenant"]}"}} {bk.get("Norm Eksiği", 0)}')
+        rows.append("# HELP omehr_norm_fazlasi Şirket geneli toplam norm fazlası (kişi)")
+        rows.append("# TYPE omehr_norm_fazlasi gauge")
+        rows.append(f'omehr_norm_fazlasi{{tenant="{data["tenant"]}"}} {bk.get("Norm Fazlası", 0)}')
+        rows.append("# HELP omehr_net_ihtiyac Net pozisyon farkı (fazla-eksik)")
+        rows.append("# TYPE omehr_net_ihtiyac gauge")
+        rows.append(f'omehr_net_ihtiyac{{tenant="{data["tenant"]}"}} {bk.get("Net İhtiyaç", 0)}')
+        rows.append("# HELP omehr_aktif_mevcut Toplam aktif personel sayısı")
+        rows.append("# TYPE omehr_aktif_mevcut gauge")
+        rows.append(f'omehr_aktif_mevcut{{tenant="{data["tenant"]}"}} {bk.get("Aktif Mevcut", 0)}')
 
     # --- P1: MODEL METRİKLERİ ---
     mb = data.get("model") or {}
     if mb.get("duration_seconds") is not None:
-        rows.append("# HELP basdas_last_run_duration_seconds Son çalıştırmanın süresi (saniye)")
-        rows.append("# TYPE basdas_last_run_duration_seconds gauge")
-        rows.append(f'basdas_last_run_duration_seconds{{tenant="{data["tenant"]}"}} {mb["duration_seconds"]}')
+        rows.append("# HELP omehr_last_run_duration_seconds Son çalıştırmanın süresi (saniye)")
+        rows.append("# TYPE omehr_last_run_duration_seconds gauge")
+        rows.append(f'omehr_last_run_duration_seconds{{tenant="{data["tenant"]}"}} {mb["duration_seconds"]}')
     if mb.get("status"):
-        rows.append("# HELP basdas_last_run_status Son çalıştırma durumu (1 SUCCESS, 0 diğer)")
-        rows.append("# TYPE basdas_last_run_status gauge")
-        rows.append(f'basdas_last_run_status{{tenant="{data["tenant"]}",model="{mb.get("best_model","yok")}"}} {1 if mb["status"]=="SUCCESS" else 0}')
+        rows.append("# HELP omehr_last_run_status Son çalıştırma durumu (1 SUCCESS, 0 diğer)")
+        rows.append("# TYPE omehr_last_run_status gauge")
+        rows.append(f'omehr_last_run_status{{tenant="{data["tenant"]}",model="{mb.get("best_model","yok")}"}} {1 if mb["status"]=="SUCCESS" else 0}')
 
     return "\n".join(rows) + "\n"

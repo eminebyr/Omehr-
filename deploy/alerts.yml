@@ -1,18 +1,18 @@
 groups:
-  - name: basdas
+  - name: omehr
     rules:
-      - alert: BasdasApplicationUnhealthy
-        expr: basdas_health == 0
+      - alert: OmehrApplicationUnhealthy
+        expr: omehr_health == 0
         for: 2m
         labels: {severity: critical}
-        annotations: {summary: "Başdaş uygulaması sağlıksız"}
-      - alert: BasdasLowDisk
-        expr: basdas_disk_free_ratio < 0.10
+        annotations: {summary: "Omehr uygulaması sağlıksız"}
+      - alert: OmehrLowDisk
+        expr: omehr_disk_free_ratio < 0.10
         for: 5m
         labels: {severity: critical}
-        annotations: {summary: "Başdaş boş disk oranı %10 altında"}
-      - alert: BasdasFailedJobs
-        expr: basdas_jobs_total{status="FAILED"} > 0
+        annotations: {summary: "Omehr boş disk oranı %10 altında"}
+      - alert: OmehrFailedJobs
+        expr: omehr_jobs_total{status="FAILED"} > 0
         for: 2m
         labels: {severity: warning}
         annotations: {summary: "Başarısız arka plan görevi var"}

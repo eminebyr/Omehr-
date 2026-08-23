@@ -318,7 +318,7 @@ def _save_tables_unlocked(root: Path, input_path: Path, tables: dict[str, pd.Dat
     except Exception:
         pass
 
-    fd, temp_name = tempfile.mkstemp(prefix="basdas_panel_", suffix=".xlsx", dir=str(input_path.parent))
+    fd, temp_name = tempfile.mkstemp(prefix="omehr_panel_", suffix=".xlsx", dir=str(input_path.parent))
     os.close(fd)
     temp = Path(temp_name)
     try:
