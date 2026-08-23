@@ -4,6 +4,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
+# DÜZELTME: PDF üretimi (src/pdf_fonts.py) Türkçe karakterleri doğru
+# gösterebilmek için DejaVu Sans yazı tipini gerektirir. python:3.12-slim
+# temel imajı hiçbir font içermez — bu paket olmadan main.py'nin rapor
+# adımı "PDF font kaydı başarısız" hatasıyla çöker.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
