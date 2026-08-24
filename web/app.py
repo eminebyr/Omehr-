@@ -64,6 +64,20 @@ APPROVERS: set[str] = set()
 
 st.set_page_config(page_title="OMEHR Norm Kadro, Transfer ve İş Gücü Optimizasyon Platformu", page_icon="📊", layout="wide")
 
+# GÜNLÜK OTOMATİK RAPOR ZAMANLAYICI (bkz. services/scheduler.py docstring'i):
+# @st.cache_resource, bu fonksiyonu Streamlit SÜRECİ başına yalnızca BİR KEZ
+# çalıştırır — sayfa yenilemelerinde veya yeni kullanıcı oturumlarında tekrar
+# tekrar thread açılmaz. Varsayılan saatler 10:00 ve 17:15; OMEHR_REPORT_
+# SCHEDULE_TIMES ortam değişkeniyle özelleştirilebilir.
+@st.cache_resource
+def _omehr_baslat_rapor_zamanlayici():
+    from services.scheduler import start_daily_report_scheduler
+    start_daily_report_scheduler()
+    return True
+
+
+_omehr_baslat_rapor_zamanlayici()
+
 # Tüm Plotly grafiklerinde dışarı aktarma, büyütme/küçültme ve görünüm
 # sıfırlama araçlarını görünür tut. Mevcut grafik kodları ve veriler değişmez.
 _PLOTLY_MODEBAR_CONFIG = {
@@ -439,7 +453,35 @@ def refresh_all():
 
 
 if not _input().exists():
-    st.error(f"Input bulunamadı: {_input()}"); st.stop()
+    # DÜZELTME (yeni özellik): önceden bu durumda uygulama SERT DURUYORDU
+    # (st.stop()) ve HİÇBİR arayüz göstermiyordu — Excel yükleme ekranı
+    # dahil (o ekran normalde Ayarlar sekmesinde, giriş yapılmış ve veri
+    # zaten yüklenmiş olmayı gerektiren bir bağlamda yaşıyordu). Sonuç:
+    # input/ dosyası hiç yokken (ör. Volume yeni bağlandığında, ya da ilk
+    # kurulumda) kullanıcı arayüzden KENDİ BAŞINA kurtulamıyor, Railway
+    # Console'dan manuel müdahale gerekiyordu. Bu, kendi kendine yeten,
+    # bağımsız bir "ilk kurulum" yükleme formu sağlar.
+    st.title("OMEHR — İlk Kurulum")
+    st.warning(f"Input dosyası bulunamadı: {_input()}")
+    st.write(
+        "Sistemin çalışabilmesi için ana Excel dosyasını "
+        "(OMEHR_AI_NORM_TRANSFER_INPUT.xlsx ya da kendi şirketinizin aynı "
+        "yapıdaki dosyası) buradan yükleyin."
+    )
+    _bootstrap_dosya = st.file_uploader("Excel dosyası (.xlsx)", type=["xlsx"], key="bootstrap_excel_yukleme")
+    if _bootstrap_dosya is not None and st.button("Yükle ve etkinleştir", key="bootstrap_excel_yukle_dugmesi"):
+        import shutil as _bootstrap_shutil
+        try:
+            _hedef = _input()
+            _hedef.parent.mkdir(parents=True, exist_ok=True)
+            _hedef.write_bytes(_bootstrap_dosya.getvalue())
+            st.success(f"Dosya etkinleştirildi: {_hedef.name}. Sayfa yeniden yükleniyor...")
+            st.cache_data.clear()
+            time.sleep(1.5)
+            st.rerun()
+        except Exception as _bootstrap_exc:
+            st.error(f"Yükleme başarısız: {_bootstrap_exc}")
+    st.stop()
 
 migrate_legacy_input(_input())
 
