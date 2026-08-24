@@ -7,7 +7,10 @@ servis fonksiyonları) web.context.PageContext üzerinden gelir.
 """
 from __future__ import annotations
 
+import os
+from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 import pandas as pd
@@ -15,6 +18,32 @@ import plotly.express as px
 
 from web.context import PageContext
 from services.safe_exec import log_swallowed
+
+
+_REPORT_SUFFIXES = {".pdf", ".xlsx", ".xlsm"}
+_ISTANBUL = ZoneInfo("Europe/Istanbul")
+
+
+def _report_files(base: Path) -> list[Path]:
+    if not base.exists():
+        return []
+    return sorted(
+        [p for p in base.rglob("*") if p.is_file() and p.suffix.lower() in _REPORT_SUFFIXES],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+
+
+def _expected_report_count() -> int:
+    try:
+        return max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "32")))
+    except ValueError:
+        return 32
+
+
+def _istanbul_mtime_text(path: Path) -> str:
+    dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).astimezone(_ISTANBUL)
+    return dt.strftime("%d.%m.%Y %H:%M")
 
 
 def render(ctx: PageContext) -> None:
@@ -39,15 +68,13 @@ def render(ctx: PageContext) -> None:
     read_input = ctx.read_input
 
     def _log_indirme(dosya_adi: str) -> None:
-        # KVKK — DENETLENEBİLİRLİK: raporlarda personel adı/adres/performans
-        # gibi kişisel veriler bulunduğu için, HANGİ kullanıcının HANGİ
-        # raporu NE ZAMAN indirdiği kalıcı olarak kaydedilir.
         try:
             from services.download_audit import kaydet as _kaydet_indirme
             _kaydet_indirme(username, dosya_adi, role)
         except Exception as _exc:
             log_swallowed("web.tab_modules.raporlar._log_indirme: beklenmeyen hata", _exc)
             pass
+
     st.subheader("PDF ve Excel Rapor Merkezi")
     st.caption("Yönetici, bölge ve analiz raporlarını burada yeniden üretin, indirin veya kontrollü biçimde Outlook/SMTP ile gönderin.")
 
@@ -62,19 +89,35 @@ def render(ctx: PageContext) -> None:
             "Rapor' sayısını kontrol edin."
         )
 
-    _raporlar = sorted(
-        [p for p in OUTPUT.rglob("*") if p.is_file() and p.suffix.lower() in {".pdf", ".xlsx", ".xlsm"}],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+    # CANLI output üretim sırasında kısa süreli 9/32 gibi kısmi görünebilir.
+    # Container açılırken alınan son TAM 32/32 snapshot varsa, üretim sürerken
+    # kullanıcıya kısmi set yerine son tamamlanmış set gösterilir.
+    expected = _expected_report_count()
+    live_reports = _report_files(OUTPUT)
+    snapshot_output = ROOT / "output_last_complete"
+    snapshot_reports = _report_files(snapshot_output)
+    if len(live_reports) >= expected:
+        DISPLAY_OUTPUT = OUTPUT
+        _raporlar = live_reports
+    elif len(snapshot_reports) >= expected:
+        DISPLAY_OUTPUT = snapshot_output
+        _raporlar = snapshot_reports
+        st.info(
+            f"Yeni rapor seti hazırlanıyor ({len(live_reports)}/{expected}). "
+            f"Bu sırada son tamamlanmış {len(snapshot_reports)}/{expected} rapor seti gösteriliyor."
+        )
+    else:
+        DISPLAY_OUTPUT = OUTPUT
+        _raporlar = live_reports
+
     a2.metric("Hazır rapor", len(_raporlar))
-    a3.metric("Son güncelleme", _raporlar[0].stat().st_mtime_ns and pd.to_datetime(_raporlar[0].stat().st_mtime, unit="s").strftime("%d.%m.%Y %H:%M") if _raporlar else "—")
+    a3.metric("Son güncelleme", _istanbul_mtime_text(_raporlar[0]) if _raporlar else "—")
 
     if not _raporlar:
         st.warning("Henüz PDF/Excel raporu yok. Yukarıdaki 'yeniden üret' düğmesini kullanın.")
     else:
-        _ana = [p for p in _raporlar if p.parent == OUTPUT]
-        _bolge = [p for p in _raporlar if p.parent != OUTPUT]
+        _ana = [p for p in _raporlar if p.parent == DISPLAY_OUTPUT]
+        _bolge = [p for p in _raporlar if p.parent != DISPLAY_OUTPUT]
         st.markdown("#### Yönetici ve ana raporlar")
         for pth in _ana:
             c1, c2, c3 = st.columns([4, 1.2, 1.4])
@@ -90,8 +133,8 @@ def render(ctx: PageContext) -> None:
                 for pth in _bolge:
                     if is_global or norm_text(scope) in norm_text(pth.stem):
                         st.download_button(
-                            f"{pth.relative_to(OUTPUT)} indir", pth.read_bytes(), file_name=pth.name,
-                            use_container_width=True, key=f"indir_alt_{pth.relative_to(OUTPUT)}_{pth.stat().st_mtime_ns}",
+                            f"{pth.relative_to(DISPLAY_OUTPUT)} indir", pth.read_bytes(), file_name=pth.name,
+                            use_container_width=True, key=f"indir_alt_{pth.relative_to(DISPLAY_OUTPUT)}_{pth.stat().st_mtime_ns}",
                             on_click=_log_indirme, args=(pth.name,),
                         )
 
@@ -213,4 +256,3 @@ def render(ctx: PageContext) -> None:
                 if oc2.button("Vazgeç", key="yedek_onay_hayir"):
                     del st.session_state["yedek_onay_bekliyor"]
                     st.rerun()
-
