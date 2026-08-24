@@ -19,15 +19,23 @@ from datetime import datetime, timedelta
 
 from services.runtime_paths import runtime_root
 
+
 def _history_file():
     from services.runtime_paths import runtime_root
     return runtime_root() / "data" / "kpi_gecmisi.csv"
+
+
 FIELDS = ["Tarih", "Aktif Mevcut", "Toplam Norm", "Norm Eksiği", "Norm Fazlası", "Net İhtiyaç"]
 
 
 def log_kpi_snapshot(kpi: dict) -> None:
     """Bugünün KPI'sını geçmiş dosyasına ekler/günceller. Hata durumunda
-    sessizce başarısız olur — ana rapor akışını asla bozmaz."""
+    sessizce başarısız olur — ana rapor akışını asla bozmaz.
+
+    Supabase senkronizasyonu da burada, ana motor tamamen başarıyla bittikten
+    sonra ve yalnız OMEHR_SUPABASE_SYNC=1 ise denenir. Senkronizasyon hatası
+    yerel KPI geçmişini veya ana rapor motorunu etkilemez.
+    """
     try:
         _history_file().parent.mkdir(parents=True, exist_ok=True)
         bugun = datetime.now().strftime("%Y-%m-%d")
@@ -45,6 +53,16 @@ def log_kpi_snapshot(kpi: dict) -> None:
             writer = csv.DictWriter(f, fieldnames=FIELDS)
             writer.writeheader()
             writer.writerows(satirlar)
+
+        # İZOLE KÖPRÜ: ana motorun hesaplama/rapor üretim yoluna dokunmaz.
+        # Varsayılan kapalıdır ve hata halinde yalnız False döner.
+        try:
+            from services.supabase_sync import sync_kpi_snapshot
+            from services.version import APP_VERSION
+            sync_kpi_snapshot(kpi, engine_version=APP_VERSION)
+        except Exception as _sync_exc:
+            from services.safe_exec import log_swallowed
+            log_swallowed("log_kpi_snapshot: Supabase senkronizasyonu atlandı", _sync_exc)
     except Exception as _exc:
         from services.safe_exec import log_swallowed
         log_swallowed("log_kpi_snapshot: bugünün KPI'sı geçmiş dosyasına kaydedilemedi", _exc)
@@ -66,7 +84,7 @@ def load_history() -> list[dict]:
 
 def snapshot_n_days_ago(n: int = 30) -> dict | None:
     """Yaklaşık N gün önceki (en yakın tarihli) kaydı döndürür; hiç kayıt
-    yoksa veya yeterli geçmiş birikmemişse None döner."""
+    yoksa veya yeterli geçmiş birikmemişse None döndürür."""
     gecmis = load_history()
     if not gecmis:
         return None
