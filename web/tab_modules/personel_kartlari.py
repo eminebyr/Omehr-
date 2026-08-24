@@ -35,6 +35,31 @@ from services.personnel_notifications import (
 from services.atama_bildirimi import create_assignment_notice
 
 
+def _personel_degisikligi_sonrasi_raporlari_yenile() -> None:
+    """DÜZELTME (yeni özellik — kullanıcı isteği): personel eklendiğinde/
+    çıkarıldığında/atandığında kutucuklu PDF/Excel raporları artık
+    OTOMATİK olarak yeniden üretiliyor — önceden bu, kimse manuel
+    'yeniden üret' butonuna basmadıkça ya da zamanlayıcı (10:00/17:15)
+    çalışmadıkça olmuyordu, bu yüzden yeni eklenen personel raporlarda
+    görünmüyordu. web.app._enqueue_without_waiting NON-BLOCKING olduğu
+    için (bkz. o fonksiyonun docstring'i) sayfayı DONDURMAZ — iş arka
+    planda kuyruğa alınır, 1-3 dakika içinde tamamlanır. Bu çağrı
+    kasıtlı olarak sessizdir (try/except) — rapor tetikleme başarısız
+    olsa bile personel kaydının kendisi ETKİLENMEMELİDİR.
+    """
+    try:
+        from web.app import _enqueue_without_waiting
+        from services.tenant_context import current_tenant_id
+        _enqueue_without_waiting("RUN_REPORTS", {}, current_tenant_id())
+    except Exception as _exc:
+        from services.safe_exec import log_swallowed
+        log_swallowed(
+            "personel_kartlari: personel değişikliği sonrası otomatik "
+            "rapor tetikleme başarısız — personel kaydı ETKİLENMEDİ",
+            _exc, level="WARNING",
+        )
+
+
 def _kidem_metni(ise_giris) -> str:
     try:
         d = pd.to_datetime(ise_giris, errors="coerce")
@@ -219,6 +244,7 @@ def _sekme_yeni_personel(ctx: PageContext, staff, magaza, unvan) -> None:
                 st.success(f"{isim} eklendi. Aktif mevcut ve norm hesapları güncellendi; bildirim: {mail_result.get('status')}")
             else:
                 st.warning(f"{isim} kaydedildi ve hesaplar güncellendi; e-posta gönderimi başarısız: {mail_result.get('status')}")
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.rerun()
         except Exception as exc:
             st.error(f"Kaydetme başarısız: {exc}")
@@ -317,6 +343,7 @@ def _sekme_toplu_yeni_personel(ctx: PageContext, staff, magaza, unvan) -> None:
             )
             if failures:
                 st.warning("Mail hataları: " + " | ".join(failures[:8]))
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.rerun()
         except Exception as exc:
             st.error(f"Toplu işe giriş başarısız: {exc}")
@@ -407,6 +434,7 @@ def _sekme_isten_cikis(ctx: PageContext, staff, cikis_nedeni) -> None:
                     f"{secilen['İsim Soyisim']} işten çıkış olarak kaydedildi ve hesaplar güncellendi; "
                     f"e-posta gönderimi başarısız: {mail_result.get('status')}"
                 )
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.rerun()
         except ValueError as exc:
             st.error(str(exc))
@@ -577,6 +605,7 @@ def _sekme_toplu_isten_cikis(ctx: PageContext, staff, cikis_nedeni) -> None:
             if tum_hatalar:
                 st.warning(f"{len(tum_hatalar)} kayıt işlenemedi:\n" + "\n".join(f"• {h}" for h in tum_hatalar[:15]))
             if basarili_sayisi:
+                _personel_degisikligi_sonrasi_raporlari_yenile()
                 st.rerun()
         except Exception as exc:
             st.error(f"Toplu işten çıkış başarısız: {exc}")
@@ -685,6 +714,7 @@ def _sekme_atama(ctx: PageContext, staff, magaza, unvan) -> None:
                 )
             with open(pdf_yolu, "rb") as fh:
                 st.download_button("📄 Atama Belgesini İndir (PDF)", fh.read(), file_name=Path(pdf_yolu).name, key="pk_atama_pdf_indir")
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.rerun()
         except ValueError as exc:
             st.error(str(exc))
@@ -740,6 +770,7 @@ def _sekme_cikis_geri_al(ctx: PageContext, staff) -> None:
                     f"{secilen['İsim Soyisim']} yeniden aktif edildi ve hesaplar güncellendi; "
                     f"e-posta gönderimi başarısız: {mail_result.get('status')}"
                 )
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.rerun()
         except ValueError as exc:
             st.error(str(exc))
