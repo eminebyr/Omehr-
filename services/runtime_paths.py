@@ -60,6 +60,21 @@ def runtime_root() -> Path:
     root.mkdir(parents=True, exist_ok=True)
     for name in ("input", "output", "data", "logs", "archive", "backup", "reference", "assets"):
         (root / name).mkdir(exist_ok=True)
+    # DÜZELTME (kritik iş mantığı hatası): config_norm_rules.json Volume'a
+    # (runtime_root) hiç kopyalanmıyordu — kod bunu OMEHR_BOOTSTRAP_RUNTIME
+    # bayrağına bakan aşağıdaki bloğun DIŞINDA arıyordu. Dosya yoksa
+    # services/norm_rule_config.py sessizce BOŞ varsayılana ("pairs": {})
+    # düşüyor, yani aile dengeleme kuralı hiç uygulanmıyor — Net İhtiyaç
+    # aynı kalırken Norm Eksiği/Fazlası'nın gerçekte olduğundan çok daha
+    # yüksek görünmesine yol açıyor (üretimde canlı doğrulandı: 106/95
+    # yerine doğru değer 48/37). Bu dosya HASSAS şirket verisi DEĞİL,
+    # sadece kod ayarı olduğu için OMEHR_BOOTSTRAP_RUNTIME'a bağlı
+    # KALMADAN, her zaman kopyalanır.
+    if root != CODE_ROOT:
+        _config_source = CODE_ROOT / "config_norm_rules.json"
+        _config_dest = root / "config_norm_rules.json"
+        if _config_source.exists() and not _config_dest.exists():
+            shutil.copy2(_config_source, _config_dest)
     if os.getenv("OMEHR_BOOTSTRAP_RUNTIME", "0") == "1" and root != CODE_ROOT:
         defaults = [
             (CODE_ROOT / "input" / input_file_name(), root / "input" / input_file_name()),

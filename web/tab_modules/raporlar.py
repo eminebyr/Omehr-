@@ -53,19 +53,14 @@ def render(ctx: PageContext) -> None:
 
     a1, a2, a3 = st.columns([1, 1, 1])
     if a1.button("🔄 PDF ve Excel raporlarını yeniden üret", use_container_width=True, key="rapor_yeniden_uret"):
-        with st.spinner("Input Excel yeniden hesaplanıyor ve tüm raporlar üretiliyor..."):
-            try:
-                job_id, ok, error = _enqueue_and_process("RUN_REPORTS", {}, tenant_code(), timeout=360)
-                if ok:
-                    read_input.clear()
-                    st.success("PDF ve Excel raporları başarıyla yenilendi.")
-                    st.rerun()
-                elif ok is None:
-                    st.warning(error)
-                else:
-                    st.error(f"Rapor üretimi başarısız: {error}")
-            except Exception as exc:
-                st.error(f"Rapor üretimi başarısız: {exc}")
+        from web.app import _enqueue_without_waiting
+        _enqueue_without_waiting("RUN_REPORTS", {}, tenant_code())
+        st.success(
+            "İşlem arka planda başlatıldı — sayfa donmayacak. Input Excel "
+            "yeniden hesaplanıp tüm raporlar üretiliyor, 1-3 dakika "
+            "sürebilir. Birkaç dakika sonra bu sayfayı yenileyip 'Hazır "
+            "Rapor' sayısını kontrol edin."
+        )
 
     _raporlar = sorted(
         [p for p in OUTPUT.rglob("*") if p.is_file() and p.suffix.lower() in {".pdf", ".xlsx", ".xlsm"}],

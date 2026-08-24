@@ -435,6 +435,28 @@ def _enqueue_and_process(job_type, payload, tenant, timeout=60):
     return job_id, None, "Zaman aşımı — görev hâlâ işleniyor olabilir, birkaç dakika sonra tekrar kontrol edin."
 
 
+def _enqueue_without_waiting(job_type, payload, tenant):
+    """DÜZELTME (kritik UX hatası — canlı ortamda doğrulandı): hem
+    refresh_all() hem raporlar.py'deki 'yeniden üret' butonu, işi
+    kuyruğa aldıktan sonra kendi kendine 5-6 dakikaya kadar SENKRON
+    (`while` + `time.sleep`) bekliyordu. Bu süre boyunca Streamlit
+    sayfası tarayıcıyla HİÇ konuşmuyor — sayfa donuyor, mobil
+    tarayıcılarda/Railway'in proxy'sinde uzun süre yanıtsız kalan
+    bağlantı KOPUYOR, kullanıcı tekrar bağlanınca oturumu (session)
+    sıfırlanmış oluyor ve giriş ekranına düşüyor. Bu fonksiyon işi
+    kuyruğa alır, worker'ı başlatır ve HEMEN döner — bekleme YOKTUR,
+    sayfa donmaz. Sonucu görmek için kullanıcının birkaç dakika sonra
+    sayfayı manuel yenilemesi/tekrar butona bakması gerekir."""
+    job_id = enqueue(job_type, payload, tenant)
+    try:
+        py = CODE_ROOT / ".venv" / "Scripts" / "python.exe"
+        executable = str(py) if py.exists() else sys.executable
+        subprocess.Popen([executable, str(CODE_ROOT / "worker.py"), "--once"], cwd=CODE_ROOT)
+    except Exception as _exc:
+        log_swallowed("web.app._enqueue_without_waiting: beklenmeyen hata", _exc)
+    return job_id
+
+
 def refresh_all():
     job_id=enqueue("RUN_REPORTS",tenant=tenant_code())
     py = CODE_ROOT / ".venv" / "Scripts" / "python.exe"
@@ -800,8 +822,12 @@ with st.sidebar:
         st.session_state["dark_mode"] = _dark_on
         st.rerun()
     if st.button("Tüm tabloları şimdi yenile", use_container_width=True):
-        with st.spinner("Tüm raporlar yeniden oluşturuluyor..."): refresh_all()
-        st.success("Yenileme tamamlandı"); st.rerun()
+        _enqueue_without_waiting("RUN_REPORTS", {}, tenant_code())
+        st.success(
+            "İşlem arka planda başlatıldı. Sayfa donmayacak — raporların "
+            "üretilmesi 1-3 dakika sürebilir; birkaç dakika sonra bu "
+            "butona veya Rapor Merkezi'ne tekrar bakın."
+        )
     with st.expander("Şifremi değiştir"):
         new1 = st.text_input("Yeni şifre", type="password", key="p1")
         new2 = st.text_input("Yeni şifre tekrar", type="password", key="p2")
