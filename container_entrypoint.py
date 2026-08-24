@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -15,11 +16,44 @@ RUNTIME = runtime_root()
 _REPORT_SUFFIXES = {".pdf", ".xlsx", ".xlsm"}
 
 
-def _report_count() -> int:
-    output = RUNTIME / "output"
+def _report_count(base: Path | None = None) -> int:
+    output = base or (RUNTIME / "output")
     if not output.exists():
         return 0
     return sum(1 for p in output.rglob("*") if p.is_file() and p.suffix.lower() in _REPORT_SUFFIXES)
+
+
+def _expected_report_count() -> int:
+    try:
+        return max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "32")))
+    except ValueError:
+        return 32
+
+
+def _snapshot_complete_reports() -> None:
+    """Son TAM rapor setini ayrı klasörde korur.
+
+    Rapor motoru yeni seti üretirken output/ kısa süreyle kısmi görünebilir.
+    Web paneli bu anda 9/32 gibi ara bir sayı göstermesin diye son tamamlanmış
+    set output_last_complete/ altında tutulur. Yalnız 32/32 (veya ayarlanan
+    hedef) mevcutsa snapshot yenilenir.
+    """
+    source = RUNTIME / "output"
+    expected = _expected_report_count()
+    current = _report_count(source)
+    if current < expected:
+        return
+
+    target = RUNTIME / "output_last_complete"
+    temp = RUNTIME / "output_last_complete_new"
+    shutil.rmtree(temp, ignore_errors=True)
+    shutil.copytree(source, temp)
+    if _report_count(temp) < expected:
+        shutil.rmtree(temp, ignore_errors=True)
+        return
+    shutil.rmtree(target, ignore_errors=True)
+    temp.replace(target)
+    print(f"Tam rapor snapshot'ı hazır: {_report_count(target)}/{expected}.", flush=True)
 
 
 def _run_report_engine_once() -> int:
@@ -40,10 +74,7 @@ def _ensure_startup_reports() -> bool:
     if os.getenv("OMEHR_ENSURE_REPORTS_ON_START", "1").strip().lower() in {"0", "false", "hayir", "no"}:
         return True
 
-    try:
-        expected = max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "32")))
-    except ValueError:
-        expected = 32
+    expected = _expected_report_count()
     try:
         retries = max(0, int(os.getenv("OMEHR_STARTUP_REPORT_RETRIES", "2")))
     except ValueError:
@@ -83,15 +114,15 @@ def main() -> int:
         set_password("admin", admin_password, must_change=True)
         print("Admin geçici parolası güvenli kasada oluşturuldu; ilk girişte değiştirilmelidir.", flush=True)
 
-    # Eski davranış korunur: açıkça istenirse motor her açılışta bir kez çalışır.
-    # Ancak asıl güvence aşağıdaki rapor-seti doğrulamasıdır; Volume'da 32 rapor
-    # yoksa OMEHR_RUN_ENGINE_ON_START=0 olsa bile eksik set tamamlanır.
     if os.getenv("OMEHR_RUN_ENGINE_ON_START", "0") == "1":
         if _run_report_engine_once() != 0:
             return 1
 
     if not _ensure_startup_reports():
         return 1
+
+    # Streamlit açılmadan hemen önce 32/32 setin güvenli görüntüleme kopyasını al.
+    _snapshot_complete_reports()
 
     os.execvp(
         sys.executable,
