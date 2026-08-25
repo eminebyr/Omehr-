@@ -80,7 +80,17 @@ def render(ctx: PageContext) -> None:
 
     a1, a2, a3 = st.columns([1, 1, 1])
     if a1.button("🔄 PDF ve Excel raporlarını yeniden üret", use_container_width=True, key="rapor_yeniden_uret"):
-        from web.app import _enqueue_without_waiting
+        # DÜZELTME (StreamlitDuplicateElementKey: 'dark_mode_toggle'): önceden
+        # burada `from web.app import _enqueue_without_waiting` vardı. Streamlit
+        # app.py'yi ana script (`__main__`) olarak çalıştırdığı için bu import
+        # Python'a göre FARKLI bir modül kimliği (`web.app`) arıyordu ve
+        # sys.modules önbelleğinde bulamayınca app.py'yi baştan sona İKİNCİ KEZ
+        # çalıştırıyordu — bu da app.py içindeki
+        # st.checkbox(..., key="dark_mode_toggle") satırının iki kez
+        # tetiklenip StreamlitDuplicateElementKey hatası vermesine yol
+        # açıyordu. Fonksiyon artık app.py'den bağımsız web/queue_utils.py
+        # modülünde; bu satır app.py'yi bir daha asla import etmiyor.
+        from web.queue_utils import _enqueue_without_waiting
         _enqueue_without_waiting("RUN_REPORTS", {}, tenant_code())
         st.success(
             "İşlem arka planda başlatıldı — sayfa donmayacak. Input Excel "

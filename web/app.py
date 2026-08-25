@@ -31,6 +31,7 @@ from services.runtime_paths import tenant_code
 from services.input_data_access import input_source
 from services.settings import input_path
 from web.display_text import MAIN_TITLE
+from web.queue_utils import _enqueue_without_waiting
 def _root():
     return runtime_root()
 
@@ -435,26 +436,17 @@ def _enqueue_and_process(job_type, payload, tenant, timeout=60):
     return job_id, None, "Zaman aşımı — görev hâlâ işleniyor olabilir, birkaç dakika sonra tekrar kontrol edin."
 
 
-def _enqueue_without_waiting(job_type, payload, tenant):
-    """DÜZELTME (kritik UX hatası — canlı ortamda doğrulandı): hem
-    refresh_all() hem raporlar.py'deki 'yeniden üret' butonu, işi
-    kuyruğa aldıktan sonra kendi kendine 5-6 dakikaya kadar SENKRON
-    (`while` + `time.sleep`) bekliyordu. Bu süre boyunca Streamlit
-    sayfası tarayıcıyla HİÇ konuşmuyor — sayfa donuyor, mobil
-    tarayıcılarda/Railway'in proxy'sinde uzun süre yanıtsız kalan
-    bağlantı KOPUYOR, kullanıcı tekrar bağlanınca oturumu (session)
-    sıfırlanmış oluyor ve giriş ekranına düşüyor. Bu fonksiyon işi
-    kuyruğa alır, worker'ı başlatır ve HEMEN döner — bekleme YOKTUR,
-    sayfa donmaz. Sonucu görmek için kullanıcının birkaç dakika sonra
-    sayfayı manuel yenilemesi/tekrar butona bakması gerekir."""
-    job_id = enqueue(job_type, payload, tenant)
-    try:
-        py = CODE_ROOT / ".venv" / "Scripts" / "python.exe"
-        executable = str(py) if py.exists() else sys.executable
-        subprocess.Popen([executable, str(CODE_ROOT / "worker.py"), "--once"], cwd=CODE_ROOT)
-    except Exception as _exc:
-        log_swallowed("web.app._enqueue_without_waiting: beklenmeyen hata", _exc)
-    return job_id
+# DÜZELTME (StreamlitDuplicateElementKey: 'dark_mode_toggle'): bu fonksiyon
+# önceden burada tanımlıydı. raporlar.py çalışma zamanında
+# `from web.app import _enqueue_without_waiting` yaptığı için, Streamlit
+# app.py'yi ana script (`__main__`) olarak çalıştırdığından bu import farklı
+# bir modül kimliği (`web.app`) arıyor, sys.modules önbelleğinde bulamayıp
+# app.py'yi baştan sona İKİNCİ KEZ çalıştırıyordu — bu da aşağıdaki
+# `st.checkbox(..., key="dark_mode_toggle")` satırının iki kez tetiklenip
+# StreamlitDuplicateElementKey hatası vermesine yol açıyordu. Fonksiyon artık
+# app.py'den TAMAMEN BAĞIMSIZ web/queue_utils.py modülünde tanımlı; hem
+# app.py hem tab_modules/raporlar.py sadece oradan import ediyor, böylece
+# app.py bir daha asla ikinci kez çalıştırılmıyor.
 
 
 def refresh_all():
