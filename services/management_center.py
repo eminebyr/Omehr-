@@ -689,10 +689,25 @@ def decide_transfer_request(request_key: str, status: str, note: str, username: 
 
 
 def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
-    """İK onaylı talepleri Fact_Mevcut ile karşılaştırır; eşleşince tamamlar."""
-    init_db()
+    """İK onaylı transferleri (transfers tablosu) Fact_Mevcut ile karşılaştırır;
+    hedefe henüz taşınmamışsa personnel_exit.update_personnel ile OTOMATİK uygular.
+
+    DÜZELTME (2026-08-27 — kritik şema hatası): Bu fonksiyon önceden web
+    panelin FİİLEN KULLANDIĞI 'transfers' tablosunu değil, hiçbir yerden
+    INSERT edilmeyen eski/ölü 'transfer_requests' tablosunu sorguluyordu —
+    yani panel üzerinden verilen hiçbir İK onayı bu fonksiyon tarafından
+    asla görülemezdi. Ayrıca fonksiyonun hiçbir çağıranı yoktu (bkz.
+    web/tab_modules/onaylar.py). Artık: (1) doğru tablo ('transfers')
+    sorgulanıyor, (2) kimlik eşleştirmesi PersonelID varsa onunla, yoksa
+    İsim Soyisim ile yapılıyor, (3) hedefe taşınmamışsa personnel_exit.
+    update_personnel ile Fact_Mevcut'taki Mağaza/Unvan alanı OTOMATİK
+    hedefe taşınıyor (kilitli + denetim izli yazma yolu — bkz.
+    services/personnel_exit.py:update_personnel), (4) bu fonksiyon artık
+    web/tab_modules/onaylar.py içinden İK onayı kaydedildikten hemen sonra
+    çağrılıyor.
+    """
     if fact_mevcut is None or fact_mevcut.empty:
-        return {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0}
+        return {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0, "applied": 0, "failed": 0}
 
     def canon_col(*names: str) -> str | None:
         mapping = {str(c).strip().casefold().replace("ı", "i"): c for c in fact_mevcut.columns}
@@ -703,47 +718,105 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
         return None
 
     pid_col = canon_col("PersonelID", "Personel ID", "Sicil No", "Sicil")
+    name_col = canon_col("İsim Soyisim", "Isim Soyisim", "Ad Soyad")
     store_col = canon_col("Mağaza", "Magaza")
     title_col = canon_col("Unvan")
-    if not pid_col or not store_col:
-        return {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0}
+    if not store_col or (not pid_col and not name_col):
+        return {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0, "applied": 0, "failed": 0}
 
-    current = {}
+    current_by_pid: dict[str, tuple[str, str]] = {}
+    current_by_name: dict[str, tuple[str, str]] = {}
     for _, row in fact_mevcut.iterrows():
-        pid = str(row.get(pid_col, "")).strip()
-        if pid:
-            current[pid] = (str(row.get(store_col, "")).strip(), str(row.get(title_col, "")).strip() if title_col else "")
+        store_val = str(row.get(store_col, "")).strip()
+        title_val = str(row.get(title_col, "")).strip() if title_col else ""
+        if pid_col:
+            pid_key = str(row.get(pid_col, "")).strip().casefold()
+            if pid_key:
+                current_by_pid[pid_key] = (store_val, title_val)
+        if name_col:
+            name_key = str(row.get(name_col, "")).strip().casefold()
+            if name_key:
+                current_by_name[name_key] = (store_val, title_val)
 
-    counts = {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0}
+    counts = {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0, "applied": 0, "failed": 0}
     now = datetime.now().isoformat(timespec="seconds")
     with connect() as conn:
         pending = conn.execute(
-            "SELECT * FROM transfer_requests WHERE hr_status='İK Onayladı' AND fact_status!='Tamamlandı'"
+            "SELECT * FROM transfers WHERE status='İK Onayladı' "
+            "AND (fact_status='Fact_Mevcut Güncellemesi Bekleniyor' OR fact_status IS NULL)"
         ).fetchall()
         for req in pending:
             counts["checked"] += 1
-            pid = str(req["personnel_id"])
-            actual_store, actual_title = current.get(pid, ("", ""))
+            pid = str(req["person_id"] or "").strip()
+            pname = str(req["person_name"] or "").strip()
             target_store = str(req["target_store"] or "")
             target_title = str(req["target_title"] or "")
-            if actual_store and actual_store.casefold() == target_store.casefold() and (not target_title or not actual_title or actual_title.casefold() == target_title.casefold()):
+
+            actual_store, actual_title = "", ""
+            if pid and pid.casefold() in current_by_pid:
+                actual_store, actual_title = current_by_pid[pid.casefold()]
+            elif pname and pname.casefold() in current_by_name:
+                actual_store, actual_title = current_by_name[pname.casefold()]
+
+            if actual_store and actual_store.casefold() == target_store.casefold() and (
+                not target_title or not actual_title or actual_title.casefold() == target_title.casefold()
+            ):
+                # Zaten hedefte (elle taşınmış ya da daha önceki bir çalıştırmada uygulanmış).
                 status = "Tamamlandı"
                 completed_at = now
                 counts["completed"] += 1
             elif actual_store and actual_store.casefold() != str(req["source_store"] or "").casefold():
+                # Beklenmedik biçimde ne kaynakta ne hedefte; elle kontrol gerektirir.
                 status = "Fact_Mevcut ile Uyumsuz"
                 completed_at = None
                 counts["mismatch"] += 1
             else:
-                status = "Fact_Mevcut Güncellemesi Bekleniyor"
-                completed_at = None
-                counts["waiting"] += 1
+                # Hâlâ kaynak mağazada: OTOMATİK UYGULA — personeli Fact_Mevcut'ta
+                # hedef mağaza/unvana taşı (personnel_exit.update_personnel ile,
+                # add_personnel/update_personnel'in kullandığı aynı kilitli,
+                # denetim-izli yazma yolunu kullanarak).
+                try:
+                    from services.personnel_exit import load_personnel_view, update_personnel
+                    staff, _, _, _ = load_personnel_view(_input_path())
+                    eslesen = staff.iloc[0:0]
+                    if pname:
+                        _isim_norm = pname.strip().casefold()
+                        eslesen = staff[staff["İsim Soyisim"].astype(str).str.strip().str.casefold() == _isim_norm]
+                    if len(eslesen) == 1:
+                        idx = eslesen.index[0]
+                        guncellemeler = {"Mağaza": target_store}
+                        if target_title:
+                            guncellemeler["Unvan"] = target_title
+                        update_personnel(
+                            input_path=_input_path(), root=runtime_root(), staff=staff,
+                            index=idx, guncellemeler=guncellemeler, username="system_rotasyon",
+                        )
+                        status = "Tamamlandı"
+                        completed_at = now
+                        counts["completed"] += 1
+                        counts["applied"] += 1
+                    else:
+                        # Belirsiz eşleşme (0 veya birden fazla aynı isim) — güvenlik
+                        # nedeniyle otomatik uygulama atlanır, İK'nın elle çözmesi gerekir.
+                        status = "Fact_Mevcut Güncellemesi Bekleniyor"
+                        completed_at = None
+                        counts["waiting"] += 1
+                        counts["failed"] += 1
+                        log_swallowed(
+                            f"reconcile_transfer_requests: '{pname}' için Fact_Mevcut'ta {len(eslesen)} eşleşme bulundu (1 bekleniyordu), otomatik uygulama atlandı.",
+                            ValueError(f"{len(eslesen)} eşleşme bulundu, 1 bekleniyordu"), level="WARNING",
+                        )
+                except Exception as exc:
+                    status = "Fact_Mevcut Güncellemesi Bekleniyor"
+                    completed_at = None
+                    counts["waiting"] += 1
+                    counts["failed"] += 1
+                    log_swallowed(f"reconcile_transfer_requests: '{pname}' otomatik uygulama hatası", exc, level="ERROR")
+
             conn.execute(
-                """UPDATE transfer_requests SET fact_status=?,fact_store=?,fact_title=?,fact_checked_at=?,
-                   completed_at=?,updated_at=? WHERE request_key=?""",
-                (status, actual_store, actual_title, now, completed_at, now, req["request_key"]),
+                "UPDATE transfers SET fact_status=?,completed_at=?,updated_at=? WHERE id=? AND status='İK Onayladı'",
+                (status, completed_at, now, int(req["id"])),
             )
-    _export_transfer_tracking_pdf()
-    sync_ok, sync_msg = _sync_transfer_requests_to_excel()
-    log_action("system", "TRANSFER_EXCEL_SYNC" if sync_ok else "TRANSFER_EXCEL_SYNC_FAILED", sync_msg)
+        conn.commit()
     return counts
+

@@ -1,4 +1,4 @@
-"""Raporlar sekmesi.
+"""Onaylar sekmesi.
 
 Bu modül, web/app.py içindeki eski "with tabs[N]:" bloğundan otomatik
 olarak çıkarılmıştır. Kod davranışı değiştirilmeden taşınmıştır; tüm
@@ -7,47 +7,19 @@ servis fonksiyonları) web.context.PageContext üzerinden gelir.
 """
 from __future__ import annotations
 
-import os
-from datetime import datetime, timezone
-from pathlib import Path
-from zoneinfo import ZoneInfo
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+import sqlite3
+import time
+from datetime import date, datetime
 from web.context import PageContext
-from services.safe_exec import log_swallowed
 
 
-_REPORT_SUFFIXES = {".pdf", ".xlsx", ".xlsm"}
-_ISTANBUL = ZoneInfo("Europe/Istanbul")
-
-
-def _report_files(base: Path) -> list[Path]:
-    if not base.exists():
-        return []
-    return sorted(
-        [p for p in base.rglob("*") if p.is_file() and p.suffix.lower() in _REPORT_SUFFIXES],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-
-
-def _expected_report_count() -> int:
-    try:
-        return max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "32")))
-    except ValueError:
-        return 32
-
-
-def _istanbul_mtime_text(path: Path) -> str:
-    dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).astimezone(_ISTANBUL)
-    return dt.strftime("%d.%m.%Y %H:%M")
-
-
+from web.transfer_email import transfer_bilgi_govdesi as _transfer_bilgi_govdesi
 def render(ctx: PageContext) -> None:
-    """Raporlar sekmesinin içeriğini çizer."""
+    """Onaylar sekmesinin içeriğini çizer."""
     sheets, acc = ctx.sheets, ctx.acc
     fm, detail, stores, kpis = ctx.fm, ctx.detail, ctx.stores, ctx.kpis
     user, username, role, scope, email = ctx.user, ctx.username, ctx.role, ctx.scope, ctx.email
@@ -67,202 +39,206 @@ def render(ctx: PageContext) -> None:
     _enqueue_and_process = ctx.enqueue_and_process
     read_input = ctx.read_input
 
-    def _log_indirme(dosya_adi: str) -> None:
-        try:
-            from services.download_audit import kaydet as _kaydet_indirme
-            _kaydet_indirme(username, dosya_adi, role)
-        except Exception as _exc:
-            log_swallowed("web.tab_modules.raporlar._log_indirme: beklenmeyen hata", _exc)
-            pass
-
-    st.subheader("PDF ve Excel Rapor Merkezi")
-    st.caption("Yönetici, bölge ve analiz raporlarını burada yeniden üretin, indirin veya kontrollü biçimde Outlook/SMTP ile gönderin.")
-
-    a1, a2, a3 = st.columns([1, 1, 1])
-    if a1.button("🔄 PDF ve Excel raporlarını yeniden üret", use_container_width=True, key="rapor_yeniden_uret"):
-        # DÜZELTME (StreamlitDuplicateElementKey: 'dark_mode_toggle'): önceden
-        # burada `from web.app import _enqueue_without_waiting` vardı. Streamlit
-        # app.py'yi ana script (`__main__`) olarak çalıştırdığı için bu import
-        # Python'a göre FARKLI bir modül kimliği (`web.app`) arıyordu ve
-        # sys.modules önbelleğinde bulamayınca app.py'yi baştan sona İKİNCİ KEZ
-        # çalıştırıyordu — bu da app.py içindeki
-        # st.checkbox(..., key="dark_mode_toggle") satırının iki kez
-        # tetiklenip StreamlitDuplicateElementKey hatası vermesine yol
-        # açıyordu. Fonksiyon artık app.py'den bağımsız web/queue_utils.py
-        # modülünde; bu satır app.py'yi bir daha asla import etmiyor.
-        from web.queue_utils import _enqueue_without_waiting
-        _enqueue_without_waiting("RUN_REPORTS", {}, tenant_code())
-        st.success(
-            "İşlem arka planda başlatıldı — sayfa donmayacak. Input Excel "
-            "yeniden hesaplanıp tüm raporlar üretiliyor, 1-3 dakika "
-            "sürebilir. Birkaç dakika sonra bu sayfayı yenileyip 'Hazır "
-            "Rapor' sayısını kontrol edin."
-        )
-
-    # CANLI output üretim sırasında kısa süreli 9/32 gibi kısmi görünebilir.
-    # Container açılırken alınan son TAM 32/32 snapshot varsa, üretim sürerken
-    # kullanıcıya kısmi set yerine son tamamlanmış set gösterilir.
-    expected = _expected_report_count()
-    live_reports = _report_files(OUTPUT)
-    snapshot_output = ROOT / "output_last_complete"
-    snapshot_reports = _report_files(snapshot_output)
-    if len(live_reports) >= expected:
-        DISPLAY_OUTPUT = OUTPUT
-        _raporlar = live_reports
-    elif len(snapshot_reports) >= expected:
-        DISPLAY_OUTPUT = snapshot_output
-        _raporlar = snapshot_reports
-        st.info(
-            f"Yeni rapor seti hazırlanıyor ({len(live_reports)}/{expected}). "
-            f"Bu sırada son tamamlanmış {len(snapshot_reports)}/{expected} rapor seti gösteriliyor."
-        )
-    else:
-        DISPLAY_OUTPUT = OUTPUT
-        _raporlar = live_reports
-
-    a2.metric("Hazır rapor", len(_raporlar))
-    a3.metric("Son güncelleme", _istanbul_mtime_text(_raporlar[0]) if _raporlar else "—")
-
-    if not _raporlar:
-        st.warning("Henüz PDF/Excel raporu yok. Yukarıdaki 'yeniden üret' düğmesini kullanın.")
-    else:
-        _ana = [p for p in _raporlar if p.parent == DISPLAY_OUTPUT]
-        _bolge = [p for p in _raporlar if p.parent != DISPLAY_OUTPUT]
-        st.markdown("#### Yönetici ve ana raporlar")
-        for pth in _ana:
-            c1, c2, c3 = st.columns([4, 1.2, 1.4])
-            c1.write(f"**{pth.name}**")
-            c2.caption(f"{pth.stat().st_size/1024/1024:.1f} MB")
-            c3.download_button(
-                "İndir", pth.read_bytes(), file_name=pth.name,
-                use_container_width=True, key=f"indir_{pth.name}_{pth.stat().st_mtime_ns}",
-                on_click=_log_indirme, args=(pth.name,),
-            )
-        if _bolge:
-            with st.expander(f"Bölge/şube raporları ({len(_bolge)})", expanded=False):
-                for pth in _bolge:
-                    if is_global or norm_text(scope) in norm_text(pth.stem):
-                        st.download_button(
-                            f"{pth.relative_to(DISPLAY_OUTPUT)} indir", pth.read_bytes(), file_name=pth.name,
-                            use_container_width=True, key=f"indir_alt_{pth.relative_to(DISPLAY_OUTPUT)}_{pth.stat().st_mtime_ns}",
-                            on_click=_log_indirme, args=(pth.name,),
-                        )
-
-        st.markdown("#### Outlook / SMTP ile rapor gönderimi")
-        _secilebilir = {p.name: p for p in _ana}
-        _varsayilan = [n for n in _secilebilir if n.lower().endswith((".pdf", ".xlsx"))][:2]
-        _ekler = st.multiselect("Gönderilecek raporlar", list(_secilebilir), default=_varsayilan, key="rapor_mail_ekleri")
-        _alici = st.text_input("Alıcılar (; ile ayırın)", value=email if email and "@" in email else "", key="rapor_mail_alici")
-        _konu = st.text_input("Konu", value="OMEHR Norm Kadro ve İş Gücü Raporları", key="rapor_mail_konu")
-        _govde = st.text_area("E-posta metni", value="Merhaba,\n\nGüncel norm kadro ve iş gücü raporları ekte sunulmuştur.\n\nİyi çalışmalar.", height=150, key="rapor_mail_govde")
-        _onay = st.checkbox("Alıcıları ve ekleri kontrol ettim; gönderimi onaylıyorum", key="rapor_mail_onay")
-        if st.button("📧 Seçili raporları gönder", disabled=not _onay, use_container_width=True, key="rapor_mail_gonder"):
-            recipients = [x.strip() for x in _alici.replace(",", ";").split(";") if x.strip()]
-            attachments = [str(_secilebilir[n]) for n in _ekler if n in _secilebilir]
-            if not recipients:
-                st.error("En az bir geçerli alıcı girin.")
-            elif not attachments:
-                st.error("En az bir PDF veya Excel raporu seçin.")
-            else:
-                job_id, ok, error = _enqueue_and_process(
-                    "SEND_EMAIL",
-                    {"subject": _konu, "body": _govde, "recipients": recipients, "attachments": attachments, "report_type": "WEB_REPORT_CENTER"},
-                    tenant_code(), timeout=120,
-                )
-                if ok:
-                    st.success("Rapor e-postası gönderildi.")
-                elif ok is None:
-                    st.warning(error)
+    st.subheader("Bölge ve İK Onayları")
+    con=db(); all_pending=pd.read_sql_query("SELECT * FROM transfers ORDER BY id DESC",con); con.close()
+    if not is_global: all_pending=all_pending[(all_pending["region"].astype(str).map(norm_text)==norm_text(scope))|(all_pending["target_region"].astype(str).map(norm_text)==norm_text(scope))]
+    st.dataframe(all_pending,use_container_width=True,hide_index=True)
+    if role=="REGION":
+        rp=all_pending[all_pending["status"].eq("Bölge Müdürleri Onayı Bekliyor")]
+        if not rp.empty:
+            rid=st.selectbox("Talep",rp["id"].tolist(),key="rid"); dec=st.selectbox("Bölge kararı",["Onayladı","Reddetti"])
+            if st.button("Bölge kararını kaydet"):
+                con=db(); con.row_factory=sqlite3.Row; row=dict(con.execute("SELECT * FROM transfers WHERE id=?",(int(rid),)).fetchone()); now=datetime.now().isoformat(timespec="seconds")
+                if norm_text(scope)==norm_text(row.get("region")): con.execute("UPDATE transfers SET source_region_decision=?,source_region_decision_by=?,source_region_decision_at=? WHERE id=?",(dec,username,now,int(rid)))
+                if norm_text(scope)==norm_text(row.get("target_region")): con.execute("UPDATE transfers SET target_region_decision=?,target_region_decision_by=?,target_region_decision_at=? WHERE id=?",(dec,username,now,int(rid)))
+                con.commit(); row=dict(con.execute("SELECT * FROM transfers WHERE id=?",(int(rid),)).fetchone()); same=norm_text(row.get("region"))==norm_text(row.get("target_region")); new="Bölge Müdürü Reddetti" if dec=="Reddetti" else ("İK Onayı Bekliyor" if row.get("source_region_decision")=="Onayladı" and (same or row.get("target_region_decision")=="Onayladı") else "Bölge Müdürleri Onayı Bekliyor"); con.execute("UPDATE transfers SET status=?,updated_at=? WHERE id=?",(new,now,int(rid))); con.commit(); con.close()
+                recipients=transfer_recipients(acc,row,sheets)
+                _govde=_transfer_bilgi_govdesi(row,f"Bölge kararı: {dec}",f"Kararı veren: {username} | Yeni durum: {new}")
+                _job_id,_ok,_err=_enqueue_and_process("SEND_EMAIL",{"subject":f"Transfer Talebi #{rid}: Bölge Kararı {dec}","body":_govde,"recipients":recipients,"transfer_id":int(rid)},tenant_code())
+                if _ok is False:
+                    st.error(f"⚠️ E-posta gönderilemedi: {_err}")
+                elif _ok is None:
+                    st.warning(f"ℹ️ {_err}")
                 else:
-                    st.error(f"Gönderim başarısız: {error}")
-
-    st.markdown("---")
-    st.markdown("#### Power BI'a Hazır Model")
-    st.caption(
-        "Dim_Magaza/Dim_Unvan/Fact_Norm/Fact_Mevcut sayfalarını, Power BI "
-        "Desktop'ta doğrudan bağlanabileceğiniz TEMİZ bir star şemaya "
-        "dönüştürür: yinelenen Dim satırları tekilleştirilir, ID sütunları "
-        "ilişkiler için tutarlı metne sabitlenir, Dim tablosunda karşılığı "
-        "olmayan (yetim) kayıtlar sessizce atılmaz, ayrı bir sayfada "
-        "raporlanır. Bir takvim (Dim_Tarih) boyutu ve ilişki rehberi de "
-        "eklenir. Bu, veriyi Power BI'a OTOMATİK GÖNDERMEZ — üretilen "
-        "dosyayı Power BI Desktop'ta 'Veri Al > Excel' ile açıp "
-        "bağlamanız gerekir."
-    )
-    if st.button("📊 Power BI modelini üret", key="powerbi_uret"):
-        try:
-            from services.powerbi_export import export_powerbi_workbook
-            _sonuc = export_powerbi_workbook(sheets, OUTPUT)
-            st.session_state["powerbi_sonuc"] = _sonuc
-            st.success(
-                f"Model üretildi: {_sonuc['dim_magaza_sayisi']} mağaza, "
-                f"{_sonuc['dim_unvan_sayisi']} unvan, "
-                f"{_sonuc['fact_norm_sayisi']} norm satırı, "
-                f"{_sonuc['fact_mevcut_sayisi']} personel satırı."
-            )
-            if _sonuc["yetim_norm_sayisi"] or _sonuc["yetim_mevcut_sayisi"]:
-                st.warning(
-                    f"⚠️ {_sonuc['yetim_norm_sayisi']} Fact_Norm ve "
-                    f"{_sonuc['yetim_mevcut_sayisi']} Fact_Mevcut satırı, "
-                    "Dim_Magaza/Dim_Unvan'da karşılığı olmadığı için modele "
-                    "dahil edilmedi — bu satırlar üretilen dosyadaki "
-                    "Yetim_Kayitlar_* sayfalarında listeleniyor, kaynak "
-                    "Excel'de düzeltilmesi önerilir."
-                )
-        except Exception as _exc:
-            log_swallowed("web.tab_modules.raporlar.powerbi_uret: beklenmeyen hata", _exc)
-            st.error(f"Power BI modeli üretilemedi: {_exc}")
-    _powerbi_sonuc = st.session_state.get("powerbi_sonuc")
-    if _powerbi_sonuc and Path(_powerbi_sonuc["file"]).is_file():
-        st.download_button(
-            "Power BI modelini indir (OMEHR_PowerBI_Model.xlsx)",
-            Path(_powerbi_sonuc["file"]).read_bytes(),
-            file_name=Path(_powerbi_sonuc["file"]).name,
-            use_container_width=True,
-            on_click=_log_indirme, args=("OMEHR_PowerBI_Model.xlsx",),
-        )
-
-    if can_view_personal_address:
-        st.markdown("---")
-        st.markdown("#### Yedekleme ve Geri Yükleme (yalnız İK/Admin)")
-        with st.expander("📥 İndirme Denetim Kaydı (KVKK — kişisel veri içeren raporları kim indirdi)"):
-            try:
-                from services.download_audit import son_kayitlar as _indirme_kayitlari
-                _kayitlar = _indirme_kayitlari(200)
-                if _kayitlar:
-                    st.dataframe(pd.DataFrame(_kayitlar)[["zaman", "kullanici", "rol", "dosya_adi"]], use_container_width=True, hide_index=True)
-                else:
-                    st.caption("Henüz hiç indirme kaydedilmedi.")
-            except Exception:
-                st.caption("İndirme kayıtları okunamadı.")
-        st.caption(
-            "Input dosyası her açılışta otomatik olarak zaman damgalı yedeklenir "
-            "(son 20 yedek saklanır). Bir sorun olursa aşağıdan eski bir sürüme dönebilirsiniz."
-        )
-        try:
-            from services.backup import list_backups, restore_backup
-            yedekler = list_backups(INPUT)
-        except Exception as _exc:
-            log_swallowed("web.tab_modules.raporlar._log_indirme: beklenmeyen hata", _exc)
-            yedekler = []
-        if not yedekler:
-            st.info("Henüz bir yedek oluşmadı.")
-        else:
-            secenekler = {p.name: p for p in yedekler}
-            secili_ad = st.selectbox("Geri yüklenecek yedek", list(secenekler), key="yedek_secim")
-            if st.button("⚠️ Seçili yedeği geri yükle (mevcut dosyanın üzerine yazar)", key="yedek_geri_yukle"):
-                st.session_state["yedek_onay_bekliyor"] = secenekler[secili_ad]
-            if st.session_state.get("yedek_onay_bekliyor"):
-                st.warning(f"'{st.session_state['yedek_onay_bekliyor'].name}' dosyası geri yüklenecek, bu işlem GERİ ALINAMAZ. Emin misiniz?")
-                oc1, oc2 = st.columns(2)
-                if oc1.button("Evet, geri yükle", key="yedek_onay_evet"):
-                    if restore_backup(st.session_state["yedek_onay_bekliyor"], INPUT, kullanici=username):
-                        st.success("Yedek geri yüklendi. Sayfa yenileniyor...")
-                        del st.session_state["yedek_onay_bekliyor"]
-                        read_input.clear()
-                        st.rerun()
+                    st.success("E-posta gönderildi.")
+                con=db(); con.execute("UPDATE transfers SET updated_at=? WHERE id=?",(now,int(rid))); con.commit(); con.close(); st.rerun()
+    if can_approve:
+        rp_hr=all_pending[all_pending["status"].eq("Bölge Müdürleri Onayı Bekliyor")]
+        if not rp_hr.empty:
+            with st.expander("İK Doğrudan Yetkisi — Bölge Onayı Bekleyen Talepleri Atla"):
+                st.caption("Bu bölüm yalnız İK/yönetim yetkisine sahip kullanıcılara görünür. Kullanımı, bölge müdürü onayı beklenmeden talebi doğrudan İK onaylı hale getirir.")
+                hrid=st.selectbox("Bölge onayı bekleyen talep",rp_hr["id"].tolist(),key="hr_override_id")
+                hr_override_note=st.text_area("Geçersiz kılma gerekçesi (zorunlu)",key="hr_override_note")
+                if st.button("İK doğrudan yetkisiyle onayla (bölge onayını atla)"):
+                    if not hr_override_note.strip():
+                        st.error("Geçersiz kılma gerekçesi zorunludur.")
                     else:
-                        st.error("Geri yükleme başarısız oldu.")
-                if oc2.button("Vazgeç", key="yedek_onay_hayir"):
-                    del st.session_state["yedek_onay_bekliyor"]
+                        now=datetime.now().isoformat(timespec="seconds")
+                        con=db(); con.row_factory=sqlite3.Row
+                        con.execute(
+                            "UPDATE transfers SET status='İK Onayladı',fact_status='Fact_Mevcut Güncellemesi Bekleniyor',decision_by=?,decision_note=?,decision_at=?,updated_at=? WHERE id=?",
+                            (username,f"İK doğrudan yetkisiyle onaylandı (bölge onayı atlandı). Gerekçe: {hr_override_note}",now,now,int(hrid)),
+                        )
+                        row=dict(con.execute("SELECT * FROM transfers WHERE id=?",(int(hrid),)).fetchone()); con.commit(); con.close()
+                        recipients=transfer_recipients(acc,row,sheets)
+                        _govde=_transfer_bilgi_govdesi(row,"İK Doğrudan Onayladı",f"Gerekçe: {hr_override_note}",rotasyon_var=True)
+                        _job_id,_ok,_err=_enqueue_and_process("TRANSFER_DECISION",{"transfer_id":int(hrid),"row":row,"approved":True,"subject":f"Transfer Talebi #{hrid}: İK Doğrudan Onayladı","body":_govde,"recipients":recipients},tenant_code())
+                        con=db(); con.execute("UPDATE transfers SET updated_at=? WHERE id=?",(now,int(hrid))); con.commit(); con.close()
+                        log(username,"TRANSFER_HR_OVERRIDE_REGION",f"{hrid}: {hr_override_note}")
+                        try:
+                            from services.management_center import reconcile_transfer_requests
+                            reconcile_transfer_requests(fm)
+                        except Exception as _rec_exc:
+                            from services.safe_exec import log_swallowed
+                            log_swallowed("onaylar.py: İK doğrudan onay sonrası reconcile_transfer_requests hatası", _rec_exc, level="ERROR")
+                        if _ok is False:
+                            st.error(f"⚠️ Onay kaydedildi AMA rotasyon evrakı/e-posta gönderilemedi: {_err}")
+                        elif _ok is None:
+                            st.warning(f"ℹ️ Onay kaydedildi. {_err}")
+                        else:
+                            st.success("Talep, İK doğrudan yetkisiyle bölge onayı atlanarak onaylandı — rotasyon evrakı ve e-posta gönderildi.")
+                        st.rerun()
+        hp=all_pending[all_pending["status"].isin(["İK Onayı Bekliyor","Revizyon İstendi"])]
+        if not hp.empty:
+            hid=st.selectbox("İK talep no",hp["id"].tolist()); dec=st.selectbox("İK kararı",["İK Onayladı","Reddedildi","Revizyon İstendi"]); note=st.text_area("İK notu")
+            _evrak_turu = "Kalıcı Rotasyon Belgesi"
+            _gecici_alanlar = {}
+            if dec == "İK Onayladı":
+                _evrak_turu = st.radio(
+                    "Onay evrakı türü", ["Kalıcı Rotasyon Belgesi", "Geçici Görevlendirme / Şube Destek Formu"],
+                    horizontal=True, key="ik_evrak_turu",
+                    help="Geçici seçilirse personelin norm/asıl mağaza kaydı DEĞİŞMEZ — yalnız bir destek belgesi üretilir.",
+                )
+                if _evrak_turu == "Geçici Görevlendirme / Şube Destek Formu":
+                    from services.gecici_gorevlendirme import NEDEN_SECENEKLERI
+                    _gc1, _gc2 = st.columns(2)
+                    _bitis_tarihi = _gc1.date_input("Görevlendirme Bitiş Tarihi", key="ik_gecici_bitis")
+                    _sure_metni = _gc2.text_input("Toplam Süre (ör. '2 hafta')", key="ik_gecici_sure")
+                    _neden = st.selectbox("Görevlendirme Nedeni", NEDEN_SECENEKLERI, key="ik_gecici_neden")
+                    _neden_diger = st.text_input("Diğer (belirtiniz)", key="ik_gecici_neden_diger") if _neden == "Diğer" else ""
+                    _sicil_no = st.text_input("Sicil No (varsa)", key="ik_gecici_sicil")
+                    _gecici_alanlar = {
+                        "end_date": _bitis_tarihi.strftime("%d.%m.%Y") if _bitis_tarihi else "",
+                        "total_duration": _sure_metni, "reason": _neden, "reason_other": _neden_diger,
+                        "person_id": _sicil_no,
+                    }
+            if st.button("İK kararını kaydet"):
+                now=datetime.now().isoformat(timespec="seconds"); fact="Fact_Mevcut Güncellemesi Bekleniyor" if dec=="İK Onayladı" else "Beklemiyor"
+                _mevcut_satir = hp[hp["id"]==hid].iloc[0]
+                _beklenen_version = int(_mevcut_satir.get("version") or 0)
+                _beklenen_status = str(_mevcut_satir["status"])
+                from services.web_runtime import optimistic_update_transfer
+                _basarili = optimistic_update_transfer(
+                    int(hid), _beklenen_status, _beklenen_version,
+                    {"status":dec,"decision_by":username,"decision_note":note,"decision_at":now,"fact_status":fact,"updated_at":now,"approval_source":"web_ik_karari"},
+                )
+                if not _basarili:
+                    st.error(
+                        "🚫 Bu talep, siz bu formu açtıktan SONRA başka biri tarafından zaten işlenmiş "
+                        "(çakışma önlendi — üzerine yazılmadı). Lütfen sayfayı yenileyip güncel durumu kontrol edin."
+                    )
                     st.rerun()
+                else:
+                    con=db(); con.row_factory=sqlite3.Row; row=dict(con.execute("SELECT * FROM transfers WHERE id=?",(int(hid),)).fetchone()); con.close()
+                    if dec=="İK Onayladı" and _evrak_turu != "Geçici Görevlendirme / Şube Destek Formu":
+                        # DÜZELTME: İK onayı kaydedildikten hemen sonra Fact_Mevcut'u
+                        # otomatik güncelle (bkz. services/management_center.py:
+                        # reconcile_transfer_requests). Geçici görevlendirmede
+                        # norm/asıl mağaza kaydı kasıtlı olarak DEĞİŞMEZ, bu yüzden
+                        # burada çağrılmıyor.
+                        try:
+                            from services.management_center import reconcile_transfer_requests
+                            reconcile_transfer_requests(fm)
+                        except Exception as _rec_exc:
+                            from services.safe_exec import log_swallowed
+                            log_swallowed("onaylar.py: İK kararı sonrası reconcile_transfer_requests hatası", _rec_exc, level="ERROR")
+                    recipients=transfer_recipients(acc,row,sheets)
+                    _govde=_transfer_bilgi_govdesi(row,dec,note,rotasyon_var=(dec=="İK Onayladı"))
+                    _job_id,_ok,_err=_enqueue_and_process("TRANSFER_DECISION",{"transfer_id":int(hid),"row":row,"approved":dec=="İK Onayladı","subject":f"Transfer Talebi #{hid}: {dec}","body":_govde,"recipients":recipients,"document_type":("TEMPORARY" if _evrak_turu=="Geçici Görevlendirme / Şube Destek Formu" else "PERMANENT"),"temp_fields":_gecici_alanlar},tenant_code())
+                    if _ok is False:
+                        st.error(f"⚠️ Karar kaydedildi AMA rotasyon evrakı/e-posta gönderilemedi: {_err}")
+                    elif _ok is None:
+                        st.warning(f"ℹ️ Karar kaydedildi. {_err}")
+                    else:
+                        st.success("Karar kaydedildi — rotasyon evrakı (varsa) ve e-posta devreden/devralan şubelere gönderildi.")
+                    st.rerun()
+        actionable=all_pending[all_pending["status"].eq("İK Onayladı")]
+        if not actionable.empty:
+            with st.expander("Rotasyon Evrakını Yeniden Oluştur / Gönder", expanded=False):
+                st.caption(
+                    "Doğrudan İK onaylı oluşturulan veya ilk gönderimi başarısız olan bir talep için "
+                    "rotasyon PDF/DOCX belgelerini yeniden üretir ve devreden/devralan şubelere e-posta gönderir."
+                )
+                resend_id = st.selectbox(
+                    "Onaylanmış transfer talebi",
+                    actionable["id"].tolist(),
+                    key="rotation_resend_id",
+                )
+                resend_note = st.text_input(
+                    "Yeniden gönderim notu",
+                    value="Rotasyon evrakı yeniden oluşturuldu ve gönderildi.",
+                    key="rotation_resend_note",
+                )
+                if st.button("Rotasyon evrakını yeniden oluştur ve gönder", type="primary", key="rotation_resend_button"):
+                    con=db(); con.row_factory=sqlite3.Row
+                    _record=con.execute("SELECT * FROM transfers WHERE id=?",(int(resend_id),)).fetchone()
+                    row=dict(_record) if _record else {}
+                    con.close()
+                    if not row:
+                        st.error("Seçilen transfer talebi bulunamadı.")
+                    else:
+                        recipients=transfer_recipients(acc,row,sheets)
+                        _govde=_transfer_bilgi_govdesi(
+                            row,
+                            "İK Onayladı — Rotasyon Evrakı Yeniden Gönderimi",
+                            resend_note,
+                            rotasyon_var=True,
+                        )
+                        _token=datetime.now().strftime("%Y%m%d%H%M%S%f")
+                        _job_id,_ok,_err=_enqueue_and_process(
+                            "TRANSFER_DECISION",
+                            {
+                                "transfer_id":int(resend_id),
+                                "row":row,
+                                "approved":True,
+                                "subject":f"Transfer Talebi #{resend_id}: Rotasyon Evrakı",
+                                "body":_govde,
+                                "recipients":recipients,
+                                "force_resend":True,
+                                "resend_token":_token,
+                            },
+                            tenant_code(),
+                        )
+                        log(username,"TRANSFER_ROTATION_RESEND",f"{resend_id}: {resend_note}")
+                        if _ok is False:
+                            st.error(f"⚠️ Rotasyon evrakı/e-posta yeniden gönderilemedi: {_err}")
+                        elif _ok is None:
+                            st.warning(f"ℹ️ Yeniden gönderim kuyruğa alındı. {_err}")
+                        else:
+                            st.success("Rotasyon PDF/DOCX evrakı yeniden oluşturuldu ve e-posta gönderildi.")
+                        st.rerun()
+
+            st.subheader("Onay Sonrası İptal / Başka Hedefe Yönlendirme")
+            action_id=st.selectbox("İşlem yapılacak talep",actionable["id"].tolist(),key="post_approval_id")
+            action=st.radio("İşlem",["Transferi İptal Et","Başka Yere Transfer Et"],horizontal=True)
+            action_reason=st.text_area("İptal / yönlendirme gerekçesi",key="post_approval_reason")
+            if action=="Transferi İptal Et":
+                if st.button("Transferi iptal et ve mail gönder",type="primary"):
+                    if not action_reason.strip():
+                        st.error("İptal gerekçesi zorunludur.")
+                    else:
+                        cancel_transfer_request(action_id,username,action_reason,acc,sheets)
+                        st.success("Transfer iptal edildi ve iptal bildirimi gönderildi."); st.rerun()
+            else:
+                targets=sheets["Fact_Norm"][["Mağaza","Bölge Sorumlusu"]].drop_duplicates().sort_values("Mağaza")
+                new_store=st.selectbox("Yeni hedef mağaza",targets["Mağaza"].tolist(),key="redirect_store")
+                new_title=st.selectbox("Yeni hedef departman/unvan",sorted(sheets["Fact_Norm"]["Unvan"].dropna().astype(str).unique()),key="redirect_title")
+                new_region=targets[targets["Mağaza"].eq(new_store)]["Bölge Sorumlusu"].iloc[0]
+                if st.button("Eski talebi iptal et ve yeni transferi oluştur",type="primary"):
+                    if not action_reason.strip():
+                        st.error("Yönlendirme gerekçesi zorunludur.")
+                    else:
+                        new_id,_=redirect_transfer_request(
+                            action_id,username,new_store,new_title,new_region,action_reason,acc,sheets
+                        )
+                        st.success(f"Eski talep iptal edildi; yeni transfer talebi #{new_id} oluşturuldu."); st.rerun()
