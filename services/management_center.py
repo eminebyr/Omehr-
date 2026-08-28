@@ -819,4 +819,3 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
             )
         conn.commit()
     return counts
-
