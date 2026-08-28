@@ -3,10 +3,10 @@ from __future__ import annotations
 """GÜNLÜK OTOMATİK RAPOR ZAMANLAYICI.
 
 DÜZELTME (yeni özellik): Bu uygulamanın mimarisinde SÜREKLİ ÇALIŞAN ayrı bir
-worker.py süreci YOK — işler yalnızca bir web isteği geldiğinde anlık olarak
+worker.py süreci YOK — işler yalnızca bir web isteği geldiğinde ancak olarak
 `worker.py --once` alt-süreciyle işleniyor (bkz. web/app.py::
 _enqueue_and_process, refresh_all). Bu, "kimse panele girmese bile günde 2
-kez otomatik rapor üret" isteğini karşılayamaz, çünkü tetikleyecek bir istek
+kez otomatik rapor üret" isteğini karşılamaz, çünkü tetikleyecek bir istek
 hiç gelmeyebilir.
 
 Çözüm: Streamlit sürecinin kendisi zaten container açık olduğu sürece canlı
@@ -20,6 +20,11 @@ Streamlit'in her sayfa yenilemesinde yeniden thread açmaz.
 Saatler `OMEHR_REPORT_SCHEDULE_TIMES` ortam değişkeniyle özelleştirilebilir
 (virgülle ayrılmış "SS:DD" listesi, örn. "10:00,17:15"); tanımsızsa bu iki
 saat varsayılan olarak kullanılır.
+
+EKLENTİ: Her tetiklemeden önce, archive/backups/backup klasörlerindeki eski
+rapor ve yedek dosyaları otomatik temizlenir (en yeni N tanesi saklanır),
+böylece Railway Volume'u zamanla dolup taşmaz. output_last_complete/
+klasörüne dokunulmaz — o, son sağlam durumun güvenlik yedeğidir.
 """
 
 import os
@@ -31,7 +36,7 @@ from datetime import datetime, timedelta
 
 from services.job_queue import enqueue
 from services.observability import get_logger
-from services.runtime_paths import code_root
+from services.runtime_paths import code_root, runtime_root
 from services.safe_exec import log_swallowed
 from services.tenant_context import current_tenant_id
 
@@ -40,6 +45,14 @@ LOGGER = get_logger("omehr.scheduler")
 _DEFAULT_TIMES = ["10:00", "17:15"]
 _STARTED_LOCK = threading.Lock()
 _STARTED = False
+
+# Temizlik varsayılanları — env değişkeniyle override edilebilir
+_CLEANUP_DEFAULTS = {
+    "OMEHR_ARCHIVE_KEEP_PDF": 10,
+    "OMEHR_ARCHIVE_KEEP_XLSX": 15,
+    "OMEHR_BACKUPS_KEEP": 10,
+    "OMEHR_BACKUP_KEEP": 5,
+}
 
 
 def _parse_times(raw: str | None) -> list[tuple[int, int]]:
@@ -64,7 +77,56 @@ def _next_run(now: datetime, times: list[tuple[int, int]]) -> datetime:
     return min(candidates)
 
 
+def _keep_newest(folder, pattern: str, keep: int) -> int:
+    """folder içinde pattern'e uyan dosyalardan en yeni `keep` tanesini
+    saklar, gerisini siler. Silinen dosya sayısını döner. Klasör yoksa
+    veya erişilemezse sessizce 0 döner (hata fırlatmaz)."""
+    if not folder.exists():
+        return 0
+    try:
+        files = sorted(
+            (f for f in folder.glob(pattern) if f.is_file()),
+            key=lambda f: f.stat().st_mtime,
+            reverse=True,
+        )
+    except Exception as exc:
+        log_swallowed(f"scheduler: temizlik için {folder} okunamadı", exc, level="WARNING")
+        return 0
+
+    removed = 0
+    for old_file in files[keep:]:
+        try:
+            old_file.unlink()
+            removed += 1
+        except Exception as exc:
+            log_swallowed(f"scheduler: {old_file} silinemedi", exc, level="WARNING")
+    return removed
+
+
+def _cleanup_old_reports() -> None:
+    """archive/backups/backup klasörlerindeki eski dosyaları temizler.
+    output_last_complete/ klasörüne KESİNLİKLE dokunulmaz."""
+    try:
+        keep_pdf = int(os.getenv("OMEHR_ARCHIVE_KEEP_PDF", _CLEANUP_DEFAULTS["OMEHR_ARCHIVE_KEEP_PDF"]))
+        keep_xlsx = int(os.getenv("OMEHR_ARCHIVE_KEEP_XLSX", _CLEANUP_DEFAULTS["OMEHR_ARCHIVE_KEEP_XLSX"]))
+        keep_backups = int(os.getenv("OMEHR_BACKUPS_KEEP", _CLEANUP_DEFAULTS["OMEHR_BACKUPS_KEEP"]))
+        keep_backup = int(os.getenv("OMEHR_BACKUP_KEEP", _CLEANUP_DEFAULTS["OMEHR_BACKUP_KEEP"]))
+
+        data_root = runtime_root()
+        total_removed = 0
+        total_removed += _keep_newest(data_root / "archive", "*.pdf", keep_pdf)
+        total_removed += _keep_newest(data_root / "archive", "*.xlsx", keep_xlsx)
+        total_removed += _keep_newest(data_root / "backups", "*.xlsx", keep_backups)
+        total_removed += _keep_newest(data_root / "backup", "*.xlsx", keep_backup)
+
+        if total_removed:
+            LOGGER.info("Otomatik temizlik: %s eski dosya silindi (archive/backups/backup)", total_removed)
+    except Exception as exc:
+        log_swallowed("scheduler: otomatik temizlik sırasında beklenmeyen hata", exc, level="ERROR")
+
+
 def _trigger_report_run() -> None:
+    _cleanup_old_reports()
     tenant = current_tenant_id()
     try:
         enqueue("RUN_REPORTS", {}, tenant)
