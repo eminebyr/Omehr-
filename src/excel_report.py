@@ -11,6 +11,7 @@ dönüp dolanan bir bağımlılık YOKTUR.
 """
 
 import math
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -986,5 +987,158 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
         ws.oddFooter.center.text='OMEHR — İnsan Kaynakları Direktörlüğü'
         ws.oddFooter.right.text='Sayfa &P / &N'
 
+    wb.save(out)
+    return out
+
+
+def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None):
+    """Bölge bazlı, üç mağazayı yan yana gösteren kompakt norm kadro listesi.
+
+    Kullanıcının operasyonel Excel düzenini yalnızca görsel şablon olarak
+    uygular; kişi, unvan, norm ve bölge değerlerinin tamamı güncel
+    ``Fact_Mevcut``/``Fact_Norm`` hesaplarından gelir. Böylece kaynakta
+    personel, norm, mağaza veya bölge değiştiğinde rapor yeniden üretimde
+    otomatik güncellenir.
+    """
+    out = Path(output_path) if output_path else runtime_root() / 'output' / 'OMEHR_Kompakt_Norm_Kadro_Listesi.xlsx'
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    def _normal(value):
+        return ' '.join(canon(txt(value)).split())
+
+    def _sheet_name(value, used):
+        base = re.sub(r"[\\/*?:\[\]]", " ", txt(value)).strip() or "Bölgesiz"
+        base = ' '.join(base.split())[:31]
+        candidate = base
+        number = 2
+        while candidate in used:
+            suffix = f" {number}"
+            candidate = f"{base[:31-len(suffix)]}{suffix}"
+            number += 1
+        used.add(candidate)
+        return candidate
+
+    stx = st.copy()
+    for column in ['Bölge Sorumlusu', 'Mağaza']:
+        if column not in stx.columns:
+            stx[column] = ''
+    stx['_yonetici'] = stx['Bölge Sorumlusu'].map(_normal)
+    stx['_magaza'] = stx['Mağaza'].map(_normal)
+    stx = stx.drop_duplicates(['_yonetici', '_magaza'])
+
+    nm = req(norm, 'Mağaza', 'Magaza'); nu = req(norm, 'Unvan'); nn = req(norm, 'Norm Kadro', 'Norm')
+    sm = req(staff, 'Mağaza', 'Magaza'); su = req(staff, 'Unvan'); dep = req(staff, 'Departman')
+    pname = req(staff, 'İsim Soyisim', 'Isim Soyisim', 'Ad Soyad')
+    staff_note_col = col(staff, 'Açıklama', 'Aciklama', 'AÇIKLAMA', 'ACIKLAMA', 'Personel Açıklaması', 'Personel Aciklamasi')
+    entry_col = col(staff, 'İşe Giriş', 'Ise Giris')
+
+    normx = norm.copy(); normx['_magaza'] = normx[nm].map(_normal); normx['_unvan'] = normx[nu].map(_title_key)
+    staffx = staff.copy(); staffx['_magaza'] = staffx[sm].map(_normal); staffx['_unvan'] = staffx[dep].map(_title_key)
+
+    def _payload(store_name, store_key):
+        ns = normx[normx['_magaza'].eq(store_key)].copy()
+        ps = staffx[staffx['_magaza'].eq(store_key)].copy()
+        norm_by_title = numeric(ns[nn]).groupby(ns['_unvan']).sum().astype(int).to_dict() if not ns.empty else {}
+        title_names = (ns.drop_duplicates('_unvan').set_index('_unvan')[nu].map(txt).to_dict() if not ns.empty else {})
+        keys = list(dict.fromkeys([*norm_by_title.keys(), *ps['_unvan'].tolist()]))
+        rows = []
+        total_shortage = total_surplus = 0
+        for key in keys:
+            people = ps[ps['_unvan'].eq(key)].copy()
+            if entry_col and entry_col in people.columns:
+                people['_giris'] = pd.to_datetime(people[entry_col], errors='coerce')
+                people = people.sort_values('_giris', ascending=True, na_position='first')
+            current = len(people); target = int(norm_by_title.get(key, 0))
+            shortage = max(target-current, 0); surplus = max(current-target, 0)
+            total_shortage += shortage; total_surplus += surplus
+            surplus_indexes = set(people.tail(surplus).index) if surplus else set()
+            for index, person in people.iterrows():
+                note = txt(person.get(staff_note_col, '')).strip() if staff_note_col else ''
+                note_key = _normal(note)
+                title = txt(person.get(su, '')).strip() or txt(title_names.get(key, key)).strip()
+                status = 'fazla' if index in surplus_indexes else 'normal'
+                if note:
+                    status = 'ayrilacak' if note_kind(note) == 'departure' else 'raporlu' if 'rapor' in note_key else 'aciklama'
+                elif 'part time' in _normal(title) or 'parttime' in _normal(title):
+                    status = 'part_time'
+                rows.append({'name': txt(person.get(pname, '')).strip(), 'title': title, 'status': status, 'note': note})
+            empty_title = txt(title_names.get(key, key)).strip()
+            for _ in range(shortage):
+                rows.append({'name': 'BOŞ POZİSYON', 'title': empty_title, 'status': 'eksik', 'note': ''})
+        return {
+            'store': txt(store_name).strip(), 'rows': rows, 'current': len(ps),
+            'norm': int(sum(norm_by_title.values())), 'shortage': total_shortage, 'surplus': total_surplus,
+        }
+
+    wb = Workbook(); wb.remove(wb.active)
+    used_names = set()
+    colors = {
+        'title': 'C65911', 'store': 'FFC000', 'header': 'FFF2CC', 'normal': 'FFFFFF',
+        'eksik': '44B3E1', 'fazla': '92D050', 'ayrilacak': 'FF0000',
+        'part_time': '00B0F0', 'raporlu': 'E4DFEC', 'aciklama': 'FFF2CC',
+        'summary': 'FFD966', 'border': '000000', 'dark': '000000', 'white': 'FFFFFF',
+    }
+    thin = Side(style='thin', color=colors['border'])
+
+    def _paint(cell, fill, *, bold=False, color=None, align='left'):
+        cell.fill = PatternFill('solid', fgColor=fill)
+        cell.font = Font(name='Calibri', size=9, bold=bold, color=color or colors['dark'])
+        cell.alignment = Alignment(horizontal=align, vertical='center', wrap_text=True)
+        cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    def _write_card(ws, top, left, payload, height):
+        right = left + 1
+        ws.merge_cells(start_row=top, start_column=left, end_row=top, end_column=right)
+        _paint(ws.cell(top, left, payload['store'].upper()), colors['store'], bold=True, align='center')
+        _paint(ws.cell(top+1, left, 'İSİM SOYİSİM'), colors['header'], bold=True, align='center')
+        _paint(ws.cell(top+1, right, 'UNVAN'), colors['header'], bold=True, align='center')
+        for offset in range(height):
+            item = payload['rows'][offset] if offset < len(payload['rows']) else None
+            row = top + 2 + offset
+            if item:
+                _paint(ws.cell(row, left, item['name']), colors[item['status']])
+                _paint(ws.cell(row, right, item['title']), colors[item['status']])
+                if item['note']:
+                    ws.cell(row, left).comment = Comment(format_person_note(item['name'], item['note']) or item['note'], 'OMEHR Personel Açıklaması')
+            else:
+                _paint(ws.cell(row, left, ''), colors['normal'])
+                _paint(ws.cell(row, right, ''), colors['normal'])
+        summary_row = top + 2 + height
+        _paint(ws.cell(summary_row, left, f"OLAN: {payload['current']}"), colors['summary'], bold=True, align='center')
+        _paint(ws.cell(summary_row, right, f"NORM: {payload['norm']}"), colors['summary'], bold=True, align='center')
+        _paint(ws.cell(summary_row+1, left, f"FAZLA PERSONEL: {payload['surplus']}"), colors['fazla'], bold=True, align='center')
+        _paint(ws.cell(summary_row+1, right, f"EKSİK PERSONEL: {payload['shortage']}"), colors['eksik'], bold=True, align='center')
+
+    for region_key in dict.fromkeys(v for v in stx['_yonetici'] if v):
+        subset = stx[stx['_yonetici'].eq(region_key)].sort_values('Mağaza')
+        display_name = txt(subset.iloc[0]['Bölge Sorumlusu']).strip() or region_key.title()
+        ws = wb.create_sheet(_sheet_name(display_name, used_names)); ws.sheet_view.showGridLines = False
+        ws.merge_cells('A1:H1'); _paint(ws['A1'], colors['title'], bold=True, color=colors['white'], align='center')
+        ws['A1'] = display_name.upper(); ws.row_dimensions[1].height = 24
+        legends = [('NORM EKSİĞİ', 'eksik'), ('FAZLA KADRO', 'fazla'), ('İSTİFA EDECEK PERSONEL', 'ayrilacak'), ('PART TIME', 'part_time'), ('AÇIKLAMA', 'aciklama'), ('RAPORLU', 'raporlu')]
+        for index, (label, status) in enumerate(legends):
+            row = 2 + index // 3; col_index = 1 + (index % 3) * 3
+            _paint(ws.cell(row, col_index, label), colors[status], bold=True)
+            _paint(ws.cell(row, col_index+1, ''), colors[status])
+        payloads = [_payload(row['Mağaza'], row['_magaza']) for _, row in subset.iterrows()]
+        top = 5
+        for start in range(0, len(payloads), 3):
+            band = payloads[start:start+3]
+            height = max([len(item['rows']) for item in band] + [1])
+            for column, payload in zip((1, 4, 7), band):
+                _write_card(ws, top, column, payload, height)
+            top += height + 6
+        for column in ('A', 'D', 'G'):
+            ws.column_dimensions[column].width = 27
+        for column in ('B', 'E', 'H'):
+            ws.column_dimensions[column].width = 24
+        for column in ('C', 'F'):
+            ws.column_dimensions[column].width = 3
+        ws.freeze_panes = 'A5'; ws.page_setup.orientation = 'landscape'; ws.page_setup.fitToWidth = 1; ws.page_setup.fitToHeight = 0
+        ws.sheet_properties.pageSetUpPr.fitToPage = True; ws.print_area = f'A1:H{max(top-2, 5)}'
+        ws.oddFooter.center.text = 'OMEHR — İnsan Kaynakları Direktörlüğü'; ws.oddFooter.right.text = 'Sayfa &P / &N'
+
+    if not wb.sheetnames:
+        ws = wb.create_sheet('Kompakt Norm Kadro'); ws['A1'] = 'Raporlanacak bölge/mağaza verisi bulunamadı.'
     wb.save(out)
     return out
