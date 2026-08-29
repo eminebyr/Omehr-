@@ -47,6 +47,7 @@ def write_df(wb,name,df):
     ws=wb.create_sheet(name[:31]); ws.append(list(df.columns))
     for row in df.itertuples(index=False,name=None):ws.append(list(row))
     navy='102F64'; thin=Side(style='thin',color='D9E1F2'); note_yellow='FFF2CC'
+    shortage_blue='D9EAF7'; surplus_green='D9F2E1'
     for c in ws[1]:c.fill=PatternFill('solid',fgColor=navy);c.font=Font(color='FFFFFF',bold=True);c.alignment=Alignment(horizontal='center',wrap_text=True)
     for row in ws.iter_rows():
         for c in row:c.border=Border(left=thin,right=thin,top=thin,bottom=thin);c.alignment=Alignment(vertical='top',wrap_text=True)
@@ -54,16 +55,24 @@ def write_df(wb,name,df):
     headers={txt(ws.cell(1,i).value):i for i in range(1,ws.max_column+1)}
     note_idx=next((headers[h] for h in ('Açıklama','Aciklama','AÇIKLAMA','ACIKLAMA') if h in headers),None)
     target_idx=next((headers[h] for h in ('Personel Adı Soyadı','İsim Soyisim','Ad Soyad','Unvan','Departman') if h in headers),1)
-    if note_idx:
-        for r in range(2,ws.max_row+1):
-            note=txt(ws.cell(r,note_idx).value).strip()
-            if not note:
-                continue
-            person_name=txt(ws.cell(r,target_idx).value).strip()
-            sentence=format_person_note(person_name,note)
-            fill_color='F4CCCC' if note_kind(note)=='departure' else note_yellow
+    deficit_idx=headers.get('Norm Eksiği')
+    surplus_idx=headers.get('Norm Fazlası')
+    for r in range(2,ws.max_row+1):
+        note=txt(ws.cell(r,note_idx).value).strip() if note_idx else ''
+        deficit=float(numeric(pd.Series([ws.cell(r,deficit_idx).value])).iloc[0]) if deficit_idx else 0
+        surplus=float(numeric(pd.Series([ws.cell(r,surplus_idx).value])).iloc[0]) if surplus_idx else 0
+        # Kullanıcının renk sözleşmesi: açıklama sarı/ayrılacak kırmızı
+        # önceliklidir; açıklama yoksa eksik mavi, fazla yeşildir.
+        fill_color=(
+            ('F4CCCC' if note_kind(note)=='departure' else note_yellow)
+            if note else shortage_blue if deficit>0 else surplus_green if surplus>0 else None
+        )
+        if fill_color:
             for c in range(1,ws.max_column+1):
                 ws.cell(r,c).fill=PatternFill('solid',fgColor=fill_color)
+        if note:
+            person_name=txt(ws.cell(r,target_idx).value).strip()
+            sentence=format_person_note(person_name,note)
             ws.cell(r,target_idx).comment=Comment(sentence or note,'OMEHR Personel Açıklaması')
     ws.freeze_panes='A2';ws.auto_filter.ref=ws.dimensions
     for i in range(1,ws.max_column+1):ws.column_dimensions[get_column_letter(i)].width=min(38,max(11,max(len(txt(ws.cell(r,i).value)) for r in range(1,min(ws.max_row,150)+1))+2))
@@ -762,7 +771,7 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
     entry_col = col(staff,'İşe Giriş','Ise Giris')
 
     wb = Workbook(); wb.remove(wb.active)
-    navy='102F64'; blue='4472C4'; shortage_blue='D9EAF7'; surplus_green='E2F0D9'
+    navy='102F64'; blue='4472C4'; shortage_blue='D9EAF7'; surplus_green='D9F2E1'
     pale='F3F6FA'; white='FFFFFF'; gold='BF9000'; dark='1F2937'; gray='D9E1F2'
     thin=Side(style='thin',color='7F8C9A'); medium=Side(style='medium',color=navy)
 
