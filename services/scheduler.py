@@ -34,7 +34,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 
-from services.job_queue import enqueue
+from services.job_queue import enqueue_scheduled_once
 from services.observability import get_logger
 from services.runtime_paths import code_root, runtime_root
 from services.safe_exec import log_swallowed
@@ -125,15 +125,31 @@ def _cleanup_old_reports() -> None:
         log_swallowed("scheduler: otomatik temizlik sırasında beklenmeyen hata", exc, level="ERROR")
 
 
-def _trigger_report_run() -> None:
-    _cleanup_old_reports()
-    tenant = current_tenant_id()
+def _active_tenants() -> list[str]:
     try:
-        enqueue("RUN_REPORTS", {}, tenant)
-        py = code_root() / ".venv" / "Scripts" / "python.exe"
-        executable = str(py) if py.exists() else sys.executable
-        subprocess.Popen([executable, str(code_root() / "worker.py"), "--once"], cwd=code_root())
-        LOGGER.info("Zamanlanmış rapor üretimi tetiklendi (kiracı: %s)", tenant)
+        from services.tenant_registry import list_tenants
+        active = [str(t["tenant_id"]).strip().upper() for t in list_tenants() if t.get("durum") == "aktif"]
+        if active:
+            return sorted(set(active))
+    except Exception as exc:
+        log_swallowed("scheduler: aktif kiracı listesi okunamadı", exc, level="WARNING")
+    return [current_tenant_id()]
+
+
+def _trigger_report_run(scheduled_for: datetime | None = None) -> None:
+    _cleanup_old_reports()
+    try:
+        slot = (scheduled_for or datetime.now()).strftime("%Y-%m-%dT%H:%M")
+        enqueued = []
+        for tenant in _active_tenants():
+            job_id = enqueue_scheduled_once("RUN_REPORTS", {}, tenant, slot)
+            if job_id is not None:
+                enqueued.append((tenant, job_id))
+        if enqueued:
+            py = code_root() / ".venv" / "Scripts" / "python.exe"
+            executable = str(py) if py.exists() else sys.executable
+            subprocess.Popen([executable, str(code_root() / "worker.py"), "--drain"], cwd=code_root())
+        LOGGER.info("Zamanlanmış rapor üretimi tetiklendi: %s", enqueued)
     except Exception as exc:
         log_swallowed("scheduler: zamanlanmış rapor üretimi tetiklenemedi", exc, level="ERROR")
 
@@ -151,7 +167,7 @@ def _loop(times: list[tuple[int, int]]) -> None:
             while wait_seconds > 0:
                 time.sleep(min(300, wait_seconds))
                 wait_seconds -= 300
-            _trigger_report_run()
+            _trigger_report_run(target)
             time.sleep(60)  # aynı dakika içinde tekrar tetiklenmeyi önle
         except Exception as exc:
             log_swallowed("scheduler: döngüde beklenmeyen hata — devam ediliyor", exc, level="ERROR")

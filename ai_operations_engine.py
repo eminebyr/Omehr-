@@ -56,8 +56,12 @@ def _latest(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.copy()
 
 
-def _operation_features(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    raw=pd.read_excel(_input(),sheet_name="Aylık Operasyon KPI",header=None)
+def _operation_features_from_frame(raw: pd.DataFrame) -> pd.DataFrame:
+    """Aylık operasyon sayfasını saf biçimde özellik tablosuna çevirir.
+
+    Ayrı tutulması panelden değiştirilen ciro/fiş/online vb. alanların,
+    dosya I/O'sundan bağımsız ve deterministik regresyon testini sağlar.
+    """
     best_row=0
     best_score=-1
     wanted={"MAGAZAID","MAGAZA","AYLIKCIRO","AYLIKFIS","ORTSEPET","ONLINESIPARIS","MALKABUL"}
@@ -65,7 +69,11 @@ def _operation_features(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
         score=sum(_canon(value) in wanted for value in raw.iloc[row_index].dropna())
         if score>best_score:
             best_row,best_score=row_index,score
-    source = _latest(pd.read_excel(_input(),sheet_name="Aylık Operasyon KPI",header=best_row))
+    headers = raw.iloc[best_row].tolist()
+    source = raw.iloc[best_row + 1:].copy()
+    source.columns = headers
+    source = source.dropna(how="all").reset_index(drop=True)
+    source = _latest(source)
     if source.empty:
         return pd.DataFrame(columns=["MağazaID"])
     result = pd.DataFrame()
@@ -91,6 +99,11 @@ def _operation_features(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return result.groupby("MağazaID", as_index=False).sum(numeric_only=True)
 
 
+def _operation_features(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    raw=pd.read_excel(_input(),sheet_name="Aylık Operasyon KPI",header=None)
+    return _operation_features_from_frame(raw)
+
+
 def _workload_model(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
     activity = sheets["Gunluk_Aktivite_Hacmi"].copy()
     # SAVUNMACI ERİŞİM: "Veri Durumu" sütunu (ör. kullanıcı tarafından
@@ -113,9 +126,15 @@ def _workload_model(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
     standard = pd.to_numeric(activity["Standart Süre (Dk)"], errors="coerce")
     calibration_factor = pd.to_numeric(activity["Kalibrasyon Katsayısı"], errors="coerce").fillna(1)
     derived_workload = amount * standard * calibration_factor
+    # Panelden Aktivite Miktarı / Standart Süre / Kalibrasyon değiştiğinde
+    # Excel'in eski formül önbelleği hâlâ dolu olabilir. Önbelleği öncelemek
+    # yeni operasyon verisini sessizce yok sayıyordu. Bileşenler geçerliyse
+    # her zaman güncel bileşenlerden türet; yalnız bileşen eksikse güvenli
+    # geri dönüş olarak hesaplanmış Excel değerini kullan.
+    usable_derived = amount.notna() & standard.notna() & calibration_factor.notna() & derived_workload.ge(0)
     usable_cached = cached_workload.notna() & cached_workload.ge(0)
-    activity["İş Yükü (Dk)"] = cached_workload.where(usable_cached, derived_workload).fillna(0)
-    activity["_İş Yükü Kaynağı"] = np.where(usable_cached, "Excel hesaplanmış değer", "Bileşenlerden yeniden hesaplandı")
+    activity["İş Yükü (Dk)"] = derived_workload.where(usable_derived, cached_workload.where(usable_cached)).fillna(0)
+    activity["_İş Yükü Kaynağı"] = np.where(usable_derived, "Bileşenlerden yeniden hesaplandı", "Excel hesaplanmış değer")
     workload = (
         activity.groupby(["MağazaID", "Mağaza", "Bölge", "UnvanID", "Unvan"], dropna=False)
         .agg(

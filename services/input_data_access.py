@@ -62,6 +62,12 @@ def ensure_schema() -> None:
             ddl = create_table_ddl(bilgi["tablo"], bilgi["kolonlar"], backend)
             con.execute(ddl)
             con.execute(create_tenant_index_ddl(bilgi["tablo"]))
+        con.execute(
+            """CREATE TABLE IF NOT EXISTS input_content_versions (
+                tenant_id TEXT PRIMARY KEY,
+                version BIGINT NOT NULL DEFAULT 0
+            )"""
+        )
         con.commit()
     finally:
         con.close()
@@ -81,13 +87,13 @@ def read_sheet(sheet_adi: str, tenant_id: str | None = None) -> pd.DataFrame:
     con = connect(_sqlite_path())
     try:
         sql_kolon_listesi = ", ".join(f'"{sql}"' for _, sql in kolonlar)
-        try:
-            rows = con.execute(
-                f'SELECT {sql_kolon_listesi} FROM "{tablo}" WHERE tenant_id=? ORDER BY _sira',
-                (tenant_id,),
-            ).fetchall()
-        except Exception:
-            return pd.DataFrame(columns=[excel for excel, _ in kolonlar])
+        # Bağlantı/şema/SQL hatasını "boş veri" gibi göstermeyin. Bu hata
+        # yukarı taşınmalı ki yanlışlıkla sıfır personelli/KPI'lı rapor
+        # üretilmesin ve operatör gerçek arızayı görebilsin.
+        rows = con.execute(
+            f'SELECT {sql_kolon_listesi} FROM "{tablo}" WHERE tenant_id=? ORDER BY _sira',
+            (tenant_id,),
+        ).fetchall()
         veri = [dict(zip([excel for excel, _ in kolonlar], row)) for row in rows]
         df = pd.DataFrame(veri, columns=[excel for excel, _ in kolonlar])
         return df
@@ -102,6 +108,26 @@ def read_all_sheets(tenant_id: str | None = None) -> dict[str, pd.DataFrame]:
     tenant_id = (tenant_id or current_tenant_id()).strip().upper()
     sema = load_schema()
     return {sheet_adi: read_sheet(sheet_adi, tenant_id=tenant_id) for sheet_adi in sema}
+
+
+def tenant_content_version(tenant_id: str | None = None) -> int:
+    """Kiracının DB içeriği her değiştiğinde artan önbellek sürümünü döndürür.
+
+    Excel modundaki dosya mtime'ının DB karşılığıdır. Saniye çözünürlüğündeki
+    zaman damgaları art arda iki yazmayı ayırt edemediği için monoton sayaç
+    kullanılır.
+    """
+    tenant_id = (tenant_id or current_tenant_id()).strip().upper()
+    ensure_schema()
+    con = connect(_sqlite_path())
+    try:
+        row = con.execute(
+            "SELECT version FROM input_content_versions WHERE tenant_id=?",
+            (tenant_id,),
+        ).fetchone()
+        return int(row[0]) if row is not None else 0
+    finally:
+        con.close()
 
 
 def write_sheet(sheet_adi: str, df: pd.DataFrame, kullanici: str = "", tenant_id: str | None = None) -> int:
@@ -150,6 +176,11 @@ def write_sheet(sheet_adi: str, df: pd.DataFrame, kullanici: str = "", tenant_id
                 degerler,
             )
             yazilan += 1
+        con.execute(
+            """INSERT INTO input_content_versions(tenant_id, version) VALUES(?, 1)
+               ON CONFLICT(tenant_id) DO UPDATE SET version=input_content_versions.version + 1""",
+            (tenant_id,),
+        )
         con.commit()
         return yazilan
     finally:

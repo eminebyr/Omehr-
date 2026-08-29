@@ -17,7 +17,15 @@ def connect() -> sqlite3.Connection:
     con.execute("""CREATE TABLE IF NOT EXISTS jobs(
         id INTEGER PRIMARY KEY AUTOINCREMENT, tenant TEXT NOT NULL, job_type TEXT NOT NULL,
         payload TEXT NOT NULL, status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, result TEXT, error TEXT)""")
+        created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, result TEXT, error TEXT,
+        scheduled_key TEXT)""")
+    existing = {row[1] for row in con.execute("PRAGMA table_info(jobs)").fetchall()}
+    if "scheduled_key" not in existing:
+        con.execute("ALTER TABLE jobs ADD COLUMN scheduled_key TEXT")
+    con.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_jobs_scheduled_key "
+        "ON jobs(scheduled_key) WHERE scheduled_key IS NOT NULL"
+    )
     con.commit()
     return con
 
@@ -29,6 +37,30 @@ def enqueue(job_type: str, payload: dict | None = None, tenant: str = "OMEHR") -
             (tenant, job_type, json.dumps(payload or {}, ensure_ascii=False, default=str), "PENDING",
              datetime.now().isoformat(timespec="seconds")),
         )
+        return int(cur.lastrowid)
+
+
+def enqueue_scheduled_once(
+    job_type: str,
+    payload: dict | None,
+    tenant: str,
+    scheduled_key: str,
+) -> int | None:
+    """Aynı kiracı/zaman dilimi için görevi yalnız bir kez oluşturur."""
+    key = f"{tenant.strip().upper()}:{job_type}:{scheduled_key}"
+    with connect() as con:
+        try:
+            cur = con.execute(
+                """INSERT INTO jobs(tenant,job_type,payload,status,created_at,scheduled_key)
+                   VALUES(?,?,?,?,?,?)""",
+                (
+                    tenant.strip().upper(), job_type,
+                    json.dumps(payload or {}, ensure_ascii=False, default=str),
+                    "PENDING", datetime.now().isoformat(timespec="seconds"), key,
+                ),
+            )
+        except sqlite3.IntegrityError:
+            return None
         return int(cur.lastrowid)
 
 

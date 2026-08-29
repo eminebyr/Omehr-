@@ -16,8 +16,8 @@ import streamlit as st
 
 
 def test_tenant_content_version_changes_after_write_sheet(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.tenant_registry import create_tenant
@@ -47,8 +47,8 @@ def test_cache_data_reflects_new_row_after_write_via_version_marker(tmp_path, mo
     """Tam senaryo: kişi eklendikten sonra, st.cache_data'nın GERÇEKTEN
     yeni veriyi yansıttığını (tenant_content_version() önbellek
     anahtarı olarak kullanıldığında) doğrular."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.tenant_registry import create_tenant
@@ -89,9 +89,9 @@ def test_cache_data_reflects_new_row_after_write_via_version_marker(tmp_path, mo
 def test_db_mode_does_not_crash_when_input_file_missing(tmp_path, monkeypatch):
     """Kritik çöküş testi: DB modunda input dosyası diskte yokken,
     web/app.py'nin mtime hesaplama mantığı ÇÖKMEMELİ."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.settings import input_path
@@ -112,8 +112,8 @@ def test_db_mode_does_not_crash_when_input_file_missing(tmp_path, monkeypatch):
 def test_excel_mode_still_uses_real_file_mtime(tmp_path, monkeypatch):
     """Regresyon kontrolü: Excel modunda (varsayılan), davranış hiç
     değişmemeli — hâlâ gerçek dosya mtime'ı kullanılmalı."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     (tmp_path / "input").mkdir()
 
     import shutil

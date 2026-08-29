@@ -48,9 +48,8 @@ def _personel_degisikligi_sonrasi_raporlari_yenile() -> None:
     olsa bile personel kaydının kendisi ETKİLENMEMELİDİR.
     """
     try:
-        from web.app import _enqueue_without_waiting
-        from services.tenant_context import current_tenant_id
-        _enqueue_without_waiting("RUN_REPORTS", {}, current_tenant_id())
+        from web.queue_utils import enqueue_report_refresh
+        enqueue_report_refresh()
     except Exception as _exc:
         from services.safe_exec import log_swallowed
         log_swallowed(
@@ -130,6 +129,7 @@ def _kart_duzenle_formu(satir: dict, index, magaza_df, unvan_df, staff_df, ctx) 
                 input_path=ctx.input_path, root=ctx.root, staff=staff_df,
                 index=index, guncellemeler=guncellemeler, username=getattr(ctx, "username", ""),
             )
+            _personel_degisikligi_sonrasi_raporlari_yenile()
             st.success(f"{yeni_isim} güncellendi.")
             st.rerun()
         except Exception as exc:
