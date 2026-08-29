@@ -1,6 +1,37 @@
 # Servis Sınırları (Bounded Context) Haritası
 
-## Durum güncellemesi — Çok Kiracılılık/Faturalama alanı taşındı
+## SONUÇ (29 Ağustos 2026) — Çok Kiracılılık/Faturalama taşıma planından vazgeçildi
+
+Aşağıdaki "Durum güncellemesi" bölümünde anlatılan taşıma planı
+tamamlanmadı ve resmen sonlandırıldı. Bağımsız bir denetimde şu
+bulundu: `services/multitenant/` alt paketindeki `tenant_context.py`,
+`tenant_manager.py`, `tenant_quota.py`, `onboarding.py`, `companies.py`
+dosyaları hiçbir canlı kod yolundan (ve hiçbir testten) çağrılmıyordu;
+üstelik `tenant_context.py` hâlâ eski `BASDAS` marka adını taşıyordu —
+yani "yeniden inşa edilen" kopya, canlı sistemin gerisinde kalmıştı.
+Daha kötüsü: `web/tab_modules/ayarlar.py`, DB moduna Excel aktarırken
+bu bayat/yanlış `tenant_context` modülünü çağırıyordu — bu, veri
+kiracı-izolasyonunu bozabilecek gerçek bir hataydı (düzeltildi:
+artık `services.tenant_context` kullanıyor).
+
+**Nihai karar:** Taşıma planı iptal edildi. Yalnız `billing.py` +
+`tenant_registry.py` (billing'in gerçek bağımlılığı) `services/
+multitenant/` altında kalıyor — geri kalan taşıma denemesi dosyaları
+silindi, canlı/tek doğru kaynak yeniden `services/tenant_context.py`,
+`services/tenant_manager.py`, `services/tenant_quota.py`, `services/
+onboarding.py` (kök seviyesindeki hiç kullanılmayan eski kopyalarıyla
+birlikte). `services/multitenant.py` (paket değil, düz dosya) da
+silindi — `services/multitenant/` paketiyle aynı isimde olduğu için
+Python tarafından zaten hiçbir zaman yüklenemiyordu (paket her zaman
+önceliklidir), yani baştan beri erişilemez ölü kodmuş.
+
+Kısacası: çok kiracılılık için ayrı bir alt paket mimarisine
+GEÇİLMEDİ. Sistem, tek-dosya `services/*.py` yapısında kalmaya devam
+ediyor. Bu alanda yeniden bir "taşıma" denemesi yapılacaksa, önce bu
+notun ve aşağıdaki "Durum güncellemesi" bölümünün okunması ve neden
+yarım kaldığının anlaşılması gerekir.
+
+## Durum güncellemesi — Çok Kiracılılık/Faturalama alanı taşındı (TARİHSEL — yukarıdaki SONUÇ ile iptal edildi)
 
 `tenant_registry.py`, `tenant_manager.py`, `tenant_context.py`,
 `tenant_quota.py`, `billing.py`, `onboarding.py`, `companies.py`
@@ -28,6 +59,7 @@ TEST KAPSAMININ doğruladığı davranış garanti edilebilir.
 
 Bu belge, `services/` altındaki dosyaları **mantıksal alanlara**
 (Norm, Transfer, Reporting, Security, Multi-tenant vb.) haritalıyor.
+
 
 **Bu, TAM bir fiziksel ayrım DEĞİL** — dosyalar fiziksel olarak
 TAŞINMADI, klasör yapısı DEĞİŞMEDİ. 87 test dosyası ve onlarca
