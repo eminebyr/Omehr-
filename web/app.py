@@ -499,16 +499,6 @@ if not _input().exists():
 
 migrate_legacy_input(_input())
 
-# DÜZELTME (FAST V15 — 3 PC ortak Excel): başka bir PC ortak Excel'i
-# değiştirdiyse, bu PC'deki eski "güncel" rapor dosyaları (PDF/XLSX)
-# geçersiz kılınır — aksi halde kullanıcı eski, artık yanlış olan bir
-# raporu güncel sanarak açabilirdi.
-try:
-    from services.multi_pc_sync import invalidate_local_reports_if_shared_input_changed
-    invalidate_local_reports_if_shared_input_changed(_root(), _input())
-except Exception as _exc:
-    log_swallowed("web.app.multi_pc_sync: paylaşımlı input değişikliği kontrol edilemedi", _exc)
-
 # PERFORMANS: Yedekleme + koordinat yenileme + LibreOffice formül yeniden
 # hesaplama (bu SONUNCUSU tek başına saniyeler sürebilir) daha önce HER
 # Streamlit etkileşiminde (sekme değişimi, buton tıklaması dahil) baştan
@@ -594,6 +584,23 @@ else:
     except Exception as _exc:
         log_swallowed("web.app.refresh_all: beklenmeyen hata", _exc)
         pass
+
+# DÜZELTME (FAST V15 — 3 PC ortak Excel — SIRA DÜZELTMESİ, 29 Ağustos 2026):
+# Bu kontrol önceden Excel'i kendi işlemiyle değiştiren adımlardan (statiklestir,
+# recalculate_workbook — yukarıdaki if/else bloğu) ÖNCE çalışıyordu. Bu adımlar
+# dosyanın mtime'ını değiştirdiği için, bir SONRAKİ etkileşimde (herhangi bir
+# tıklama — Streamlit her etkileşimde script'i baştan çalıştırır) bu kontrol
+# kendi mtime değişikliğini "başka bir PC Excel'i değiştirdi" sanıp az önce
+# üretilmiş raporları SİLİYORDU — raporların sürekli kayboluyormuş gibi
+# görünmesinin kök nedeni buydu. Artık kontrol, bu PC'nin kendi Excel
+# değişikliklerinin TAMAMLANDIĞI noktada çalışıyor; marker dosyası her zaman
+# "bu PC'nin en son işlediği" mtime'ı görür, yalnızca GERÇEKTEN dışarıdan
+# (başka PC'den) gelen değişiklikler fark yaratıp raporları geçersiz kılar.
+try:
+    from services.multi_pc_sync import invalidate_local_reports_if_shared_input_changed
+    invalidate_local_reports_if_shared_input_changed(_root(), _input())
+except Exception as _exc:
+    log_swallowed("web.app.multi_pc_sync: paylaşımlı input değişikliği kontrol edilemedi", _exc)
 
 if st.session_state.get("_recalc_uyari"):
     st.warning(st.session_state["_recalc_uyari"])
