@@ -139,7 +139,10 @@ def render(ctx: PageContext) -> None:
     if c1.button("Değişiklikleri Kaydet", type="primary", use_container_width=True, key=f"kaydet_{sayfa}"):
         try:
             yazilan = write_sheet(sayfa, duzenlenen, kullanici=getattr(ctx, "username", ""))
+            from web.queue_utils import enqueue_report_refresh
+            enqueue_report_refresh()
             st.success(f"'{sayfa}' kaydedildi ({yazilan} satır).")
+            st.info("Panel KPI'ları ve Excel/PDF raporları arka planda güncelleniyor.")
         except Exception as exc:
             st.error(f"Kaydetme başarısız: {exc}")
     if c2.button("Veritabanından Yeniden Yükle", use_container_width=True, key=f"yenile_{sayfa}"):
