@@ -585,22 +585,22 @@ else:
         log_swallowed("web.app.refresh_all: beklenmeyen hata", _exc)
         pass
 
-# DÜZELTME (FAST V15 — 3 PC ortak Excel — SIRA DÜZELTMESİ, 29 Ağustos 2026):
-# Bu kontrol önceden Excel'i kendi işlemiyle değiştiren adımlardan (statiklestir,
-# recalculate_workbook — yukarıdaki if/else bloğu) ÖNCE çalışıyordu. Bu adımlar
-# dosyanın mtime'ını değiştirdiği için, bir SONRAKİ etkileşimde (herhangi bir
-# tıklama — Streamlit her etkileşimde script'i baştan çalıştırır) bu kontrol
-# kendi mtime değişikliğini "başka bir PC Excel'i değiştirdi" sanıp az önce
-# üretilmiş raporları SİLİYORDU — raporların sürekli kayboluyormuş gibi
-# görünmesinin kök nedeni buydu. Artık kontrol, bu PC'nin kendi Excel
-# değişikliklerinin TAMAMLANDIĞI noktada çalışıyor; marker dosyası her zaman
-# "bu PC'nin en son işlediği" mtime'ı görür, yalnızca GERÇEKTEN dışarıdan
-# (başka PC'den) gelen değişiklikler fark yaratıp raporları geçersiz kılar.
-try:
-    from services.multi_pc_sync import invalidate_local_reports_if_shared_input_changed
-    invalidate_local_reports_if_shared_input_changed(_root(), _input())
-except Exception as _exc:
-    log_swallowed("web.app.multi_pc_sync: paylaşımlı input değişikliği kontrol edilemedi", _exc)
+# DÜZELTME (FAST V15 — 3 PC ortak Excel — TAMAMEN DEVRE DIŞI, 29 Ağustos 2026):
+# Bu kontrol, "Excel yeniden hesaplama" adımının (statiklestir,
+# recalculate_workbook) HER TAZE tarayıcı oturumunda (her F5'te, çünkü
+# st.session_state oturuma özeldir) dosyayı fiziksel olarak yeniden yazdığını
+# — bu yüzden içerik değişmese bile mtime'ın HER OTURUMDA değiştiğini —
+# hesaba katmıyordu. Sonuç: bu kontrol neredeyse HER sayfa yüklemesinde
+# "başka bir PC Excel'i değiştirdi" sanıp az önce üretilmiş raporları
+# SİLİYORDU (sıralamayı değiştirmek de yetmedi, çünkü sorun sıra değil,
+# mtime'ın doğası gereği her oturumda değişmesiydi). Artık tek sunuculu
+# (Railway) mimaride "birden fazla PC aynı ağ Excel dosyasını paylaşıyor"
+# varsayımı geçerli olmadığı için bu kontrol TAMAMEN devre dışı bırakılmıştır.
+# try:
+#     from services.multi_pc_sync import invalidate_local_reports_if_shared_input_changed
+#     invalidate_local_reports_if_shared_input_changed(_root(), _input())
+# except Exception as _exc:
+#     log_swallowed("web.app.multi_pc_sync: paylaşımlı input değişikliği kontrol edilemedi", _exc)
 
 if st.session_state.get("_recalc_uyari"):
     st.warning(st.session_state["_recalc_uyari"])
