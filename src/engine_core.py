@@ -46,6 +46,7 @@ from src.excel_report import (
     _v16_scenario_impact, _v16_add_workbook_layers,
     _executive_analysis_frames, _add_executive_analysis_sheets,
     _add_visible_ai_dashboard, _build_admin_report_pack, build_boxed_manager_excel,
+    build_compact_norm_roster_excel,
 )
 from src.ai_norm import (
     _transfer_coverage, _decision_reason, ai_norm_table, validate_ai_decisions,
@@ -163,6 +164,7 @@ def run_all():
             _exc, level="ERROR",
         )
     boxed_manager_excel=build_boxed_manager_excel(st,norm,staff,kp)
+    compact_norm_roster_excel=build_compact_norm_roster_excel(st,norm,staff,kp)
     outdir=runtime_root()/'output'
     # VERİ KALİTESİ RAPORU (V19.9 — dış inceleme sonrası eklendi): dummy
     # adres/saha etüdü bekleyen süre/dummy mail/tanımsız unvan işaretleri
@@ -203,7 +205,7 @@ def run_all():
     snap={'version':'V19.1 Derin Model Karşılaştırması','timestamp':datetime.now().isoformat(),'duration_seconds':round((datetime.now()-started).total_seconds(),2),'sha256':h,'kpis':kp,'sources':{'mevcut':'Fact_Mevcut','norm':'Fact_Norm','ai':'V19_AI_Norm_Sonuclari.xlsx','benchmark':'V19_1_Derin_Model_Karsilastirmasi.xlsx'},'engines':{'mevcut_norm_comparison':True,'pdf':True,'excel':True,'region_reports':True,'ai':True,'statistical_tests':True,'machine_learning':True,'group_kfold':True,'operational':True},'files':{'excel':str(outx),'pdf':str(outp),'region_reports':str(outdir/'Bolge_Raporlari')}}
     (outdir/'OMEHR_latest.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
     (runtime_root()/'logs'/'OMEHR_Run_Audit.json').write_text(json.dumps(snap,ensure_ascii=False,indent=2),encoding='utf-8')
-    return {'path':p,'sheets':sheets,'norm':norm,'staff':staff,'state':st,'titles':tt,'kpis':kp,'scenarios':scens,'risk':risk,'ai_norm':ai,'hash':h,'excel':outx,'pdf':outp,'excel_v18':current_excel,'manager_excel':manager_excel,'boxed_manager_excel':boxed_manager_excel,'pdf_v18':current_pdf,'admin_reports':admin_reports,'veri_kalitesi_raporu':kalite_raporu,'version':'V19.21.28 Kutucuklu Personel Excel Raporu'}
+    return {'path':p,'sheets':sheets,'norm':norm,'staff':staff,'state':st,'titles':tt,'kpis':kp,'scenarios':scens,'risk':risk,'ai_norm':ai,'hash':h,'excel':outx,'pdf':outp,'excel_v18':current_excel,'manager_excel':manager_excel,'boxed_manager_excel':boxed_manager_excel,'compact_norm_roster_excel':compact_norm_roster_excel,'pdf_v18':current_pdf,'admin_reports':admin_reports,'veri_kalitesi_raporu':kalite_raporu,'version':'V19.21.28 Kutucuklu Personel Excel Raporu'}
 
 # ============================================================================
 # ENTERPRISE RESILIENCE WRAPPER
