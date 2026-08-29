@@ -10,8 +10,8 @@ varsayılan 10 şube/5 kullanıcı kotası kullanılıyordu).
 
 
 def test_register_tenant_applies_correct_plan_quota(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.onboarding import register_tenant
@@ -27,10 +27,10 @@ def test_register_tenant_applies_correct_plan_quota(tmp_path, monkeypatch):
 def test_full_self_service_onboarding_chain_end_to_end(tmp_path, monkeypatch):
     """3-adımlı self-servis kayıt akışının (firma kaydı → ilk admin →
     Excel içe aktarma → doğru KPI) TAM olarak çalıştığını doğrular."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_TENANT", "TAMZINCIR")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_TENANT", "TAMZINCIR")
     (tmp_path / "data").mkdir()
 
     from services.onboarding import register_tenant, register_first_admin, import_initial_data
@@ -61,8 +61,8 @@ def test_deneme_plan_quota_blocks_oversized_import_as_designed(tmp_path, monkeyp
     """'Deneme' planının düşük kotasının, GERÇEKTEN büyük bir veri
     yüklemesini engellediğini (bilinçli bir koruma olduğunu)
     doğrular — bu bir hata değil, tasarım kararıdır."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.onboarding import register_tenant, register_first_admin, import_initial_data
