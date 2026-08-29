@@ -88,7 +88,10 @@ def render(ctx: PageContext) -> None:
                         log(username,"TRANSFER_HR_OVERRIDE_REGION",f"{hrid}: {hr_override_note}")
                         try:
                             from services.management_center import reconcile_transfer_requests
-                            reconcile_transfer_requests(fm)
+                            _reconcile = reconcile_transfer_requests(fm)
+                            if _reconcile.get("applied", 0):
+                                from web.queue_utils import enqueue_report_refresh
+                                enqueue_report_refresh()
                         except Exception as _rec_exc:
                             from services.safe_exec import log_swallowed
                             log_swallowed("onaylar.py: İK doğrudan onay sonrası reconcile_transfer_requests hatası", _rec_exc, level="ERROR")
@@ -149,7 +152,10 @@ def render(ctx: PageContext) -> None:
                     # burada çağrılmıyor.
                     try:
                         from services.management_center import reconcile_transfer_requests
-                        reconcile_transfer_requests(fm)
+                        _reconcile = reconcile_transfer_requests(fm)
+                        if _reconcile.get("applied", 0):
+                            from web.queue_utils import enqueue_report_refresh
+                            enqueue_report_refresh()
                     except Exception as _rec_exc:
                         from services.safe_exec import log_swallowed
                         log_swallowed("onaylar.py: İK kararı sonrası reconcile_transfer_requests hatası", _rec_exc, level="ERROR")
