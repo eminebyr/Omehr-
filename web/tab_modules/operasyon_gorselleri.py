@@ -170,29 +170,20 @@ def render(ctx: PageContext) -> None:
         "Dosya her güncellendiğinde bu grafik de otomatik yenilenir."
     )
     try:
-        from services.cached_excel_reader import read_workbook_cached
-        wb_ciro_tahmin = read_workbook_cached(INPUT, data_only=True)
-        ws_ct = wb_ciro_tahmin["Verimlilik_Operasyon_Tahmini"]
-        _ciro_satiri = None
-        for r in range(1, ws_ct.max_row + 1):
-            if ws_ct.cell(r, 1).value == "Toplam Ciro (TL) (Tahmin)":
-                _ciro_satiri = r
-                break
-        if _ciro_satiri:
-            _ciro_degerler = [ws_ct.cell(_ciro_satiri, c).value for c in range(2, 6)]
-            if all(v is not None for v in _ciro_degerler):
-                fig_ciro_gelecek = px.bar(
-                    x=["+30 Gün", "+60 Gün", "+90 Gün", "+120 Gün"], y=_ciro_degerler,
-                    labels={"x": "Ufuk", "y": "Toplam Ciro (TL)"}, title="Toplam Ciro — İleriye Dönük Tahmin",
-                    color_discrete_sequence=["#4472C4"], text_auto=".2s",
-                )
-                st.plotly_chart(fig_ciro_gelecek, use_container_width=True)
-                st.caption(
-                    "⚠️ Bu zaman-trend tahmininin istatistiksel anlamlılığı düşüktür (R²≈0, bkz. "
-                    "Istatistiksel_Model_Testi). Verimlilik Görselleri sekmesindeki Ciro-tabanlı İş Yükü "
-                    "Endeksi projeksiyonu (r=0,91) daha güvenilirdir."
-                )
+        from services.fast_excel_views import forecast_payload
+        _ciro_degerler = forecast_payload(INPUT).get("ciro")
+        if _ciro_degerler:
+            fig_ciro_gelecek = px.bar(
+                x=["+30 Gün", "+60 Gün", "+90 Gün", "+120 Gün"], y=_ciro_degerler,
+                labels={"x": "Ufuk", "y": "Toplam Ciro (TL)"}, title="Toplam Ciro — İleriye Dönük Tahmin",
+                color_discrete_sequence=["#4472C4"], text_auto=".2s",
+            )
+            st.plotly_chart(fig_ciro_gelecek, use_container_width=True)
+            st.caption(
+                "⚠️ Bu zaman-trend tahmininin istatistiksel anlamlılığı düşüktür (R²≈0, bkz. "
+                "Istatistiksel_Model_Testi). Verimlilik Görselleri sekmesindeki Ciro-tabanlı İş Yükü "
+                "Endeksi projeksiyonu (r=0,91) daha güvenilirdir."
+            )
     except Exception as _exc:
         log_swallowed("web.tab_modules.operasyon_gorselleri.render: beklenmeyen hata", _exc)
         pass
-

@@ -171,23 +171,16 @@ def render(ctx: PageContext) -> None:
         st.info("ML tahmin verisi henüz oluşmadı — main.py'yi çalıştırın (V19_AI_Norm_Sonuclari.xlsx üretir).")
 
     try:
-        from services.cached_excel_reader import read_workbook_cached
-        wb_isyuku_tahmin = read_workbook_cached(INPUT, data_only=True)
-        ws_ciro_isyuku = wb_isyuku_tahmin["Verimlilik_Operasyon_Tahmini"]
-        _isyuku_tahmin_satiri = None
-        for r in range(1, ws_ciro_isyuku.max_row + 1):
-            if ws_ciro_isyuku.cell(r, 1).value == "İş Yükü Endeksi (Ciro Tahmininden Türetilmiş)":
-                _isyuku_tahmin_satiri = r
-                break
-        if _isyuku_tahmin_satiri:
-            _degerler = [ws_ciro_isyuku.cell(_isyuku_tahmin_satiri, c).value for c in range(2, 6)]
-            if all(v is not None for v in _degerler):
-                fig_isyuku_gelecek = px.line(
-                    x=["+30 Gün", "+60 Gün", "+90 Gün", "+120 Gün"], y=_degerler, markers=True,
-                    labels={"x": "Ufuk", "y": "İş Yükü Endeksi"},
-                    title="İş Yükü Endeksi — Ciro Tahminine Dayalı İleriye Dönük Projeksiyon (r=0,91)",
-                )
-                st.plotly_chart(fig_isyuku_gelecek, use_container_width=True)
+        from services.fast_excel_views import forecast_payload
+        _forecast = forecast_payload(INPUT)
+        _degerler = _forecast.get("isyuku")
+        if _degerler:
+            fig_isyuku_gelecek = px.line(
+                x=["+30 Gün", "+60 Gün", "+90 Gün", "+120 Gün"], y=_degerler, markers=True,
+                labels={"x": "Ufuk", "y": "İş Yükü Endeksi"},
+                title="İş Yükü Endeksi — Ciro Tahminine Dayalı İleriye Dönük Projeksiyon (r=0,91)",
+            )
+            st.plotly_chart(fig_isyuku_gelecek, use_container_width=True)
     except Exception as _exc:
         log_swallowed("web.tab_modules.verimlilik_gorselleri.render: beklenmeyen hata", _exc)
         pass
@@ -199,31 +192,12 @@ def render(ctx: PageContext) -> None:
         "Doğruluk, ilk 9 ayla son 3 ay geriye dönük tahmin edilip gerçekle karşılaştırılarak (backtesting) ölçülmüştür."
     )
     try:
-        from services.cached_excel_reader import read_workbook_cached
-        wb_tahmin = read_workbook_cached(INPUT, data_only=True)
-        ws_t = wb_tahmin["Verimlilik_Operasyon_Tahmini"]
-        tahmin_satirlari = []
-        for r in range(1, ws_t.max_row + 1):
-            etiket = ws_t.cell(r, 1).value
-            if isinstance(etiket, str) and etiket.endswith("(Tahmin)"):
-                degerler = [ws_t.cell(r, c).value for c in range(2, 6)]
-                if all(v is not None for v in degerler):
-                    tahmin_satirlari.append((etiket.replace(" (Tahmin)", ""), degerler))
-        ws_d = wb_tahmin["Tahmin_Dogruluk_Testi"]
-        dogruluk_satirlari = []
-        metrik_baslik_satiri = None
-        for r in range(1, ws_d.max_row + 1):
-            if ws_d.cell(r, 1).value == "Metrik":
-                metrik_baslik_satiri = r
-                break
-        if metrik_baslik_satiri:
-            for r in range(metrik_baslik_satiri + 1, ws_d.max_row + 1):
-                etiket = ws_d.cell(r, 1).value
-                mape = ws_d.cell(r, 8).value
-                if not etiket:
-                    break
-                if isinstance(mape, (int, float)):
-                    dogruluk_satirlari.append((etiket, round(mape, 1)))
+        # Aynı workbook yukarıda zaten tek kez açılıp küçük bir payload'a
+        # dönüştürüldü. İkinci openpyxl açılışı ve tam satır taraması yoktur.
+        from services.fast_excel_views import forecast_payload
+        _forecast = forecast_payload(INPUT)
+        tahmin_satirlari = _forecast.get("tahmin_satirlari", [])
+        dogruluk_satirlari = _forecast.get("dogruluk_satirlari", [])
     except Exception as _exc:
         log_swallowed("web.tab_modules.verimlilik_gorselleri.render: beklenmeyen hata", _exc)
         tahmin_satirlari = []
@@ -246,4 +220,3 @@ def render(ctx: PageContext) -> None:
         st.markdown("**Model Doğruluğu (MAPE — geriye dönük test, düşük olması iyidir):**")
         for etiket, mape in dogruluk_satirlari:
             st.write(f"- {etiket}: %{mape}")
-
