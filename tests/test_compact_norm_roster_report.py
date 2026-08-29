@@ -49,6 +49,38 @@ def test_compact_report_uses_three_store_layout_and_live_values(tmp_path: Path):
     assert 'EKSİK PERSONEL: 0' in values
 
 
+def test_compact_report_includes_norm_eksik_fazla_pivot_sheets(tmp_path: Path):
+    st, norm, staff = _frames()
+    out = build_compact_norm_roster_excel(st, norm, staff, output_path=tmp_path / 'pivot.xlsx')
+    wb = load_workbook(out)
+    assert {'NORM KADRO', 'EKSİK', 'FAZLA'}.issubset(set(wb.sheetnames))
+
+    norm_ws = wb['NORM KADRO']
+    header = [c.value for c in norm_ws[1]]
+    assert 'KASİYER' in header and 'REYON GÖREVLİSİ' in header and 'MANAV' in header and header[-1] == 'TOPLAM'
+
+    def _row(ws, store_name):
+        for row in ws.iter_rows(min_row=2):
+            if row[1].value == store_name:
+                return {ws.cell(1, c.column).value: c.value for c in row}
+        raise AssertionError(f"{store_name} bulunamadı")
+
+    # MAĞAZA A: KASİYER norm=2, mevcut=1 (test fixture'ında) -> eksik=1
+    eksik_a = _row(wb['EKSİK'], 'MAĞAZA A')
+    assert eksik_a['KASİYER'] == 1
+    assert eksik_a['TOPLAM'] == 1
+
+    # MAĞAZA C: MANAV norm=0, mevcut=1 -> fazla=1
+    fazla_c = _row(wb['FAZLA'], 'MAĞAZA C')
+    assert fazla_c['MANAV'] == 1
+    assert fazla_c['TOPLAM'] == 1
+
+    # Alt satırda TOPLAM satırı, her sütunun toplamını içermeli
+    total_row = [c.value for c in list(wb['EKSİK'].iter_rows())[-1]]
+    assert total_row[1] == 'TOPLAM'
+    assert total_row[-1] == sum(v for v in total_row[2:-1] if isinstance(v, int))
+
+
 def test_compact_report_applies_status_colors_and_comments(tmp_path: Path):
     st, norm, staff = _frames()
     out = build_compact_norm_roster_excel(st, norm, staff, output_path=tmp_path/'colors.xlsx')
