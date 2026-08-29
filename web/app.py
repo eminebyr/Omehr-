@@ -203,9 +203,9 @@ def _build_model_from_sheets(sheets):
     # değiştirilir; "detail"/"stores"/"fm" ise diğer sekmelerde (ısı haritaları,
     # transfer önerileri) kullanıldığı için olduğu gibi bırakılır.
     try:
-        import sys as _sys
-        _sys.path.insert(0, str(_root() / "src"))
-        import engine_core as _ec
+    import sys as _sys
+    _sys.path.insert(0, str(CODE_ROOT / "src"))
+    import engine_core as _ec
         _p, _sheets2, _norm, _staff, _h = _ec.load()
         _st, _tt = _ec.state(_norm, _staff, _sheets2)
         # KPI kartları, mağaza/unvan detayları ve transfer sekmeleri aynı resmi
