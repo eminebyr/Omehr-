@@ -72,8 +72,10 @@ def render(ctx: PageContext) -> None:
             try:
                 backup = save_tables(ctx.root, ctx.input_path, tables, ctx.username)
                 st.session_state.pop("master_data_tables", None)
+                from web.queue_utils import enqueue_report_refresh
+                enqueue_report_refresh()
                 st.success(f"Ana veriler kaydedildi. Otomatik yedek: {backup.name}")
-                st.info("Web KPI'larını yenilemek için üst bölümdeki 'Tüm tabloları şimdi yenile' düğmesini kullanın.")
+                st.info("Panel KPI'ları ve Excel/PDF raporları arka planda güncelleniyor.")
             except Exception as exc:
                 st.error(f"Kaydetme başarısız: {exc}")
         if c2.button("Excel'den Yeniden Yükle", use_container_width=True):
