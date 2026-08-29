@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -22,9 +23,10 @@ LOGGER = get_logger("omehr.worker")
 def _admin_copy_recipients() -> list[str]:
     """Rotasyon evrakının bir kopyasını Mail_Listesi'ndeki admin hesabına ekler."""
     try:
-        import pandas as pd
-        from common_veri_okuma import input_file
-        df = pd.read_excel(input_file(), sheet_name="Mail_Listesi")
+        from common_veri_okuma import read_all
+        df = read_all().get("Mail_Listesi")
+        if df is None or df.empty:
+            return []
         user_col = next((c for c in df.columns if str(c).strip() == "Web Kullanıcı"), None)
         mail_col = next((c for c in df.columns if str(c).strip() == "E-posta"), None)
         active_col = next((c for c in df.columns if str(c).strip() == "Aktif"), None)
@@ -42,7 +44,7 @@ def _admin_copy_recipients() -> list[str]:
         return []
 
 
-def execute(job: dict) -> dict:
+def _execute_for_tenant(job: dict) -> dict:
     kind, payload = job["job_type"], job["payload"]
     if kind == "RUN_REPORTS":
         result = subprocess.run([sys.executable, str(code_root() / "main.py")], cwd=code_root())
@@ -126,6 +128,20 @@ def execute(job: dict) -> dict:
         ok = recalculate_workbook(Path(payload["input_path"]))
         return {"recalculated": ok}
     raise ValueError(f"Desteklenmeyen görev: {kind}")
+
+
+def execute(job: dict) -> dict:
+    """Görevi, kuyruk kaydındaki kiracı bağlamında çalıştırır."""
+    tenant = str(job.get("tenant") or "OMEHR").strip().upper()
+    previous = os.environ.get("OMEHR_TENANT")
+    os.environ["OMEHR_TENANT"] = tenant
+    try:
+        return _execute_for_tenant(job)
+    finally:
+        if previous is None:
+            os.environ.pop("OMEHR_TENANT", None)
+        else:
+            os.environ["OMEHR_TENANT"] = previous
 
 
 def run(once: bool = False, drain: bool = False) -> int:
