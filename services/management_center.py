@@ -777,7 +777,7 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
                 # denetim-izli yazma yolunu kullanarak).
                 try:
                     from services.personnel_exit import load_personnel_view, update_personnel
-                    staff, _, _, _ = load_personnel_view(_input_path())
+                    staff, magaza, unvan, _ = load_personnel_view(_input_path())
                     eslesen = staff.iloc[0:0]
                     if pname:
                         _isim_norm = pname.strip().casefold()
@@ -785,8 +785,19 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
                     if len(eslesen) == 1:
                         idx = eslesen.index[0]
                         guncellemeler = {"Mağaza": target_store}
+                        magaza_id = magaza.loc[
+                            magaza["Mağaza"].astype(str).eq(target_store), "MağazaID"
+                        ]
+                        if not magaza_id.empty:
+                            guncellemeler["MağazaID"] = magaza_id.iloc[0]
                         if target_title:
                             guncellemeler["Unvan"] = target_title
+                            guncellemeler["Departman"] = target_title
+                            unvan_id = unvan.loc[
+                                unvan["Unvan"].astype(str).eq(target_title), "UnvanID"
+                            ]
+                            if not unvan_id.empty:
+                                guncellemeler["UnvanID"] = unvan_id.iloc[0]
                         update_personnel(
                             input_path=_input_path(), root=runtime_root(), staff=staff,
                             index=idx, guncellemeler=guncellemeler, username="system_rotasyon",
