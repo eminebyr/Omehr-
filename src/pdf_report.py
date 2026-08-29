@@ -524,6 +524,7 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
     smid=req(staff,'MağazaID','MagazaID'); sm=req(staff,'Mağaza','Magaza'); sb=req(staff,'Bölge Sorumlusu','Bolge Sorumlusu','Bölge')
     nu=req(norm,'Unvan'); su=req(staff,'Unvan'); pname=req(staff,'İsim Soyisim','Isim Soyisim','Ad Soyad')
     staff_note_col=col(staff,'Açıklama','Aciklama','AÇIKLAMA','ACIKLAMA','Personel Açıklaması','Personel Aciklamasi')
+    norm_note_col=col(norm,'Açıklama','Aciklama','AÇIKLAMA','ACIKLAMA')
 
     norm_stores=norm[[nmid,nm,nb]].copy(); norm_stores.columns=['MağazaID','Mağaza','Bölge Sorumlusu']
     staff_stores=staff[[smid,sm,sb]].copy(); staff_stores.columns=['MağazaID','Mağaza','Bölge Sorumlusu']
@@ -586,6 +587,16 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
                 if _sentence:
                     person_manual_notes.append(_sentence)
         manual_notes=list(dict.fromkeys(person_manual_notes))
+        # Fact_Norm açıklaması kişiye değil mağaza/unvan normuna aittir.
+        # Excel kutucuklarında yorum olarak görünen aynı bilgi PDF'nin
+        # Mevcut Durum Açıklaması bölümünde de açık metin olarak yer alır.
+        norm_manual_notes=[]
+        if norm_note_col and norm_note_col in ns.columns:
+            for _, _nr in ns.iterrows():
+                _note=txt(_nr.get(norm_note_col,'')).strip()
+                if _note:
+                    norm_manual_notes.append(f"{txt(_nr.get(nu,'Norm')).title()} norm açıklaması: {_note}")
+        manual_notes.extend(v for v in dict.fromkeys(norm_manual_notes) if v not in manual_notes)
 
         current=int(len(ps)); norm_total=int(title_data['Yönetim Normu'].sum())
         deficit=int(title_data['Eksik'].sum()); excess=int(title_data['Fazla'].sum())
@@ -739,11 +750,6 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
             elif eksik not in {'','-','0'}:
                 detail_style.append(('BACKGROUND',(0,ri),(-1,ri),colors.HexColor('#D9EAF7')))
             elif (surplus_start is not None and ri>=surplus_start) or fazla not in {'','-','0'}:
-                # DÜZELTME (renk kodu tutarlılığı, 29 Ağustos 2026): Norm Fazlası
-                # satırları önceden beyaz (renksiz) kalıyordu — kullanıcının
-                # "Fazla = yeşil, Eksik = mavi" kuralı burada UYGULANMIYORDU.
-                # Norm Eksiği satırlarıyla aynı doygunlukta (açık ton) bir yeşil
-                # kullanılarak tutarlı hale getirildi.
                 detail_style.append(('BACKGROUND',(0,ri),(-1,ri),colors.HexColor('#D9F2E1')))
             else:
                 detail_style.append(('BACKGROUND',(0,ri),(-1,ri),colors.white))
@@ -838,7 +844,7 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
             ('BACKGROUND',(0,1),(0,1),colors.white),
             ('BACKGROUND',(1,1),(1,1),colors.HexColor('#FFF2CC')),
             ('BACKGROUND',(2,1),(2,1),colors.HexColor('#D9EAF7')),
-            ('BACKGROUND',(3,1),(3,1),colors.HexColor('#D9F2E1')),
+            ('BACKGROUND',(3,1),(3,1),colors.HexColor('#F2F2F2')),
             ('BACKGROUND',(4,1),(4,1),colors.HexColor('#F2F2F2')),
             ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),
             ('FONTSIZE',(0,1),(-1,1),6),('ALIGN',(0,0),(-1,-1),'CENTER'),
@@ -954,12 +960,8 @@ def region_plain_pdf(path, region, kpi, st, tt):
         ]
         tb=Table(rows,colWidths=[55*mm,55*mm,20*mm,20*mm,22*mm],repeatRows=1)
         tb.setStyle(TableStyle([
-            # DÜZELTME (renk kodu tutarlılığı, 29 Ağustos 2026): "Norm
-            # Eksikleri" bölüm başlığı önceden kırmızı (#9B2D2D) idi —
-            # kullanıcının "Eksik = mavi" kuralıyla eşleşmiyordu. Aynı
-            # dosyadaki diğer mavi vurgularla (ör. #4472C4) tutarlı bir
-            # mavi ile değiştirildi.
             ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#4472C4')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor('#D9EAF7')),
             ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),('FONTSIZE',(0,0),(-1,-1),7),
             ('GRID',(0,0),(-1,-1),.3,colors.grey),('ALIGN',(2,0),(-1,-1),'CENTER'),
         ]))
@@ -978,6 +980,7 @@ def region_plain_pdf(path, region, kpi, st, tt):
         tb=Table(rows,colWidths=[55*mm,55*mm,20*mm,20*mm,22*mm],repeatRows=1)
         tb.setStyle(TableStyle([
             ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#2F7A4F')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('BACKGROUND',(0,1),(-1,-1),colors.HexColor('#D9F2E1')),
             ('FONTNAME',(0,0),(-1,-1),f),('FONTNAME',(0,0),(-1,0),font(True)),('FONTSIZE',(0,0),(-1,-1),7),
             ('GRID',(0,0),(-1,-1),.3,colors.grey),('ALIGN',(2,0),(-1,-1),'CENTER'),
         ]))
