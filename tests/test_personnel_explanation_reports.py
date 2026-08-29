@@ -47,3 +47,19 @@ def test_personnel_explanation_pdf_builds(tmp_path):
     out=tmp_path/'person_note.pdf'
     _build_store_pdf(out,kpi,norm,staff,pd.DataFrame(),include_summary=False,sheets={})
     assert out.exists() and out.stat().st_size > 10000
+
+
+def test_norm_explanation_is_visible_in_pdf_text(tmp_path, monkeypatch):
+    import src.pdf_report as pdf_module
+    staff,norm,tt,st,kpi=_frames()
+    norm.loc[0,'Açıklama']='Vardiya planında desteklenmelidir.'
+    out=tmp_path/'norm_note.pdf'
+    texts=[]
+    original=pdf_module.Paragraph
+    def recording_paragraph(text, *args, **kwargs):
+        texts.append(str(text))
+        return original(text, *args, **kwargs)
+    monkeypatch.setattr(pdf_module, 'Paragraph', recording_paragraph)
+    _build_store_pdf(out,kpi,norm,staff,pd.DataFrame(),include_summary=False,sheets={})
+    text=' '.join(texts)
+    assert 'Vardiya planında desteklenmelidir' in text
