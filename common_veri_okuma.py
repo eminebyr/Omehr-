@@ -1,5 +1,64 @@
-import hashlib, json, os, pandas as pd
+import hashlib, json, os, shutil, pandas as pd
+from datetime import datetime
+from pathlib import Path
+from zipfile import is_zipfile
 from services.runtime_paths import runtime_root
+from services.settings import input_file_name
+
+
+def _excel_saglam(path):
+    """Dosyanın yalnız uzantısını değil, gerçek XLSX içeriğini doğrular."""
+    path = Path(path)
+    if not path.is_file() or path.stat().st_size == 0 or not is_zipfile(path):
+        return False
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=False)
+        ok = bool(wb.sheetnames)
+        wb.close()
+        return ok
+    except Exception:
+        return False
+
+
+def _en_yeni_saglam_yedek(root):
+    adaylar = []
+    for klasor in ('backups', 'backup'):
+        adaylar.extend((root / klasor).glob('*.xlsx'))
+    adaylar = sorted((p for p in adaylar if p.is_file()), key=lambda p: p.stat().st_mtime, reverse=True)
+    return next((p for p in adaylar if _excel_saglam(p)), None)
+
+
+def _bozuk_inputtan_kurtar(root, bozuklar):
+    """Bozuk inputları saklayıp en yeni açılabilir yedeği atomik geri yükler."""
+    yedek = _en_yeni_saglam_yedek(root)
+    if yedek is None:
+        return None
+    damga = datetime.now().strftime('%Y%m%d_%H%M%S')
+    karantina = root / 'recovery_quarantine'
+    karantina.mkdir(parents=True, exist_ok=True)
+    for bozuk in bozuklar:
+        if not bozuk.is_file():
+            continue
+        hedef = karantina / f'{bozuk.name}.{damga}.corrupt'
+        sayac = 2
+        while hedef.exists():
+            hedef = karantina / f'{bozuk.name}.{damga}.{sayac}.corrupt'
+            sayac += 1
+        bozuk.replace(hedef)
+        print(f'BOZUK INPUT KORUNDU: {bozuk} -> {hedef}', flush=True)
+    hedef = root / 'input' / input_file_name()
+    # openpyxl uzantıyı da doğruladığı için geçici dosya .xlsx ile bitmeli.
+    gecici = hedef.with_name(f'.{hedef.stem}.{os.getpid()}.recovery.tmp.xlsx')
+    try:
+        shutil.copy2(yedek, gecici)
+        if not _excel_saglam(gecici):
+            raise RuntimeError(f'Kopyalanan yedek doğrulanamadı: {yedek}')
+        os.replace(gecici, hedef)
+    finally:
+        gecici.unlink(missing_ok=True)
+    print(f'INPUT OTOMATİK KURTARILDI: {yedek} -> {hedef}', flush=True)
+    return hedef
 
 def _db_modu():
     return os.getenv("OMEHR_INPUT_SOURCE", "excel").strip().lower() == "db"
@@ -14,7 +73,7 @@ def input_file():
     # başka bir testin kök dizinini okuyordu. Artık her çağrıda taze
     # çözümlenir.
     root = runtime_root()
-    fs=sorted((root/'input').glob('*.xlsx'))
+    fs=sorted(p for p in (root/'input').glob('*.xlsx') if not p.name.startswith('~$'))
     if not fs:
         if _db_modu():
             # Veritabanı modunda Excel dosyası hiç OLMAYABİLİR — bu bir
@@ -23,8 +82,19 @@ def input_file():
             # İÇERİĞİ hiçbir zaman okunmaz (read_all() DB'ye yönlenir).
             return root/'input'/'OMEHR_AI_NORM_TRANSFER_INPUT.xlsx'
         raise FileNotFoundError('input klasorunde Excel dosyasi yok.')
-    if len(fs)>1: print('UYARI: Birden fazla Excel bulundu; ilk dosya kullaniliyor:',fs[0].name)
-    return fs[0]
+    saglam = [p for p in fs if _excel_saglam(p)]
+    if saglam:
+        tercih = root/'input'/input_file_name()
+        secilen = tercih if tercih in saglam else max(saglam, key=lambda p: p.stat().st_mtime)
+        if len(fs)>1: print('UYARI: Birden fazla Excel bulundu; sağlam dosya kullanılıyor:',secilen.name)
+        return secilen
+    kurtarilan = _bozuk_inputtan_kurtar(root, fs)
+    if kurtarilan is not None:
+        return kurtarilan
+    raise RuntimeError(
+        'Input Excel bozuk veya açılabilir değil ve backup/backups klasörlerinde sağlam yedek bulunamadı. '
+        f'Kontrol edilen dosyalar: {[p.name for p in fs]}'
+    )
 
 def fingerprint(path=None):
     if _db_modu():
