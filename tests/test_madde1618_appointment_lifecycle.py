@@ -64,6 +64,27 @@ def test_today_dated_appointment_actually_updates_fact_mevcut(tmp_path, monkeypa
     )
 
 
+def test_appointment_updates_norm_family_with_title(tmp_path, monkeypatch):
+    """Transfer sonrası resmi norm hesabı eski Departman'da kalmamalı."""
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    from services.personnel_exit import load_personnel_view
+    from services.appointment_lifecycle import create_appointment
+
+    hedef = _hazirla(tmp_path)
+    staff, magaza, unvan, _ = load_personnel_view(hedef)
+    kisi = staff[staff["İşten Çıkış"].isna()].iloc[0]
+    hedef_unvan = unvan[unvan["Unvan"].astype(str) != str(kisi["Unvan"])].iloc[0]
+    create_appointment(
+        input_path=hedef, root=tmp_path, person_name=kisi["İsim Soyisim"], staff_index=kisi.name,
+        staff_df=staff, magaza_df=magaza, unvan_df=unvan, source_store=kisi["Mağaza"],
+        source_title=kisi["Unvan"], target_store=kisi["Mağaza"], target_title=hedef_unvan["Unvan"],
+        planned_date=date.today(), created_by="test",
+    )
+    staff2, *_ = load_personnel_view(hedef)
+    assert staff2.loc[kisi.name, "UnvanID"] == hedef_unvan["UnvanID"]
+    assert staff2.loc[kisi.name, "Departman"] == hedef_unvan["Unvan"]
+
+
 def test_future_dated_appointment_does_not_touch_fact_mevcut(tmp_path, monkeypatch):
     monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     from services.personnel_exit import load_personnel_view
