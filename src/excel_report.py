@@ -1140,5 +1140,97 @@ def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None)
 
     if not wb.sheetnames:
         ws = wb.create_sheet('Kompakt Norm Kadro'); ws['A1'] = 'Raporlanacak bölge/mağaza verisi bulunamadı.'
+
+    # DÜZELTME (eksik sayfalar, 29 Ağustos 2026): kullanıcının referans
+    # aldığı GÜNCEL_NORM_KADRO dosyasında bölge kartlarının yanı sıra
+    # şirket geneli üç pivot sayfası da bulunuyordu — NORM KADRO (mağaza x
+    # unvan hedef kadro), EKSİK (mağaza x unvan norm eksiği) ve FAZLA
+    # (mağaza x unvan norm fazlası). İlk sürüm yalnız bölge kartlarını
+    # üretiyordu, bu üç özet sayfası hiç eklenmemişti. Aşağıda aynı
+    # normx/staffx verisi (yukarıdaki kartlarla birebir aynı eşleştirme
+    # mantığı: norm '_unvan' <-> personel Departman '_unvan') şirket
+    # genelinde mağaza x unvan tablosu olarak pivotlanır. Unvan sütun
+    # sırası referans dosyadaki gibi elle sabitlenmez — canlı Fact_Norm
+    # verisindeki ilk görülme sırasına göre otomatik belirlenir, böylece
+    # unvan değiştiğinde/eklendiğinde rapor yeniden üretimde güncellenir.
+    if not normx.empty or not staffx.empty:
+        title_names_global: dict = {}
+        for _, _r in normx.iterrows():
+            _key = _r['_unvan']
+            if _key and _key not in title_names_global:
+                title_names_global[_key] = txt(_r[nu]).strip()
+        for _key in staffx['_unvan'].tolist():
+            if _key and _key not in title_names_global:
+                title_names_global[_key] = _key.title()
+        title_keys = list(title_names_global.keys())
+
+        stores_all = (
+            stx.drop_duplicates('_magaza')[['Mağaza', '_magaza']]
+            .assign(_ad=lambda d: d['Mağaza'].map(lambda v: txt(v).strip()))
+            .sort_values('_ad')
+        )
+
+        def _store_breakdown(store_key):
+            ns = normx[normx['_magaza'].eq(store_key)]
+            ps = staffx[staffx['_magaza'].eq(store_key)]
+            norm_by_title = numeric(ns[nn]).groupby(ns['_unvan']).sum().astype(int).to_dict() if not ns.empty else {}
+            current_by_title = ps['_unvan'].value_counts().to_dict() if not ps.empty else {}
+            out_row = {}
+            for key in title_keys:
+                target = int(norm_by_title.get(key, 0))
+                current = int(current_by_title.get(key, 0))
+                out_row[key] = (target, max(target - current, 0), max(current - target, 0))
+            return out_row
+
+        breakdowns = {row['_magaza']: _store_breakdown(row['_magaza']) for _, row in stores_all.iterrows()}
+
+        def _write_pivot_sheet(sheet_name, value_index):
+            ws = wb.create_sheet(sheet_name); ws.sheet_view.showGridLines = False
+            _paint(ws.cell(1, 2, sheet_name), colors['summary'], bold=True, align='center')
+            for offset, key in enumerate(title_keys):
+                _paint(ws.cell(1, 3 + offset, title_names_global[key]), colors['summary'], bold=True, align='center')
+            last_col = 3 + len(title_keys)
+            _paint(ws.cell(1, last_col, 'TOPLAM'), colors['summary'], bold=True, align='center')
+
+            column_totals = [0] * len(title_keys)
+            grand_total = 0
+            row_index = 2
+            for index, (_, store_row) in enumerate(stores_all.iterrows(), start=1):
+                breakdown = breakdowns[store_row['_magaza']]
+                ws.cell(row_index, 1, index)
+                ws.cell(row_index, 2, store_row['_ad'])
+                row_total = 0
+                for offset, key in enumerate(title_keys):
+                    value = breakdown[key][value_index]
+                    if value:
+                        ws.cell(row_index, 3 + offset, value)
+                        column_totals[offset] += value
+                        row_total += value
+                ws.cell(row_index, last_col, row_total)
+                grand_total += row_total
+                for c in range(1, last_col + 1):
+                    ws.cell(row_index, c).border = Border(left=thin, right=thin, top=thin, bottom=thin)
+                row_index += 1
+
+            _paint(ws.cell(row_index, 2, 'TOPLAM'), colors['summary'], bold=True, align='center')
+            for offset, total in enumerate(column_totals):
+                ws.cell(row_index, 3 + offset, total if total else None)
+            _paint(ws.cell(row_index, last_col, grand_total), colors['summary'], bold=True, align='center')
+
+            ws.column_dimensions['A'].width = 4
+            ws.column_dimensions['B'].width = 22
+            for offset in range(len(title_keys)):
+                ws.column_dimensions[get_column_letter(3 + offset)].width = 12
+            ws.column_dimensions[get_column_letter(last_col)].width = 10
+            ws.freeze_panes = 'C2'
+            ws.page_setup.orientation = 'landscape'; ws.page_setup.fitToWidth = 1; ws.page_setup.fitToHeight = 0
+            ws.sheet_properties.pageSetUpPr.fitToPage = True
+            ws.oddFooter.center.text = 'OMEHR — İnsan Kaynakları Direktörlüğü'; ws.oddFooter.right.text = 'Sayfa &P / &N'
+            return ws
+
+        _write_pivot_sheet('NORM KADRO', 0)
+        _write_pivot_sheet('EKSİK', 1)
+        _write_pivot_sheet('FAZLA', 2)
+
     wb.save(out)
     return out
