@@ -64,6 +64,11 @@ def create_appointment(*, input_path: Path, root: Path, person_name: str, staff_
                 "MağazaID": magaza_id_satir.iloc[0] if not magaza_id_satir.empty else None,
                 "Unvan": target_title,
                 "UnvanID": unvan_id_satir.iloc[0] if not unvan_id_satir.empty else None,
+                # Norm motorunun resmi hesap anahtarı Departman'dır. Yalnız
+                # görünen unvanı değiştirmek personeli eski norm ailesinde
+                # bırakıyordu. Uzman/elit unvanlar state_engine'deki aile
+                # eşlemesiyle yine ana ailelerine normalleştirilir.
+                "Departman": target_title,
             },
             username=created_by,
         )
@@ -123,6 +128,7 @@ def apply_due_appointments(*, input_path: Path, root: Path) -> list[dict]:
                     "MağazaID": magaza_id_satir.iloc[0] if not magaza_id_satir.empty else None,
                     "Unvan": row["target_title"],
                     "UnvanID": unvan_id_satir.iloc[0] if not unvan_id_satir.empty else None,
+                    "Departman": row["target_title"],
                 },
                 username="sistem_planli_atama",
             )

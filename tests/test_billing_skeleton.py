@@ -12,7 +12,7 @@ import time
 
 
 def test_payment_success_then_failure_updates_tenant_and_blocks_login(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "data").mkdir()
 
     from services.tenant_registry import create_tenant, get_tenant
@@ -41,7 +41,7 @@ def test_payment_success_then_failure_updates_tenant_and_blocks_login(tmp_path, 
 
 
 def test_unknown_tenant_billing_event_does_not_raise(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     (tmp_path / "data").mkdir()
 
     from services.billing import process_billing_event
@@ -57,7 +57,7 @@ def _imzali_stripe_istegi(payload: str, sir: str) -> dict:
 
 
 def test_real_signed_stripe_webhook_end_to_end(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     monkeypatch.setenv("BASDAS_STRIPE_WEBHOOK_SECRET", "whsec_test_gizli")
     (tmp_path / "data").mkdir()
 
@@ -84,7 +84,7 @@ def test_real_signed_stripe_webhook_end_to_end(tmp_path, monkeypatch):
 
 
 def test_forged_stripe_signature_is_rejected(tmp_path, monkeypatch):
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     monkeypatch.setenv("BASDAS_STRIPE_WEBHOOK_SECRET", "whsec_test_gizli")
     (tmp_path / "data").mkdir()
 
@@ -114,7 +114,7 @@ def test_webhook_without_secret_configured_refuses_safely(tmp_path, monkeypatch)
     """BASDAS_STRIPE_WEBHOOK_SECRET hiç ayarlanmamışsa, sunucu (imza
     kontrolünü ATLAYIP güvenilir kabul etmek yerine) GÜVENLİ şekilde
     reddetmeli."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     monkeypatch.delenv("BASDAS_STRIPE_WEBHOOK_SECRET", raising=False)
     (tmp_path / "data").mkdir()
 

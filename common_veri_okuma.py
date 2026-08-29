@@ -28,7 +28,13 @@ def input_file():
 
 def fingerprint(path=None):
     if _db_modu():
-        return "veritabani-kaynakli"
+        # Kiracı içeriği her write_sheet() işleminde artırılır. Sabit değer
+        # rapor kayıt defteri/lineage katmanına farklı verileri aynı sürüm gibi
+        # gösteriyordu ve eski raporun yeniden kullanılmasına yol açabiliyordu.
+        from services.input_data_access import tenant_content_version
+        from services.tenant_context import current_tenant_id
+        tenant = current_tenant_id()
+        return f"db:{tenant}:{tenant_content_version(tenant)}"
     p=path or input_file(); h=hashlib.sha256()
     with open(p,'rb') as f:
         for b in iter(lambda:f.read(1024*1024),b''): h.update(b)

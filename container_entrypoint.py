@@ -40,15 +40,18 @@ def _snapshot_complete_reports() -> None:
     """
     source = RUNTIME / "output"
     expected = _expected_report_count()
-    current = _report_count(source)
-    if current < expected:
+    from services.report_contract import validate_current_report_set
+    contract = validate_current_report_set(source)
+    current = contract["present"]
+    if contract["status"] != "SUCCESS" or contract["expected"] < expected:
         return
 
     target = RUNTIME / "output_last_complete"
     temp = RUNTIME / "output_last_complete_new"
     shutil.rmtree(temp, ignore_errors=True)
     shutil.copytree(source, temp)
-    if _report_count(temp) < expected:
+    copied_contract = validate_current_report_set(temp)
+    if copied_contract["status"] != "SUCCESS" or copied_contract["expected"] < expected:
         shutil.rmtree(temp, ignore_errors=True)
         return
     shutil.rmtree(target, ignore_errors=True)
@@ -80,8 +83,10 @@ def _ensure_startup_reports() -> bool:
     except ValueError:
         retries = 2
 
-    current = _report_count()
-    if current >= expected:
+    from services.report_contract import validate_current_report_set
+    contract = validate_current_report_set(RUNTIME / "output")
+    current = contract["present"]
+    if contract["status"] == "SUCCESS" and contract["expected"] >= expected:
         print(f"Başlangıç rapor seti hazır: {current}/{expected}. Motor tekrar çalıştırılmadı.", flush=True)
         return True
 
@@ -89,8 +94,9 @@ def _ensure_startup_reports() -> bool:
     for attempt in range(1, attempts + 1):
         print(f"Başlangıç rapor seti eksik: {current}/{expected}. Üretim denemesi {attempt}/{attempts}.", flush=True)
         rc = _run_report_engine_once()
-        current = _report_count()
-        if rc == 0 and current >= expected:
+        contract = validate_current_report_set(RUNTIME / "output")
+        current = contract["present"]
+        if rc == 0 and contract["status"] == "SUCCESS" and contract["expected"] >= expected:
             print(f"Başlangıç rapor seti tamamlandı: {current}/{expected}.", flush=True)
             return True
         if attempt < attempts:

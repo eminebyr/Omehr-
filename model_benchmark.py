@@ -29,6 +29,20 @@ def _dataset() -> tuple[pd.DataFrame, list[str], list[str]]:
     ai = pd.read_excel(_ai_file(), sheet_name="AI_Norm_Sonuclari")
     operation = pd.read_excel(_analytics_file(), sheet_name="Operasyon_Metrikleri")
     data = ai.merge(operation, on="MağazaID", how="left")
+    # Her iki kaynakta bulunan açıklama sütunları merge sonrası _x/_y adını
+    # alabilir. Model ayrıntı raporunun kullandığı kanonik adları geri kur.
+    for column in ("Mağaza", "Unvan"):
+        if column not in data.columns:
+            left = data.get(f"{column}_x")
+            right = data.get(f"{column}_y")
+            if left is not None and right is not None:
+                data[column] = left.combine_first(right)
+            elif left is not None:
+                data[column] = left
+            elif right is not None:
+                data[column] = right
+            else:
+                data[column] = ""
     numeric = [
         "Aylık Ciro", "Aylık Fiş", "Ortalama Sepet", "Online Sipariş", "Mal Kabul",
         "Fazla Mesai", "Devamsızlık", "Fire Oranı", "Performans", "Pik Katsayısı",

@@ -28,6 +28,7 @@ from services.home_proximity import refresh_home_proximity, maps_route
 from services.web_runtime import connect_web_db as db, log_web_action as log
 from services.job_queue import enqueue, status as job_status
 from services.runtime_paths import tenant_code
+from services.tenant_context import current_tenant_id, set_session_tenant
 from services.input_data_access import input_source
 from services.settings import input_path
 from web.display_text import MAIN_TITLE
@@ -46,6 +47,14 @@ def _output():
 
 def _db():
     return _root() / "data" / "v16_management.db"
+
+
+def _input_version(tenant_id: str = "") -> float:
+    """Excel için mtime, DB için kiracıya özgü monoton içerik sürümü."""
+    if input_source() == "db":
+        from services.input_data_access import tenant_content_version
+        return float(tenant_content_version(tenant_id or None))
+    return _input().stat().st_mtime
 
 
 # DÜZELTME (tutarlılık — services/*.py ve src/*.py'de düzeltilen aynı
@@ -466,7 +475,7 @@ def refresh_all():
     build_model_cached.clear()
 
 
-if not _input().exists():
+if input_source() != "db" and not _input().exists():
     # DÜZELTME (yeni özellik): önceden bu durumda uygulama SERT DURUYORDU
     # (st.stop()) ve HİÇBİR arayüz göstermiyordu — Excel yükleme ekranı
     # dahil (o ekran normalde Ayarlar sekmesinde, giriş yapılmış ve veri
@@ -497,7 +506,8 @@ if not _input().exists():
             st.error(f"Yükleme başarısız: {_bootstrap_exc}")
     st.stop()
 
-migrate_legacy_input(_input())
+if input_source() != "db":
+    migrate_legacy_input(_input())
 
 # PERFORMANS: Yedekleme + koordinat yenileme + LibreOffice formül yeniden
 # hesaplama (bu SONUNCUSU tek başına saniyeler sürebilir) daha önce HER
@@ -507,8 +517,12 @@ migrate_legacy_input(_input())
 # adımlar SADECE dosyanın son işlendiğimiz andan beri gerçekten değiştiği
 # durumlarda (mtime farklıysa) çalışır; aynı oturumda sonraki her etkileşimde
 # saniyeler içinde atlanır.
-_mevcut_mtime = _input().stat().st_mtime
-if st.session_state.get("_son_islenen_mtime") == _mevcut_mtime:
+_mevcut_mtime = _input_version(current_tenant_id())
+if input_source() == "db":
+    # DB modunda Excel dosyası, dosya kilidi, yedekleme ve LibreOffice
+    # yeniden hesaplaması yoktur. Önbellek anahtarı tenant sürüm sayacıdır.
+    st.session_state["_son_islenen_mtime"] = _mevcut_mtime
+elif st.session_state.get("_son_islenen_mtime") == _mevcut_mtime:
     pass  # Dosya bu oturumda daha önce işlendi ve o zamandan beri değişmedi, atla.
 else:
     try:
@@ -580,7 +594,7 @@ else:
     # Bu oturumda dosyayı işledik; bir sonraki etkileşimde dosya gerçekten
     # değişmediyse (mtime aynıysa) tüm bu ağır adımlar atlanacak.
     try:
-        st.session_state["_son_islenen_mtime"] = _input().stat().st_mtime
+        st.session_state["_son_islenen_mtime"] = _input_version(current_tenant_id())
     except Exception as _exc:
         log_swallowed("web.app.refresh_all: beklenmeyen hata", _exc)
         pass
@@ -618,8 +632,6 @@ if st.session_state.get("_recalc_uyari"):
 # çalışan sunucu, birden fazla firmanın kullanıcıları) bu, kiracı
 # seçiminin HİÇ ÇALIŞMAMASI anlamına gelirdi.
 # ------------------------------------------------------------------
-from services.tenant_context import current_tenant_id, set_session_tenant
-
 if "user" not in st.session_state:
     _kiraci_secenekleri = ["OMEHR"]
     try:
@@ -706,7 +718,7 @@ if "user" not in st.session_state:
         # Kiracıyı DOĞRULAMADAN ÖNCE oturuma yaz — bu kiracının Mail_
         # Listesi'ni (kullanıcı dizinini) okuyabilmek için gereklidir.
         set_session_tenant(secilen_kiraci)
-        _giris_sheets = read_input(_input().stat().st_mtime, tenant_id=secilen_kiraci)
+        _giris_sheets = read_input(_input_version(secilen_kiraci), tenant_id=secilen_kiraci)
         _giris_acc = accounts(_giris_sheets)
         match = _giris_acc[_giris_acc["Web Kullanıcı"].astype(str).str.strip().eq(username.strip())]
         if match.empty:
@@ -749,7 +761,10 @@ st.session_state["_son_aktivite"] = datetime.now().isoformat()
 if not st.session_state.get("_atama_kontrolu_yapildi"):
     try:
         from services.appointment_lifecycle import apply_due_appointments
-        apply_due_appointments(input_path=_input(), root=_root())
+        _uygulanan_atamalar = apply_due_appointments(input_path=_input(), root=_root())
+        if _uygulanan_atamalar:
+            from web.queue_utils import enqueue_report_refresh
+            enqueue_report_refresh()
     except Exception as _exc:
         log_swallowed("web.app: apply_due_appointments başarısız", _exc)
     st.session_state["_atama_kontrolu_yapildi"] = True
@@ -771,7 +786,7 @@ if os.getenv("OMEHR_WORKER_INLINE", "0") == "1":
     except Exception as _exc:
         log_swallowed("web.app: inline worker (OMEHR_WORKER_INLINE) başarısız", _exc)
 
-sheets = read_input(_input().stat().st_mtime, tenant_id=current_tenant_id())
+sheets = read_input(_input_version(current_tenant_id()), tenant_id=current_tenant_id())
 required = {"Fact_Mevcut", "Fact_Norm", "Mail_Listesi"}
 if not required.issubset(sheets):
     st.error(f"Eksik input sayfaları: {sorted(required-set(sheets))}"); st.stop()
@@ -866,7 +881,7 @@ with st.sidebar:
                     )
     if st.button("Çıkış", use_container_width=True): del st.session_state.user; st.rerun()
 
-fm, detail, stores, kpis = build_model_cached(_input().stat().st_mtime, tenant_id=current_tenant_id())
+fm, detail, stores, kpis = build_model_cached(_input_version(current_tenant_id()), tenant_id=current_tenant_id())
 if not is_global:
     fm=fm[fm["Bölge Sorumlusu"].astype(str).map(norm_text).eq(norm_text(scope))]
     detail=detail[detail["Bölge Sorumlusu"].astype(str).map(norm_text).eq(norm_text(scope))]

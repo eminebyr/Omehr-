@@ -144,6 +144,14 @@ def main():
             LOGGER.exception('İş gücü tahmini başarısız')
         print('[5/6] Mevcut, yönetim normu, bölge ve yönetici raporları...',flush=True); result=run_all()
         audit['report_schema']=validate_report_schema(result)
+        from services.report_contract import validate_report_set
+        audit['report_contract'] = validate_report_set(_output(), result['sheets'])
+        if audit['report_contract']['status'] != 'SUCCESS':
+            raise RuntimeError(
+                f"Zorunlu rapor seti eksik: {audit['report_contract']['present']}/"
+                f"{audit['report_contract']['expected']}; "
+                f"eksikler={audit['report_contract']['missing']}"
+            )
         audit['kpis']=result['kpis']; audit['files']={'excel':str(result['excel']),'pdf':str(result['pdf'])}
         if os.getenv('OMEHR_SEND_EMAIL','1')=='1':
             print('[6/6] E-posta dağıtımı...',flush=True); audit['email']=send_reports_via_outlook()
