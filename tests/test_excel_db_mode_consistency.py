@@ -14,9 +14,9 @@ def test_db_mode_write_is_visible_to_dashboard(tmp_path, monkeypatch):
     """DB modunda write_sheet ile yazılan bir değişikliğin, dashboard'un
     kullandığı common_veri_okuma.read_all() üzerinden GERÇEKTEN
     görünür olduğunu doğrular."""
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.setenv("BASDAS_INPUT_SOURCE", "db")
-    monkeypatch.setenv("BASDAS_DB_BACKEND", "sqlite")
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
+    monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     (tmp_path / "data").mkdir()
 
     from services.input_excel_migration import migrate_excel_to_db
@@ -53,8 +53,8 @@ def test_ana_veri_yonetimi_excel_mode_write_is_visible_to_dashboard(tmp_path, mo
     save_tables kullanımı) Excel modunda GERÇEKTEN tutarlı olduğunu
     doğrular — bu ekranın SORUNLU OLMADIĞINI kanıtlar."""
     import shutil
-    monkeypatch.setenv("BASDAS_RUNTIME_ROOT", str(tmp_path))
-    monkeypatch.delenv("BASDAS_INPUT_SOURCE", raising=False)
+    monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     (tmp_path / "input").mkdir()
     yol = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
     shutil.copyfile("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", yol)
