@@ -761,7 +761,10 @@ st.session_state["_son_aktivite"] = datetime.now().isoformat()
 if not st.session_state.get("_atama_kontrolu_yapildi"):
     try:
         from services.appointment_lifecycle import apply_due_appointments
-        apply_due_appointments(input_path=_input(), root=_root())
+        _uygulanan_atamalar = apply_due_appointments(input_path=_input(), root=_root())
+        if _uygulanan_atamalar:
+            from web.queue_utils import enqueue_report_refresh
+            enqueue_report_refresh()
     except Exception as _exc:
         log_swallowed("web.app: apply_due_appointments başarısız", _exc)
     st.session_state["_atama_kontrolu_yapildi"] = True
