@@ -93,21 +93,16 @@ def _dosyayi_gerekirse_yenile(path_text: str, mtime_ns: int, size: int) -> dict:
         return yeni_durum
 
 
-@lru_cache(maxsize=64)
+@lru_cache(maxsize=128)
 def _read_excel_cached(path_text: str, mtime_ns: int, size: int, sheet_name: str, header: int) -> pd.DataFrame:
-    durum = _dosyayi_gerekirse_yenile(path_text, mtime_ns, size)
-    if header == 0:
-        if sheet_name not in durum["sayfa_veri"]:
-            raise KeyError(f"Sayfa bulunamadı: {sheet_name}")
-        return durum["sayfa_veri"][sheet_name]
-    # header != 0 olan varyantlar (ör. iki satırlı başlık şeritli sayfalar):
-    # sayfa İÇERİK hash'i (her zaman header=0 ile) DEĞİŞMEDİĞİ sürece bu
-    # varyant da önbellekte tutulur — dosya değişmedikçe tekrar okunmaz.
-    varyantlar = durum["header_varyantlari"].setdefault(sheet_name, {})
-    anahtar = (durum["sayfa_hash"].get(sheet_name), header)
-    if anahtar not in varyantlar:
-        varyantlar[anahtar] = pd.read_excel(path_text, sheet_name=sheet_name, header=header)
-    return varyantlar[anahtar]
+    """Yalnız istenen sayfayı okuyan panel hızlı yolu.
+
+    Önceki uygulama tek bir sayfa istendiğinde dahi workbook'taki bütün
+    sayfaları açıp hashliyordu. Değişiklik manifesti için yararlı olan bu
+    tam tarama, normal panel okumasında gereksiz bir soğuk-açılış cezasıydı.
+    Tam fingerprint taraması ``son_degisen_sayfalar()`` içinde korunur.
+    """
+    return pd.read_excel(path_text, sheet_name=sheet_name, header=header)
 
 
 def read_sheet_cached(path: Path, sheet_name: str, header: int = 0) -> pd.DataFrame:

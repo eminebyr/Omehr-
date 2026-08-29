@@ -26,6 +26,10 @@ def test_engine_core_import_uses_code_root_not_runtime_root():
     assert '_root() / "src"' not in kaynak, (
         "REGRESYON: engine_core hâlâ (yanlış) _root()/src altında aranıyor."
     )
+    assert "_ec.load()" not in kaynak, (
+        "REGRESYON: panel, read_input ile yüklenmiş sayfalar varken kaynağı "
+        "engine_core.load() üzerinden ikinci kez okuyor."
+    )
 
 
 def test_engine_core_module_actually_importable_from_code_root():

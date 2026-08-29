@@ -44,6 +44,9 @@ def test_unrelated_sheets_are_not_reread_after_steady_state_write(gecici_input, 
     read_sheet_cached(hedef, "Fact_Mevcut")
     read_sheet_cached(hedef, "Dim_Magaza")
     read_sheet_cached(hedef, "Mail_Listesi")
+    # Normal panel okuması artık yalnız istenen sayfayı açar. Tam workbook
+    # fingerprint'i yalnız değişiklik manifesti açıkça istendiğinde üretilir.
+    son_degisen_sayfalar(hedef)
 
     durum = _SAYFA_ONBELLEGI[str(hedef.resolve())]
     id_once = {s: id(durum["sayfa_veri"][s]) for s in ("Dim_Magaza", "Mail_Listesi")}
@@ -69,3 +72,16 @@ def test_unrelated_sheets_are_not_reread_after_steady_state_write(gecici_input, 
     assert id_once["Mail_Listesi"] == id_sonra["Mail_Listesi"], (
         "REGRESYON: Mail_Listesi ilgisiz bir yazmadan sonra gereksiz yere yeniden okundu."
     )
+
+
+def test_normal_sheet_read_does_not_trigger_full_workbook_scan(gecici_input, monkeypatch):
+    """Panelde tek sayfa okumak, 64 sayfalık manifest taramasını başlatmamalı."""
+    import services.cached_excel_reader as cache
+
+    cache.invalidate_table()
+    def forbidden_full_scan(*args, **kwargs):
+        raise AssertionError("normal panel okuması tam workbook taraması başlattı")
+    monkeypatch.setattr(cache, "_dosyayi_gerekirse_yenile", forbidden_full_scan)
+
+    frame = cache.read_sheet_cached(gecici_input, "Fact_Mevcut")
+    assert not frame.empty

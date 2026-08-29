@@ -217,8 +217,14 @@ def _build_model_from_sheets(sheets):
         # Runtime volume yerine her zaman kod kökünden yüklenmelidir.
         _sys.path.insert(0, str(CODE_ROOT / "src"))
         import engine_core as _ec
-        _p, _sheets2, _norm, _staff, _h = _ec.load()
-        _st, _tt = _ec.state(_norm, _staff, _sheets2)
+        # read_input() bu çalışma için bütün kaynak sayfaları zaten yükledi.
+        # engine_core.load() çağrısı aynı Excel/DB kaynağını ikinci kez okuyup
+        # model kuruyordu. Resmî state/kpi motorlarını koruyarak mevcut veri
+        # nesneleri üzerinden hesapla; sonuç aynı, ikinci I/O yoktur.
+        from services.personnel_status import active_people as _active_people
+        _norm = sheets["Fact_Norm"]
+        _staff = _active_people(sheets["Fact_Mevcut"])
+        _st, _tt = _ec.state(_norm, _staff, sheets)
         # KPI kartları, mağaza/unvan detayları ve transfer sekmeleri aynı resmi
         # state çıktısını kullanır; ikinci bir eski dashboard hesabı kalmaz.
         #
