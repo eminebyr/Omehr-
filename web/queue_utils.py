@@ -46,3 +46,10 @@ def _enqueue_without_waiting(job_type, payload, tenant):
     except Exception as _exc:
         log_swallowed("web.queue_utils._enqueue_without_waiting: beklenmeyen hata", _exc)
     return job_id
+
+
+def enqueue_report_refresh() -> str:
+    """Güncel kiracı için raporları arka planda yeniden üretir."""
+    from services.tenant_context import current_tenant_id
+
+    return _enqueue_without_waiting("RUN_REPORTS", {}, current_tenant_id())
