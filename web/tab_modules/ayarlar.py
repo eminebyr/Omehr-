@@ -242,7 +242,7 @@ def render(ctx: PageContext) -> None:
             # moda göre doğru hedefe yazılıyor.
             if _db_modu():
                 from services.input_excel_migration import migrate_excel_to_db
-                from services.multitenant.tenant_context import current_tenant_id
+                from services.tenant_context import current_tenant_id
                 with st.spinner("Excel veritabanına aktarılıyor, bu birkaç saniye sürebilir..."):
                     _sonuc = migrate_excel_to_db(
                         str(_gecici_yol), kullanici=getattr(ctx, "username", "web"), tenant_id=current_tenant_id(),
