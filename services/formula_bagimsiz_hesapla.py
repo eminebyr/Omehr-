@@ -21,7 +21,7 @@ from pathlib import Path
 import openpyxl
 import pandas as pd
 
-from src.text_utils import canon
+from src.text_utils import canon, _title_key
 from services.safe_exec import log_swallowed
 
 
@@ -67,24 +67,24 @@ def statiklestir(input_path: Path) -> bool:
     # Fact_Mevcut.Unvan gerçek unvandır; norm sayımında Departman kullanılır.
     # Böylece ELİT/UZMAN varyantlar kendi norm ailesini karşılar. Yardımcı
     # departmanlar ise ayrı değerlendirilir.
-    unvan_id_by_key = {canon(ad): uid for uid, ad in unvan_ad_map.items()}
+    unvan_id_by_key = {_title_key(ad): uid for uid, ad in unvan_ad_map.items()}
     mevcut_sayim: dict[tuple, int] = {}
     if {"MağazaID", "Departman"}.issubset(fm_aktif.columns):
-        specialist_family = {
-            'yonetici':'yonetici', 'uzman yonetici':'yonetici', 'elit yonetici':'yonetici',
-            'yonetici yardimcisi':'yonetici yardimcisi',
-            'sarkuteri':'sarkuteri', 'uzman sarkuteri':'sarkuteri', 'elit sarkuteri':'sarkuteri',
-            'sarkuteri yardimcisi':'sarkuteri yardimcisi',
-            'kasap':'kasap', 'uzman kasap':'kasap', 'elit kasap':'kasap',
-            'kasap yardimcisi':'kasap yardimcisi',
-            'manav':'manav', 'uzman manav':'manav', 'elit manav':'manav',
-            'manav yardimcisi':'manav yardimcisi',
-        }
+        # DÜZELTME (tutarlılık, 29 Ağustos 2026): specialist_family sabit
+        # sözlüğü (yalnız 4 elle yazılı aile) KALDIRILDI — bu, panelin
+        # resmi KPI kartlarını besleyen src.state_engine._staff_norm_
+        # family ile SESSİZCE senkronize olmayan ayrı bir kopyaydı. Artık
+        # AYNI fonksiyon doğrudan çağrılır: hem config_norm_rules.json
+        # tabanlı family_aliases hem otomatik "UZMAN X"/"ELİT X" -> X
+        # kademe birleştirmesi (config'te tanımsız yeni unvanlar için de)
+        # buradan gelir. CEO Özet'in okuduğu Norm_Durumu/Magaza_KPI_
+        # Skor_Karti sayfası ile panelin geri kalanı artık AYNI kaynaktan
+        # beslenir.
+        from src.state_engine import _staff_norm_family
         for _, r in fm_aktif.iterrows():
             if pd.isna(r["MağazaID"]) or pd.isna(r["Departman"]):
                 continue
-            real_key = canon(r.get('Unvan'))
-            family_key = specialist_family.get(real_key, canon(r["Departman"]))
+            family_key = _staff_norm_family(r.get('Unvan'), r["Departman"])
             uid = unvan_id_by_key.get(family_key)
             if not uid:
                 continue
@@ -113,31 +113,42 @@ def statiklestir(input_path: Path) -> bool:
     except Exception as _exc:
         log_swallowed('statiklestir: REFERENTIAL_CONTROL okunamadı', _exc)
 
-    # Tüm şubelerde ana aile ve yardımcı denge kuralını kontrol dağılımına uygula.
-    # Uzman/elit personel ana aileyi karşılar; yardımcı kendi normu üzerindeki
-    # kapasitesiyle Manav/Kasap/Şarküteri ana açığını tamamlayabilir.
-    main_names = ('YÖNETİCİ', 'MANAV', 'KASAP', 'ŞARKÜTERİ')
-    helper_pairs = (('MANAV','MANAV YARDIMCISI'),('KASAP','KASAP YARDIMCISI'),('ŞARKÜTERİ','ŞARKÜTERİ YARDIMCISI'))
+    # DÜZELTME (tutarlılık, 29 Ağustos 2026): main_names/helper_pairs sabit
+    # listeleri (yalnız Manav/Kasap/Şarküteri; Yönetici HİÇ dahil değildi
+    # — bu yüzden Yönetici/Yönetici Yardımcısı dengesi burada hiç
+    # uygulanmıyordu) ve "ana unvanda >=1 kişi olmalı" şartı KALDIRILDI —
+    # src.state_engine::_reconcile_main_family_rules ("Kural A") ile
+    # SENKRON: ana unvanlar ve çiftler artık resolve_assistant_pairs ile
+    # (config + canlı veride bulunan her "X YARDIMCISI" için otomatik,
+    # YÖNETİCİ dahil TÜM aileler) türetilir; 0 ana personel olsa bile
+    # aile toplamı normu karşılıyorsa dengelenir (KASITLI — bkz. state_
+    # engine.py'deki aynı fonksiyonun docstring'i, "Kural A").
+    from services.norm_rule_config import load_norm_rules as _load_rules_for_pairs, resolve_assistant_pairs
+    _rules_for_pairs = _load_rules_for_pairs()
+    _bilinen_unvanlar = {_title_key(ad) for ad in unvan_ad_map.values()}
+    _pairs = resolve_assistant_pairs(_rules_for_pairs, _bilinen_unvanlar)
     store_ids = {mid for mid, _ in set(norm_toplam) | set(mevcut_sayim) | set(kontrol_eksik)}
     for mid in store_ids:
-        for main_name in main_names:
-            uid = unvan_id_by_key.get(canon(main_name))
-            if not uid:
-                continue
-            if mevcut_sayim.get((mid,uid),0) >= norm_toplam.get((mid,uid),0):
-                kontrol_eksik[(mid,uid)] = 0
-        for main_name, helper_name in helper_pairs:
-            main_uid = unvan_id_by_key.get(canon(main_name))
-            helper_uid = unvan_id_by_key.get(canon(helper_name))
+        for main_key, helper_key in _pairs.items():
+            main_uid = unvan_id_by_key.get(main_key)
+            helper_uid = unvan_id_by_key.get(helper_key)
             if not main_uid or not helper_uid:
                 continue
+            if mevcut_sayim.get((mid,main_uid),0) >= norm_toplam.get((mid,main_uid),0):
+                kontrol_eksik[(mid,main_uid)] = 0
             main_gap = max(0, norm_toplam.get((mid,main_uid),0)-mevcut_sayim.get((mid,main_uid),0))
             helper_capacity = max(0, mevcut_sayim.get((mid,helper_uid),0)-norm_toplam.get((mid,helper_uid),0))
-            # Yardımcı dengelemesi için ana ailede en az 1 personel olmalıdır.
-            # 0 ana personel + yardımcılar ana normu tek başına kapatamaz.
-            support = min(main_gap, helper_capacity) if mevcut_sayim.get((mid,main_uid),0) >= 1 else 0
+            support = min(main_gap, helper_capacity)
             if support:
                 kontrol_eksik[(mid,main_uid)] = max(0, int(kontrol_eksik.get((mid,main_uid),main_gap))-int(support))
+                # DÜZELTME (tutarlılık, 29 Ağustos 2026): önceden yalnız
+                # ana unvanın eksiği düşürülüyordu — yardımcının fazlası
+                # HİÇ güncellenmiyordu (state_engine.py::_reconcile_main_
+                # family_rules ise HER İKİSİNİ de düşürür). Somut etki:
+                # ana unvan Eksik=0 gösterirken yardımcı Fazla değerini
+                # yanlışlıkla dengelemeden bırakıyordu.
+                helper_fazla_ham = max(0, mevcut_sayim.get((mid,helper_uid),0)-norm_toplam.get((mid,helper_uid),0))
+                kontrol_fazla[(mid,helper_uid)] = max(0, int(kontrol_fazla.get((mid,helper_uid),helper_fazla_ham))-int(support))
 
     wb = openpyxl.load_workbook(input_path)
     degisti = False
@@ -176,7 +187,21 @@ def statiklestir(input_path: Path) -> bool:
             toplam_norm = nk
             toplam_mevcut = mevcut
             is_yardimci = False
-            if kontrol_eksik or kontrol_fazla:
+            # DÜZELTME (KRİTİK, 29 Ağustos 2026 — benim genelleştirmemle
+            # tespit edildi): "if kontrol_eksik or kontrol_fazla:" SÖZLÜĞÜN
+            # GENEL OLARAK boş olup olmadığına bakıyordu — herhangi BİR
+            # (mid,uid) çifti için (REFERENTIAL_CONTROL'den ya da aile
+            # dengelemesinden 0 bile olsa) bir kayıt yazılınca, TÜM DİĞER
+            # unvanlar da bu "override modu"na sürükleniyor ve kayıtları
+            # OLMAYAN unvanlar için gerçek (nk-mevcut) hesaplanmak yerine
+            # SESSİZCE 0 (varsayılan .get) yazılıyordu. Somut etki: Yönetici/
+            # Manav/Kasap/Şarküteri'den biri "mevcut>=norm" durumuna gelip
+            # kontrol_eksik[(mid,uid)]=0 yazdığı AN, o mağazadaki TÜM DİĞER
+            # unvanların (ör. Kasiyer, Manav Teraziği — hiçbir aile kuralına
+            # girmeyen unvanlar dahil) Norm_Durumu sayfasındaki gerçek eksiği
+            # kayboluyor, hepsi 0 görünüyordu. Artık HER (mid,uid) çifti
+            # kendi override durumuna göre AYRI AYRI değerlendirilir.
+            if (mid, uid) in kontrol_eksik or (mid, uid) in kontrol_fazla:
                 eksik = int(kontrol_eksik.get((mid,uid),0))
                 fazla = int(kontrol_fazla.get((mid,uid),0))
             else:
@@ -392,5 +417,3 @@ def _skor_kartini_statiklestir(input_path, wb, mag_ad_map, norm_toplam_magaza, e
         ws.cell(r, 14).value = sinif
         degisti = True
     return degisti
-
-
