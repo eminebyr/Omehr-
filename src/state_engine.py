@@ -165,6 +165,18 @@ def _staff_norm_family(real_title, department):
         return real
     if real in alias_map:
         return alias_map[real]
+    # DÜZELTME (unvan kademelendirmesi genelleştirildi, 29 Ağustos 2026):
+    # config'te family_aliases içinde AÇIKÇA tanımlanmamış bir unvan için
+    # de "UZMAN X"/"ELİT X" -> "X" otomatik kademe birleştirmesi dene.
+    # Böylece yarın "Uzman Kasiyer" gibi yeni bir unvan eklenirse, config
+    # dosyasına elle satır eklemeden aynı davranışa otomatik kavuşur.
+    # Ortak fonksiyon (services/norm_rule_config.resolve_family_key) hem
+    # burada hem services/family_balance.py'de kullanılır — iki yerde
+    # ayrı/senkronize-olmayan bir kopya YAZILMAZ.
+    from services.norm_rule_config import resolve_family_key
+    auto_family = resolve_family_key(real_title, rules)
+    if auto_family:
+        return auto_family
     # Diğer tüm görevlerde Departman norm ailesidir; boşsa gerçek unvan kullanılır.
     return dep or real
 
@@ -240,7 +252,18 @@ def _reconcile_main_family_rules(title):
     balance = load_norm_rules().get('assistant_balance') or {}
     if not bool(balance.get('enabled', True)):
         return out
-    pairs = [(_title_key(k), _title_key(v)) for k, v in (balance.get('pairs') or {}).items()]
+    # DÜZELTME (unvan kademelendirmesi genelleştirildi, 29 Ağustos 2026):
+    # config'teki assistant_balance.pairs önceden TEK kaynaktı (yalnız
+    # elle yazılı 4 çift). Artık services/norm_rule_config.resolve_
+    # assistant_pairs, canlı veride bulunan (out['_Unvan']) her "X
+    # YARDIMCISI" unvanı için, config'te açıkça override edilmemişse
+    # otomatik "X" -> "X YARDIMCISI" eşleşmesi ekler. Config'teki elle
+    # yazılı çiftler HER ZAMAN öncelikli kalır, bu yalnız eksik olanı
+    # tamamlar.
+    from services.norm_rule_config import load_norm_rules as _load_rules_for_pairs, resolve_assistant_pairs
+    _rules = _load_rules_for_pairs()
+    _known_titles = set(out['_Unvan'].dropna().unique().tolist())
+    pairs = [(k, v) for k, v in resolve_assistant_pairs(_rules, _known_titles).items()]
     min_main = int(balance.get('minimum_main_current', 1) or 1)
     out['_Aile Denge'] = 0
     if '_Ana Unvan Personelsiz' not in out.columns:
