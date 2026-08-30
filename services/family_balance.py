@@ -8,12 +8,13 @@ def _key(value: object) -> str:
     table = str.maketrans('ÇĞİÖŞÜÂÎÛ', 'CGIOSUAIU')
     return ' '.join(s.translate(table).split())
 
-PAIRS = (
-    ('YONETICI', 'YONETICI YARDIMCISI'),
-    ('MANAV', 'MANAV YARDIMCISI'),
-    ('SARKUTERI', 'SARKUTERI YARDIMCISI'),
-    ('KASAP', 'KASAP YARDIMCISI'),
-)
+# DÜZELTME (unvan kademelendirmesi genelleştirildi, 29 Ağustos 2026):
+# Sabit PAIRS listesi (yalnız 4 elle yazılı çift) KALDIRILDI — bu, aynı
+# kuralın src/state_engine.py::_reconcile_main_family_rules ile SESSİZCE
+# senkronize olmadığı bir tutarsızlık kaynağıydı: config_norm_rules.json
+# değiştirilse (ör. yeni bir çift eklense) bile bu dosya SABİT kalıyordu.
+# Artık her ikisi de services/norm_rule_config.resolve_assistant_pairs
+# ORTAK fonksiyonunu kullanır — tek kaynak, senkron davranış.
 
 
 def balance_store_title_rows(
@@ -43,6 +44,11 @@ def balance_store_title_rows(
     Kaybedilmemesi gereken bilgi (ana unvanda gercek kimse yok) KPI
     sayisini BOZMADAN, warning_col'da (varsayilan '_Ana Unvan
     Personelsiz') ayri bir niteliksel bayrak olarak korunur.
+
+    Ana/yardımcı çiftleri artık config_norm_rules.json'dan (elle yazılı)
+    VE canlı veride bulunan her "X YARDIMCISI" unvanı için otomatik
+    olarak (services.norm_rule_config.resolve_assistant_pairs) gelir —
+    bkz. o fonksiyonun docstring'i.
     """
     out = frame.copy()
     if out.empty or key_col not in out.columns:
@@ -51,12 +57,28 @@ def balance_store_title_rows(
         out[col] = pd.to_numeric(out.get(col, 0), errors='coerce').fillna(0).astype(int)
     if warning_col not in out.columns:
         out[warning_col] = False
+    from services.norm_rule_config import load_norm_rules, resolve_assistant_pairs
+    from src.text_utils import _title_key
+    rules = load_norm_rules()
     try:
-        from services.norm_rule_config import load_norm_rules
-        min_main = int((load_norm_rules().get('assistant_balance') or {}).get('minimum_main_current', 1) or 1)
+        min_main = int((rules.get('assistant_balance') or {}).get('minimum_main_current', 1) or 1)
     except Exception:
         min_main = 1
     keys = out[key_col].map(_key)
+    # NOT: resolve_assistant_pairs, _title_key formatında anahtar/değer
+    # döner — bu dosyanın kendi _key() normalizasyonu (büyük harf,
+    # boşluksuz Türkçe çeviri) FARKLI bir formattır. Eşleşmenin doğru
+    # çalışması için PAIRS burada _key() formatına çevrilir.
+    known_titles_title_key = {_title_key(v) for v in out[key_col].dropna().unique().tolist()}
+    auto_pairs = resolve_assistant_pairs(rules, known_titles_title_key)
+    title_key_to_orig = {_title_key(v): v for v in out[key_col].dropna().unique().tolist()}
+    PAIRS = []
+    for main_tk, assistant_tk in auto_pairs.items():
+        main_orig = title_key_to_orig.get(main_tk)
+        assistant_orig = title_key_to_orig.get(assistant_tk)
+        if main_orig is None or assistant_orig is None:
+            continue  # bu mağazada bu unvanlardan biri hiç yoksa atla
+        PAIRS.append((_key(main_orig), _key(assistant_orig)))
     for main, assistant in PAIRS:
         idx = out.index[keys.isin((main, assistant))].tolist()
         if not idx:
