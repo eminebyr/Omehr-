@@ -127,12 +127,13 @@ def reconcile_kpis(staff, tt, kp):
 
 
 
-def _yaz_kpi_mutabakat_sayfasi(excel_path, mutabakat: dict) -> None:
+def _yaz_kpi_mutabakat_sayfasi(excel_path, mutabakat: dict, workbook=None):
     """reconcile_kpis() sonucunu, üretilen yönetici Excel dosyasına ayrı bir
     'KPI_Mutabakat_Kontrolu' sayfası olarak ekler — her çalıştırmada rakamların
     gerçekten tutup tutmadığının GÖRÜNÜR, denetlenebilir kaydı."""
     from openpyxl import load_workbook
-    wb = load_workbook(excel_path)
+    owns_workbook = workbook is None
+    wb = load_workbook(excel_path) if owns_workbook else workbook
     if 'KPI_Mutabakat_Kontrolu' in wb.sheetnames:
         del wb['KPI_Mutabakat_Kontrolu']
     ws = wb.create_sheet('KPI_Mutabakat_Kontrolu')
@@ -173,4 +174,6 @@ def _yaz_kpi_mutabakat_sayfasi(excel_path, mutabakat: dict) -> None:
                 ws.cell(r, c).value = row[h_]
     for col_letter, w in zip('ABCDEFG', [55, 16, 14, 12, 12, 12, 22]):
         ws.column_dimensions[col_letter].width = w
-    wb.save(excel_path)
+    if owns_workbook:
+        wb.save(excel_path)
+    return wb

@@ -205,7 +205,7 @@ def _surplus_people_report(tt,staff):
 
 
 
-def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None):
+def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None,return_workbook=False):
     """Sadece Fact_Mevcut ve Fact_Norm karşılaştırmasını içeren sade yönetici Excel'i."""
     out=runtime_root()/'output'/'OMEHR_Executive_Data.xlsx'
     wb=Workbook(); wb.remove(wb.active)
@@ -244,6 +244,8 @@ def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validatio
             write_df(wb,('Transfer - '+scenario_name)[:31],frame)
     if risk is not None and not risk.empty:
         write_df(wb,'Transfer Riskleri',risk)
+    if return_workbook:
+        return out, wb
     wb.save(out)
     return out
 

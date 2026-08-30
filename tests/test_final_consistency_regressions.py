@@ -24,8 +24,9 @@ def test_report_contract_includes_compact_report():
     from services.report_contract import required_report_paths
 
     paths = required_report_paths([f"BÖLGE {i}" for i in range(1, 7)])
-    assert len(paths) == 33
+    assert len(paths) == 34
     assert any(path.name == "OMEHR_Kompakt_Norm_Kadro_Listesi.xlsx" for path in paths)
+    assert any(path.name == "OMEHR_Ciro_Kisa_Vadeli_Projeksiyonu.xlsx" for path in paths)
 
 
 def test_rotation_checker_initializes_empty_database(tmp_path, monkeypatch):

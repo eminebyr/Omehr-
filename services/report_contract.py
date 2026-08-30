@@ -16,6 +16,7 @@ BASE_REPORTS = (
     "OMEHR_Executive_Data.xlsx",
     "OMEHR_Kutucuklu_Yonetici_Raporu.xlsx",
     "OMEHR_Kompakt_Norm_Kadro_Listesi.xlsx",
+    "OMEHR_Ciro_Kisa_Vadeli_Projeksiyonu.xlsx",
     "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx",
     "OMEHR_Maliyet_Analizi.pdf",
     "OMEHR_Operasyon_Verimlilik_Analizi.pdf",

@@ -99,3 +99,21 @@ def test_missing_operational_sheet_still_skips_gracefully(isolated_root):
     yok) korunmalı."""
     sonuc = run({}, isolated_root / "output")
     assert sonuc["status"] == "SKIPPED"
+
+
+def test_existing_monthly_operation_sheet_is_accepted(isolated_root):
+    """Canlı inputtaki kurumsal başlık + gömülü kolon satırı biçimi doğrudan
+    tarihsel kaynak olarak kullanılmalı; ayrı bir kopya sayfa gerekmemeli."""
+    months = pd.date_range("2026-01-01", periods=7, freq="MS").strftime("%Y-%m")
+    raw = pd.DataFrame([
+        ["Ay", "MagazaID", "Mağaza", "Aylık Ciro"],
+        *[[month, "M1", "TEST", 1000 + index * 100] for index, month in enumerate(months)],
+    ], columns=["AYLIK OPERASYON KPI", "Unnamed: 1", "Unnamed: 2", "Unnamed: 3"])
+
+    sonuc = run({"Aylık Operasyon KPI": raw}, isolated_root / "output")
+
+    assert sonuc["status"] == "SUCCESS"
+    assert sonuc["source_sheet"] == "Aylık Operasyon KPI"
+    assert sonuc["store_forecasts"] == 1
+    workbook = pd.ExcelFile(sonuc["file"])
+    assert workbook.sheet_names == ["Şirket Projeksiyonu", "Tarihsel Aylık Toplamlar", "Mağaza Projeksiyonu"]
