@@ -5,6 +5,9 @@ cd "$(dirname "$0")"
 export PYTHONUTF8=1
 export PYTHONUNBUFFERED=1
 export OMEHR_SEND_EMAIL=1
+# Aşağıda ayrı alert_watcher.py süreci başlatıldığı için Streamlit içinde
+# ikinci bir watcher thread'i açılmasın.
+export OMEHR_EMBEDDED_ALERT_WATCHER=0
 
 fail() {
   echo "HATA: Sistem başlatılamadı. Ekrandaki son HATA satırını paylaşın." >&2

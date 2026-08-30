@@ -163,7 +163,7 @@ def run_all():
             "ana rapor üretimi (kutucuklu PDF/Excel) bundan etkilenmeden devam ediyor",
             _exc, level="ERROR",
         )
-    boxed_manager_excel=build_boxed_manager_excel(st,norm,staff,kp)
+    boxed_manager_excel=build_boxed_manager_excel(st,norm,staff,kp,tt=tt)
     compact_norm_roster_excel=build_compact_norm_roster_excel(st,norm,staff,kp,tt=tt)
     outdir=runtime_root()/'output'
     # VERİ KALİTESİ RAPORU (V19.9 — dış inceleme sonrası eklendi): dummy

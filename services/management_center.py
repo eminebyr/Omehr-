@@ -328,11 +328,14 @@ def scan_alerts(store_df: pd.DataFrame, title_df: pd.DataFrame) -> pd.DataFrame:
             region, store, deficit = str(row.get("Bölge Sorumlusu", "")), str(row.get("Mağaza", "")), float(row.get("Norm Eksiği", 0))
             key = hashlib.sha256(f"STORE|{region}|{store}|{deficit}".encode()).hexdigest()[:24]
             msg = f"{store} mağazasında {int(deficit)} kişilik kritik norm açığı bulunuyor."
-            conn.execute(
+            inserted = conn.execute(
                 "INSERT OR IGNORE INTO alerts(alert_key,severity,region,store,title,deficit,message,status,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
                 (key, "Kritik", region, store, "", deficit, msg, "Açık", now),
             )
-            generated.append({"alert_key": key, "severity": "Kritik", "region": region, "store": store, "deficit": deficit, "message": msg})
+            # Yalnız gerçekten yeni eklenen alarm Teams'e gönderilmelidir.
+            # INSERT OR IGNORE mevcut kayıtta rowcount=0 döndürür.
+            if inserted.rowcount == 1:
+                generated.append({"alert_key": key, "severity": "Kritik", "region": region, "store": store, "deficit": deficit, "message": msg})
     return pd.DataFrame(generated)
 
 

@@ -82,6 +82,7 @@ timeout /t 2 /nobreak >nul
 start "OMEHR Worker" /MIN cmd /c ""%BASEPY%" "%cd%\worker.py" >> "%cd%\logs\CURRENT_Worker_Console.log" 2>&1"
 start "OMEHR Monitoring" /MIN cmd /c ""%BASEPY%" -m uvicorn monitoring_server:app --host 127.0.0.1 --port 9108 >> "%cd%\logs\CURRENT_Monitoring_Console.log" 2>&1"
 start "OMEHR Alerts" /MIN cmd /c ""%BASEPY%" "%cd%\alert_watcher.py" >> "%cd%\logs\CURRENT_Alerts_Console.log" 2>&1"
+set "OMEHR_EMBEDDED_ALERT_WATCHER=0"
 start "OMEHR Web" /MIN cmd /c "cd /d "%cd%" && "%BASEPY%" -m streamlit run "%cd%\web\app.py" --server.port 8501 --server.headless true >> "%cd%\logs\CURRENT_Web_Console.log" 2>&1"
 
 echo [5/5] Web paneli bekleniyor...

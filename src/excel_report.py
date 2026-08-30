@@ -25,7 +25,7 @@ from openpyxl.utils import get_column_letter
 
 from services.runtime_paths import runtime_root
 from services.personnel_notes import format_person_note, note_kind
-from services.family_balance import balance_detail_table, balance_store_title_rows
+from services.family_balance import balance_store_title_rows
 from src.text_utils import canon, col, numeric, product_name, req, txt, unvan_sirali, _store_key, _title_key
 
 
@@ -206,7 +206,6 @@ def _surplus_people_report(tt,staff):
 
 
 def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None):
-    tt=balance_detail_table(tt)
     """Sadece Fact_Mevcut ve Fact_Norm karşılaştırmasını içeren sade yönetici Excel'i."""
     out=runtime_root()/'output'/'OMEHR_Executive_Data.xlsx'
     wb=Workbook(); wb.remove(wb.active)
@@ -299,7 +298,6 @@ def _gap_text(mevcut, ai_norm):
 
 
 def _region_excel(path, region, kpi, st, tt, ai, staff):
-    tt=balance_detail_table(tt)
     """Bölge müdürü için yalnızca mevcut, norm, eksik ve fazla raporu."""
     wb=Workbook(); wb.remove(wb.active)
     rs=st[st['Bölge Sorumlusu'].map(canon)==canon(region)].copy()
@@ -327,7 +325,6 @@ def _region_excel(path, region, kpi, st, tt, ai, staff):
 
 
 def enhanced_excel_reports(kpi,st,tt,ai,staff):
-    tt=balance_detail_table(tt)
     outdir=runtime_root()/'output'/'Bolge_Raporlari'; outdir.mkdir(exist_ok=True)
     temp_dir=runtime_root()/'output'/'Bolge_Excel_Yeni'; shutil.rmtree(temp_dir,ignore_errors=True); temp_dir.mkdir(exist_ok=True)
     for region in sorted(st['Bölge Sorumlusu'].dropna().map(txt).unique()):
@@ -533,8 +530,11 @@ def _executive_analysis_frames(input_path):
     ops=canonical_locations(latest(_read(input_path,'Aylık Operasyon KPI')))
     costs=canonical_locations(latest(_read(input_path,'Personel Maliyeti')))
     overtime=latest(_read(input_path,'Fazla Mesai'))
-    fire=_read(input_path,'Fire ve İade')
-    workload=_read(input_path,'İş Yükü Endeksi')
+    # Bütün operasyon kaynakları aynı mağaza anahtarından birleşmelidir.
+    # Fire/iş yükü sayfalarında mağaza adının sonunda boşluk bulunması (örn.
+    # "BUCA ") daha önce aynı fiziksel mağazayı iki satıra ayırıyordu.
+    fire=canonical_locations(latest(_read(input_path,'Fire ve İade')))
+    workload=canonical_locations(latest(_read(input_path,'İş Yükü Endeksi')))
 
     def keys(frame):
         mid=col(frame,'MagazaID','MağazaID'); store=col(frame,'Mağaza','Magaza')
@@ -576,10 +576,12 @@ def _executive_analysis_frames(input_path):
     fmid,fstore=keys(fire)
     if fmid and fstore:
         f=fire[[fmid,fstore]].copy();f.columns=['MağazaID','Mağaza'];f['Fire Oranı %']=number(fire,'Fire Oranı %')
+        f=f.groupby(['MağazaID','Mağaza'],as_index=False,dropna=False)['Fire Oranı %'].mean()
         operational=f if operational.empty else operational.merge(f,on=['MağazaID','Mağaza'],how='outer')
     wmid,wstore=keys(workload)
     if wmid and wstore:
         w=workload[[wmid,wstore]].copy();w.columns=['MağazaID','Mağaza'];w['İş Yükü Endeksi']=number(workload,'İş Yükü Endeksi')
+        w=w.groupby(['MağazaID','Mağaza'],as_index=False,dropna=False)['İş Yükü Endeksi'].mean()
         operational=w if operational.empty else operational.merge(w,on=['MağazaID','Mağaza'],how='outer')
     if not operational.empty:
         operational.insert(2,'Birim Tipi',operational['Mağaza'].map(unit_type))
@@ -726,7 +728,7 @@ def _build_admin_report_pack(kpi, st, tt, ai, input_path, main_pdf, main_excel):
     return [admin_pdf,ai_pdf,operation_pdf,cost_pdf,norm_path,finance_path,Path(main_excel)]
 
 
-def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
+def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None, tt=None):
     """Kutucuklu yönetici PDF'sinin personel satırlı Excel karşılığını üretir.
 
     Her yönetici ayrı sayfadadır. Her mağaza ayrı kutudur ve PDF ile aynı
@@ -810,10 +812,26 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
         td['Norm'] = numeric(td['Norm']).astype(int); td['Mevcut'] = numeric(td['Mevcut']).astype(int)
         td['Eksik']=(td['Norm']-td['Mevcut']).clip(lower=0).astype(int)
         td['Fazla']=(td['Mevcut']-td['Norm']).clip(lower=0).astype(int)
-        td=balance_store_title_rows(
-            td,key_col='_Key',norm_col='Norm',current_col='Mevcut',
-            deficit_col='Eksik',surplus_col='Fazla'
-        )
+        if tt is not None and not tt.empty:
+            # Üretim raporunda tek hesap kaynağı state() çıktısıdır. Böylece
+            # kutucuklu rapor aile dengelemesini yeniden yapıp açığı/fazlayı
+            # başka unvan satırına taşımaz. tt verilmemesi eski bağımsız test
+            # ve entegrasyon çağrılarıyla geriye uyumluluk içindir.
+            store_tt=tt[tt['Mağaza'].map(canon)==canon(store_name)].copy()
+            store_tt['_Key']=store_tt['Unvan'].map(_title_key)
+            state_values=(store_tt.groupby('_Key',dropna=False)[
+                ['Aktif Mevcut','Norm Kadro','Norm Eksiği','Norm Fazlası']
+            ].sum())
+            for target,source in [
+                ('Mevcut','Aktif Mevcut'),('Norm','Norm Kadro'),
+                ('Eksik','Norm Eksiği'),('Fazla','Norm Fazlası'),
+            ]:
+                td[target]=td['_Key'].map(state_values[source]).fillna(td[target]).astype(int)
+        else:
+            td=balance_store_title_rows(
+                td,key_col='_Key',norm_col='Norm',current_col='Mevcut',
+                deficit_col='Eksik',surplus_col='Fazla'
+            )
         td = unvan_sirali(td,unvan_kolonu='Unvan')
 
         rows=[]

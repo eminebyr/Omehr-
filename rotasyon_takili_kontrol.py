@@ -75,14 +75,18 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    from services.management_center import _db_path, _input_path
+    from services.management_center import _input_path
+    from services.web_runtime import connect_web_db, db_path
 
-    db_path = _db_path()
-    print(f"Veritabanı: {db_path}")
+    current_db_path = db_path()
+    print(f"Veritabanı: {current_db_path}")
     print(f"Girdi (Fact_Mevcut) dosyası: {_input_path()}")
     print()
 
-    con = sqlite3.connect(db_path)
+    # Temiz/ilk kurulumda transfers tablosu henüz oluşmamış olabilir.
+    # Panelin kullandığı ortak başlangıç yolu tabloyu ve migrations'ı güvenle
+    # hazırlar; mevcut kayıtları değiştirmez.
+    con = connect_web_db()
     con.row_factory = sqlite3.Row
     stuck = con.execute(
         "SELECT id, created_at, person_name, source_store, target_store, "

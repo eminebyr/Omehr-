@@ -36,52 +36,15 @@ from reportlab.graphics.shapes import Drawing, Line, Rect, String
 from services.runtime_paths import runtime_root
 from services.settings import input_path
 from services.personnel_notes import format_person_note, note_kind
-from services.family_balance import balance_store_title_rows
 from src.text_utils import canon, col, numeric, product_name, req, txt, unvan_sirali, _title_key
 from src.excel_report import _executive_analysis_frames
 
 
 
 def _person_norm_key(real_title, department):
-    """Gerçek unvanı doğru norm ailesine bağlar.
-
-    Fact_Mevcut.Departman normalde norm ailesidir; ancak saha girişinde
-    UZMAN/ELİT personelin departmanı yanlışlıkla yardımcı aileye yazılmış
-    olabilir. Bu durumda gerçek unvan her zaman önceliklidir.
-    """
-    real=_title_key(real_title)
-    dep=_title_key(department)
-    specialist_map={
-        _title_key('UZMAN YÖNETİCİ'):_title_key('YÖNETİCİ'),
-        _title_key('ELİT YÖNETİCİ'):_title_key('YÖNETİCİ'),
-        _title_key('UZMAN ŞARKÜTERİ'):_title_key('ŞARKÜTERİ'),
-        _title_key('ELİT ŞARKÜTERİ'):_title_key('ŞARKÜTERİ'),
-        _title_key('UZMAN KASAP'):_title_key('KASAP'),
-        _title_key('ELİT KASAP'):_title_key('KASAP'),
-        _title_key('UZMAN MANAV'):_title_key('MANAV'),
-        _title_key('ELİT MANAV'):_title_key('MANAV'),
-    }
-    exact_family_map = {
-        _title_key('YÖNETİCİ'): _title_key('YÖNETİCİ'),
-        _title_key('UZMAN YÖNETİCİ'): _title_key('YÖNETİCİ'),
-        _title_key('ELİT YÖNETİCİ'): _title_key('YÖNETİCİ'),
-        _title_key('YÖNETİCİ YARDIMCISI'): _title_key('YÖNETİCİ YARDIMCISI'),
-        _title_key('MANAV'): _title_key('MANAV'),
-        _title_key('UZMAN MANAV'): _title_key('MANAV'),
-        _title_key('ELİT MANAV'): _title_key('MANAV'),
-        _title_key('MANAV YARDIMCISI'): _title_key('MANAV YARDIMCISI'),
-        _title_key('ŞARKÜTERİ'): _title_key('ŞARKÜTERİ'),
-        _title_key('UZMAN ŞARKÜTERİ'): _title_key('ŞARKÜTERİ'),
-        _title_key('ELİT ŞARKÜTERİ'): _title_key('ŞARKÜTERİ'),
-        _title_key('ŞARKÜTERİ YARDIMCISI'): _title_key('ŞARKÜTERİ YARDIMCISI'),
-        _title_key('KASAP'): _title_key('KASAP'),
-        _title_key('UZMAN KASAP'): _title_key('KASAP'),
-        _title_key('ELİT KASAP'): _title_key('KASAP'),
-        _title_key('KASAP YARDIMCISI'): _title_key('KASAP YARDIMCISI'),
-    }
-    # Gerçek unvan bu tanımlı ailelerden biriyse Departman hatalı olsa bile
-    # gerçek unvan önceliklidir. Diğer görevlerde Departman norm ailesidir.
-    return exact_family_map.get(real, specialist_map.get(real, dep or real))
+    """Resmî state motoruyla aynı norm ailesi anahtarını döndürür."""
+    from src.state_engine import _staff_norm_family
+    return _staff_norm_family(real_title, department)
 
 # font()/_PDF_FONTS_READY artık src/pdf_fonts.py'de TEK noktada tanımlı
 # (bağımsız, döngüsel-import riski olmayan modül). Buradan aynı isimle geri
@@ -566,16 +529,17 @@ def _build_store_pdf(path, kpi, norm, staff, ai, validation_summary=None, stores
         _store_tt=tt[tt['Mağaza'].map(canon)==canon(sname)].copy()
         if not _store_tt.empty:
             _store_tt['_Key']=_store_tt['Unvan'].map(_title_key)
+            _m_map=_store_tt.groupby('_Key')['Aktif Mevcut'].sum().to_dict()
+            _n_map=_store_tt.groupby('_Key')['Norm Kadro'].sum().to_dict()
             _e_map=_store_tt.groupby('_Key')['Norm Eksiği'].sum().to_dict()
             _f_map=_store_tt.groupby('_Key')['Norm Fazlası'].sum().to_dict()
+            title_data['Mevcut']=title_data['_Key'].map(_m_map).fillna(0).astype(int)
+            title_data['Yönetim Normu']=title_data['_Key'].map(_n_map).fillna(0).astype(int)
             title_data['Eksik']=title_data['_Key'].map(_e_map).fillna(0).astype(int)
             title_data['Fazla']=title_data['_Key'].map(_f_map).fillna(0).astype(int)
-        # Yönetici/yardımcı, Manav/yardımcı, Şarküteri/yardımcı ve Kasap/yardımcı
-        # dağılımı tüm mağazalarda aile toplamı üzerinden dengelenir.
-        title_data=balance_store_title_rows(
-            title_data,key_col='_Key',norm_col='Yönetim Normu',current_col='Mevcut',
-            deficit_col='Eksik',surplus_col='Fazla'
-        )
+        # Eksik/fazla dağılımı state() içinde bir kez dengelenmiştir. Burada
+        # ikinci kez dengelemek aynı toplamı başka unvan satırlarına taşıyıp
+        # PDF ile panel/Excel arasında tutarsızlık oluşturur.
         title_data=unvan_sirali(title_data,unvan_kolonu='Unvan')
 
         # Personel açıklamaları yalnız Fact_Mevcut.H/Açıklama alanından alınır.
