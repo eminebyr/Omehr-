@@ -88,6 +88,22 @@ def _omehr_baslat_rapor_zamanlayici():
 
 _omehr_baslat_rapor_zamanlayici()
 
+
+# TEAMS ALERT WATCHER (bkz. alert_watcher.py::start_background() docstring'i):
+# DÜZELTME (30 Ağustos 2026 — Teams uyarıları hiç çalışmıyordu): önceden ayrı
+# bir süreç/servis olarak çalıştırılması gerekiyordu ve Railway'de hiç
+# başlatılmıyordu. Artık günlük rapor zamanlayıcısıyla AYNI şekilde, mevcut
+# Streamlit sürecinin içinde, süreç başına bir kez başlatılan bir arka plan
+# thread'i olarak çalışır — ekstra Railway servisi gerekmez.
+@st.cache_resource
+def _omehr_baslat_alert_watcher():
+    from alert_watcher import start_background as _start_alert_watcher
+    _start_alert_watcher()
+    return True
+
+
+_omehr_baslat_alert_watcher()
+
 # Tüm Plotly grafiklerinde dışarı aktarma, büyütme/küçültme ve görünüm
 # sıfırlama araçlarını görünür tut. Mevcut grafik kodları ve veriler değişmez.
 _PLOTLY_MODEBAR_CONFIG = {
