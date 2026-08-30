@@ -81,6 +81,50 @@ def test_compact_report_includes_norm_eksik_fazla_pivot_sheets(tmp_path: Path):
     assert total_row[-1] == sum(v for v in total_row[2:-1] if isinstance(v, int))
 
 
+def test_compact_report_pivot_sheets_use_state_output_when_tt_provided(tmp_path: Path):
+    """DÜZELTME (tutarlılık, 29 Ağustos 2026) regresyon testi: tt (state()
+    çıktısı) verildiğinde EKSİK/FAZLA sayfaları KENDİ ham hesaplaması
+    yerine tt'den okumalı — bu, KASİYER gibi config_norm_rules.json'da
+    hiç tanımlı olmayan bir aile için bile otomatik dengeleme (Uzman
+    Kasiyer dahil, Kasiyer Yardımcısı ile mahsup) yapılmasını sağlar.
+    tt VERİLMEDEN aynı senaryo çalıştırılsaydı bu dengeleme HİÇ
+    uygulanmazdı (ham normx/staffx hesaplaması aile kuralı bilmez)."""
+    from src.state_engine import state
+
+    norm = pd.DataFrame([
+        {'MağazaID': '1', 'Mağaza': 'TEST MAĞAZA', 'Bölge Sorumlusu': 'TEST BÖLGE', 'Unvan': 'KASİYER', 'Norm Kadro': 2},
+        {'MağazaID': '1', 'Mağaza': 'TEST MAĞAZA', 'Bölge Sorumlusu': 'TEST BÖLGE', 'Unvan': 'KASİYER YARDIMCISI', 'Norm Kadro': 1},
+    ])
+    staff = pd.DataFrame([
+        {'MağazaID': '1', 'Mağaza': 'TEST MAĞAZA', 'Bölge Sorumlusu': 'TEST BÖLGE',
+         'İsim Soyisim': 'KİŞİ 1', 'Unvan': 'UZMAN KASİYER', 'Departman': 'KASİYER'},
+        {'MağazaID': '1', 'Mağaza': 'TEST MAĞAZA', 'Bölge Sorumlusu': 'TEST BÖLGE',
+         'İsim Soyisim': 'KİŞİ 2', 'Unvan': 'KASİYER YARDIMCISI', 'Departman': 'KASİYER YARDIMCISI'},
+        {'MağazaID': '1', 'Mağaza': 'TEST MAĞAZA', 'Bölge Sorumlusu': 'TEST BÖLGE',
+         'İsim Soyisim': 'KİŞİ 3', 'Unvan': 'KASİYER YARDIMCISI', 'Departman': 'KASİYER YARDIMCISI'},
+    ])
+    st, tt = state(norm, staff, {})
+
+    out_ile_tt = build_compact_norm_roster_excel(st, norm, staff, output_path=tmp_path / 'ile_tt.xlsx', tt=tt)
+    wb = load_workbook(out_ile_tt)
+
+    def _deger(ws, unvan_kolon_adi):
+        header = [c.value for c in ws[1]]
+        col_idx = header.index(unvan_kolon_adi) + 1
+        for row in ws.iter_rows(min_row=2):
+            if row[1].value and row[1].value != 'TOPLAM':
+                v = row[col_idx - 1].value
+                return v if v else 0
+        return None
+
+    eksik_ws = wb['EKSİK']
+    fazla_ws = wb['FAZLA']
+    kasiyer_eksik = _deger(eksik_ws, 'KASİYER')
+    yardimci_fazla = _deger(fazla_ws, 'KASİYER YARDIMCISI')
+    assert (kasiyer_eksik or 0) == 0, "tt verildiğinde Kasiyer ailesi (Uzman Kasiyer dahil) otomatik dengelenmeli"
+    assert (yardimci_fazla or 0) == 0, "tt verildiğinde Yardımcı fazlası otomatik dengelenmeli"
+
+
 def test_compact_report_applies_status_colors_and_comments(tmp_path: Path):
     st, norm, staff = _frames()
     out = build_compact_norm_roster_excel(st, norm, staff, output_path=tmp_path/'colors.xlsx')
