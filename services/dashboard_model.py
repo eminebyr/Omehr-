@@ -271,8 +271,8 @@ def build_dashboard_model(sheets: dict[str, pd.DataFrame], control_path: Path):
         }
     ).reset_index()
     # Norm tanımı olmayan çalışan da toplam aktif mevcutta ve personel
-    # listelerinde görünür. Ancak EKSİK/FAZLA değeri yalnızca resmi kontrol
-    # tablosundaki mağaza+departman sınıflamasından gelir.
+    # listelerinde görünür. Bu kişinin departmanı için norm 0 kabul edilir;
+    # aksi halde mevcut artarken fazla sabit kalır ve KPI mutabakatı bozulur.
     # SAVUNMA: detail/names birleştirmesinden önce StoreKey/RoleKey'i açıkça
     # string'e sabitle — biri boş/NaN ağırlıklı kalıp pandas tarafından
     # float64'e yükseltilirse (özellikle tamamı NaN olan bir grup varsa)
@@ -295,7 +295,7 @@ def build_dashboard_model(sheets: dict[str, pd.DataFrame], control_path: Path):
     for c in ("BaselineRaw", "BaselineEffective"):
         detail[c] = pd.to_numeric(detail.get(c, 0), errors="coerce").fillna(0).astype(int)
     has_baseline = detail["_HasBaseline"].eq(True)
-    in_scope = detail["InScope"].eq(True) | detail["Norm"].gt(0)
+    in_scope = detail["InScope"].eq(True) | detail["Norm"].gt(0) | detail["Mevcut"].gt(0)
     effective = pd.Series(0, index=detail.index, dtype=int)
     effective.loc[has_baseline] = (
         detail.loc[has_baseline, "BaselineEffective"]
@@ -320,4 +320,51 @@ def build_dashboard_model(sheets: dict[str, pd.DataFrame], control_path: Path):
         "Norm Fazlası": int(detail["Fazla"].sum()),
     }
     kpis["Net İhtiyaç"] = kpis["Norm Fazlası"] - kpis["Norm Eksiği"]
-    return fm, detail, stores, kpis
+
+    # TEK DOĞRU HESAP KAYNAĞI
+    # ------------------------
+    # Yukarıdaki tarihsel dashboard/baseline modeli, aynı canlı veri için
+    # rapor motorunun state() sonucu 48/37 iken 62/51 üretebiliyordu. Web
+    # katmanı bunu ikinci kez state() çağırarak sonradan örtüyordu; state()
+    # çağrısı herhangi bir nedenle başarısız olursa eski ve yanlış rakamlar
+    # sessizce yeniden görünüyordu. Panel, Excel ve PDF artık aynı resmi
+    # state() çıktısından beslenir. Tarihsel blok yalnız personel adlarını
+    # derlemek için kullanılır; norm/eksik/fazla hesabına karar vermez.
+    from src.state_engine import state as _official_state
+
+    official_stores, official_detail = _official_state(
+        sheets["Fact_Norm"], fm, sheets
+    )
+    official_detail = official_detail.copy()
+    official_stores = official_stores.copy()
+    aliases = {
+        "Aktif Mevcut": "Mevcut",
+        "Norm Kadro": "Norm",
+        "Norm Eksiği": "Eksik",
+        "Norm Fazlası": "Fazla",
+    }
+    for frame in (official_detail, official_stores):
+        for source, target in aliases.items():
+            frame[target] = pd.to_numeric(frame[source], errors="coerce").fillna(0).astype(int)
+
+    # Unvan analizi ekranının personel listesi alanlarını koru.
+    official_detail["StoreKey"] = official_detail["Mağaza"].map(store_key)
+    official_detail["RoleKey"] = official_detail["Unvan"].map(role_key)
+    name_columns = [
+        "StoreKey", "RoleKey", "Personel Adı Soyadı",
+        "Gerçek Unvan / Personel", "Gerçek Unvanlar",
+    ]
+    official_detail = official_detail.merge(names[name_columns], on=["StoreKey", "RoleKey"], how="left")
+    for column in name_columns[2:]:
+        official_detail[column] = official_detail[column].fillna("")
+
+    kpis = dict(official_stores.attrs.get("kpi_override") or {})
+    if not kpis:
+        kpis = {
+            "Aktif Mevcut": int(len(fm)),
+            "Toplam Norm": int(official_detail["Norm"].sum()),
+            "Norm Eksiği": int(official_detail["Eksik"].sum()),
+            "Norm Fazlası": int(official_detail["Fazla"].sum()),
+        }
+        kpis["Net İhtiyaç"] = kpis["Norm Fazlası"] - kpis["Norm Eksiği"]
+    return fm, official_detail, official_stores, kpis

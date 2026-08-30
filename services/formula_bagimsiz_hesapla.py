@@ -165,13 +165,12 @@ def statiklestir(input_path: Path) -> bool:
                 kontrol_fazla[(mid,helper_uid)] = max(0, int(kontrol_fazla.get((mid,helper_uid),helper_fazla_ham))-int(support))
 
     # DÜZELTME (tutarlılık, 29 Ağustos 2026): src.state_engine.state()'te
-    # "kapsam" (scope) mantığı var — bir unvanın Fact_Norm'da (herhangi
-    # bir mağazada) GERÇEKTEN bir norm satırı yoksa VE bir aile
-    # dengelemesinin yardımcısı da değilse, o unvan "norm dışı görev"
-    # sayılır ve Eksik/Fazla hesabına HİÇ dahil edilmez (0 kalır). Bu
-    # dosyada böyle bir filtre YOKTU — TÜM (mid,uid) çiftleri için ham
-    # hesaplama yapılıyordu. Aynı kapsam kümesi burada da uygulanır.
+    # Aktif personelde fiilen kullanılan unvanlar da kapsamdadır. Fact_Norm'da
+    # henüz satırı bulunmayan bir unvanın normu 0 kabul edilir ve mevcut
+    # personeli fazlaya yazılır; böylece Excel'in statik Norm_Durumu sonucu
+    # state_engine ve web paneliyle aynı kalır.
     kapsam_uidleri = {uid for (_, uid) in norm_toplam.keys()}
+    kapsam_uidleri |= {uid for (_, uid) in mevcut_sayim.keys()}
     kapsam_uidleri |= {unvan_id_by_key.get(v) for v in _pairs.values() if unvan_id_by_key.get(v)}
 
     wb = openpyxl.load_workbook(input_path)
@@ -229,9 +228,7 @@ def statiklestir(input_path: Path) -> bool:
                 eksik = int(kontrol_eksik.get((mid,uid),0))
                 fazla = int(kontrol_fazla.get((mid,uid),0))
             elif uid not in kapsam_uidleri:
-                # Norm dışı görev (Fact_Norm'da hiç tanımlı değil, yardımcı
-                # da değil) — state_engine.py::state() ile aynı: hesaba
-                # dahil edilmez.
+                # Ne normda ne de aktif mevcutta bulunan teknik/boş satır.
                 eksik = 0
                 fazla = 0
             else:

@@ -344,11 +344,15 @@ def state(norm,staff,sheets):
     title['Norm Kadro']=numeric(title['Norm Kadro']).astype(int)
     title['Aktif Mevcut']=numeric(title['Aktif Mevcut']).astype(int)
 
-    # Norm kapsamı, şirket genelinde Fact_Norm'da tanımlı departman aileleridir.
-    # Normu o mağazada 0 olan fakat aynı norm ailesinde mevcut personel varsa
-    # bu kişi norm fazlası olabilir. Norm dışı görevler (ör. merkez özel rolleri)
-    # eksik/fazla hesabına alınmaz.
-    kapsam_unvanlari=set(ng['_Unvan'].dropna().tolist())
+    # Norm kapsamı, şirket genelinde Fact_Norm'da tanımlı departman aileleri
+    # ile aktif personelde fiilen kullanılan departmanların birleşimidir.
+    # Aktif bir personelin departmanı Fact_Norm'da henüz hiç tanımlı değilse
+    # bu satırın normu 0 kabul edilir ve personel norm fazlasına yazılır.
+    # Aksi halde toplam Aktif Mevcut artarken Norm Fazlası sabit kalır ve
+    # mağaza/unvan mutabakatı bozulur (canlı örnek: Akevler/Anahtarcı).
+    normda_tanimli_unvanlar=set(ng['_Unvan'].dropna().tolist())
+    kapsam_unvanlari=set(normda_tanimli_unvanlar)
+    kapsam_unvanlari |= set(mg['_Unvan'].dropna().tolist())
     # DÜZELTME: yardımcı (YARDIMCISI) unvanların çoğu zaman KENDİ Fact_Norm
     # satırı hiç yoktur — bu tasarım gereğidir (norm ana unvanda tanımlanır,
     # yardımcı yalnız destek sağlar). Önceden bu durumda yardımcı unvan
@@ -430,6 +434,20 @@ def state(norm,staff,sheets):
     # veya yardımcı kapasitesi normu tamamlarken boş pozisyon oluşmaz.
     title=_reconcile_main_family_rules(title)
 
+    # Aktif personelde kullanılan fakat Fact_Norm'da şirket genelinde hiç
+    # tanımlanmamış unvanları görünür bir veri-yönetimi uyarısı olarak koru.
+    # Bu işaret resmi norma otomatik kayıt EKLEMEZ; norm 0/fazla mevcut hesabını
+    # şeffaflaştırır ve İK'nın hangi unvan için norm kararı vermesi gerektiğini
+    # gösterir.
+    title['Normda Tanımlı Değil'] = (
+        title['Aktif Mevcut'].gt(0) & ~title['_Unvan'].isin(normda_tanimli_unvanlar)
+    )
+    title['Norm Tanımı Durumu'] = title.apply(
+        lambda row: f"NORMDA TANIMLI DEĞİL (+{int(row['Aktif Mevcut'])})"
+        if bool(row['Normda Tanımlı Değil']) else "",
+        axis=1,
+    )
+
     norm_title_map=norm.drop_duplicates('_Unvan').set_index('_Unvan')[nu].to_dict()
     staff_title_map=staff.drop_duplicates('_Unvan').set_index('_Unvan')[dep].to_dict()
     title['Unvan']=title['_Unvan'].map(norm_title_map).fillna(title['_Unvan'].map(staff_title_map))
@@ -451,7 +469,11 @@ def state(norm,staff,sheets):
     title['Unvan']=title_series.mask(title_series.map(txt).eq(''),title['_Unvan'].map(lambda x:txt(x).upper()))
     title['UnvanID']=''
     _ana_unvan_uyari_var = '_Ana Unvan Personelsiz' in title.columns
-    _secili_kolonlar = ['MağazaID','Mağaza','Bölge Sorumlusu','UnvanID','Unvan','Norm Kadro','Aktif Mevcut','Norm Eksiği','Norm Fazlası']
+    _secili_kolonlar = [
+        'MağazaID','Mağaza','Bölge Sorumlusu','UnvanID','Unvan',
+        'Norm Kadro','Aktif Mevcut','Norm Eksiği','Norm Fazlası',
+        'Normda Tanımlı Değil','Norm Tanımı Durumu',
+    ]
     if _ana_unvan_uyari_var:
         _secili_kolonlar.append('_Ana Unvan Personelsiz')
     tt=title[_secili_kolonlar].copy()
