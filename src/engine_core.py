@@ -164,7 +164,7 @@ def run_all():
             _exc, level="ERROR",
         )
     boxed_manager_excel=build_boxed_manager_excel(st,norm,staff,kp)
-    compact_norm_roster_excel=build_compact_norm_roster_excel(st,norm,staff,kp)
+    compact_norm_roster_excel=build_compact_norm_roster_excel(st,norm,staff,kp,tt=tt)
     outdir=runtime_root()/'output'
     # VERİ KALİTESİ RAPORU (V19.9 — dış inceleme sonrası eklendi): dummy
     # adres/saha etüdü bekleyen süre/dummy mail/tanımsız unvan işaretleri
