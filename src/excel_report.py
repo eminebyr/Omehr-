@@ -991,7 +991,7 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
     return out
 
 
-def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None):
+def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None, tt=None):
     """Bölge bazlı, üç mağazayı yan yana gösteren kompakt norm kadro listesi.
 
     Kullanıcının operasyonel Excel düzenini yalnızca görsel şablon olarak
@@ -1171,6 +1171,30 @@ def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None)
         )
 
         def _store_breakdown(store_key):
+            if tt is not None and not tt.empty and {'Mağaza','Unvan','Norm Kadro','Norm Eksiği','Norm Fazlası'}.issubset(tt.columns):
+                # DÜZELTME (tutarlılık, 29 Ağustos 2026): önceden bu fonksiyon
+                # normx/staffx'ten KENDİ ham hesaplamasını yapıyordu — hiçbir
+                # aile dengelemesi (Yönetici/Manav/Kasap/Şarküteri + config'te
+                # tanımsız yeni unvanlar) uygulanmıyordu, panelin/PDF'nin
+                # kullandığı resmi src.state_engine.state() sonucundan farklı
+                # sayılar üretebiliyordu. tt (state() çıktısı) verilmişse artık
+                # doğrudan ondan okunur — tek kaynak, aynı dengeleme.
+                _tt_store = tt[tt['Mağaza'].map(_normal).eq(store_key)]
+                if not _tt_store.empty:
+                    _tt_store = _tt_store.assign(_k=_tt_store['Unvan'].map(_title_key))
+                    _norm_map = _tt_store.groupby('_k')['Norm Kadro'].sum().astype(int).to_dict()
+                    _eksik_map = _tt_store.groupby('_k')['Norm Eksiği'].sum().astype(int).to_dict()
+                    _fazla_map = _tt_store.groupby('_k')['Norm Fazlası'].sum().astype(int).to_dict()
+                    return {
+                        key: (
+                            int(_norm_map.get(key, 0)),
+                            int(_eksik_map.get(key, 0)),
+                            int(_fazla_map.get(key, 0)),
+                        )
+                        for key in title_keys
+                    }
+            # tt verilmemişse (geriye dönük uyumluluk — ör. eski çağıranlar)
+            # ham normx/staffx hesaplamasına düşülür.
             ns = normx[normx['_magaza'].eq(store_key)]
             ps = staffx[staffx['_magaza'].eq(store_key)]
             norm_by_title = numeric(ns[nn]).groupby(ns['_unvan']).sum().astype(int).to_dict() if not ns.empty else {}
