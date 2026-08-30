@@ -4,12 +4,9 @@ regresyon testi.
 Kapsam: store_card, KENDİ ham hesaplamasını (title_data['Eksik']=...)
 yalnız bir BAŞLANGIÇ değeri olarak kullanır — hemen ardından bu değer,
 src.state_engine.state() çıktısından (tt) alınan gerçek Eksik/Fazla ile
-EZİLİR, sonra services.family_balance.balance_store_title_rows (bizim
-genelleştirdiğimiz, config'te tanımsız unvanlar için de otomatik
-dengeleme yapan fonksiyon) çağrılır. Yani PDF raporları ZATEN doğru
-kaynağa bağlı — bu test, gelecekte biri bu zinciri (tt override'ı veya
-balance_store_title_rows çağrısını) yanlışlıkla kaldırırsa kırmızı
-olacak bir güvenlik ağıdır.
+EZİLİR. Aile dengelemesi state() içinde yalnız bir kez yapılır; PDF bu
+sonucu yeniden dağıtmaz. Bu test, tt bağlantısının kaybolmasına karşı
+güvenlik ağıdır.
 """
 
 import pandas as pd

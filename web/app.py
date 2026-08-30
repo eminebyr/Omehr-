@@ -102,7 +102,8 @@ def _omehr_baslat_alert_watcher():
     return True
 
 
-_omehr_baslat_alert_watcher()
+if os.getenv("OMEHR_EMBEDDED_ALERT_WATCHER", "1").strip().lower() not in {"0", "false", "hayir", "no"}:
+    _omehr_baslat_alert_watcher()
 
 # Tüm Plotly grafiklerinde dışarı aktarma, büyütme/küçültme ve görünüm
 # sıfırlama araçlarını görünür tut. Mevcut grafik kodları ve veriler değişmez.

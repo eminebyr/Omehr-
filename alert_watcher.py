@@ -58,7 +58,10 @@ def _arka_plan_dongusu() -> None:
     from services.observability import get_logger
     from services.safe_exec import log_swallowed
 
-    aralik = int(os.getenv("OMEHR_ALERT_INTERVAL_SECONDS", "900"))
+    try:
+        aralik = max(30, int(os.getenv("OMEHR_ALERT_INTERVAL_SECONDS", "900")))
+    except ValueError:
+        aralik = 900
     logger = get_logger("omehr.alert_watcher")
     logger.info("Alert watcher (arka plan thread) başladı — her %s saniyede bir kritik norm açığı taranacak.", aralik)
     while True:
@@ -101,7 +104,10 @@ def _bir_tur() -> int:
 
 
 def main() -> int:
-    aralik = int(os.getenv("OMEHR_ALERT_INTERVAL_SECONDS", "900"))
+    try:
+        aralik = max(30, int(os.getenv("OMEHR_ALERT_INTERVAL_SECONDS", "900")))
+    except ValueError:
+        aralik = 900
     print(f"Alert watcher başladı — her {aralik} saniyede bir kritik norm açığı taranacak.")
     try:
         while True:

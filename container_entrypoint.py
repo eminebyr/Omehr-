@@ -25,9 +25,9 @@ def _report_count(base: Path | None = None) -> int:
 
 def _expected_report_count() -> int:
     try:
-        return max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "32")))
+        return max(1, int(os.getenv("OMEHR_EXPECTED_REPORT_COUNT", "33")))
     except ValueError:
-        return 32
+        return 33
 
 
 def _snapshot_complete_reports() -> None:
@@ -35,7 +35,7 @@ def _snapshot_complete_reports() -> None:
 
     Rapor motoru yeni seti üretirken output/ kısa süreyle kısmi görünebilir.
     Web paneli bu anda 9/32 gibi ara bir sayı göstermesin diye son tamamlanmış
-    set output_last_complete/ altında tutulur. Yalnız 32/32 (veya ayarlanan
+    set output_last_complete/ altında tutulur. Yalnız 33/33 (veya ayarlanan
     hedef) mevcutsa snapshot yenilenir.
     """
     source = RUNTIME / "output"
@@ -71,7 +71,7 @@ def _ensure_startup_reports() -> bool:
 
     Railway Volume kalıcı olduğu için daha önce üretilmiş tam set varsa motoru gereksiz
     yere tekrar çalıştırmaz. Set eksikse main.py çalıştırılır ve kısa bir kontrollü
-    retry yapılır. Varsayılan hedef 32 rapordur; OMEHR_EXPECTED_REPORT_COUNT ile
+    retry yapılır. Varsayılan hedef 33 rapordur; OMEHR_EXPECTED_REPORT_COUNT ile
     değiştirilebilir. OMEHR_ENSURE_REPORTS_ON_START=0 ile tamamen kapatılabilir.
     """
     if os.getenv("OMEHR_ENSURE_REPORTS_ON_START", "1").strip().lower() in {"0", "false", "hayir", "no"}:
@@ -127,7 +127,7 @@ def main() -> int:
     if not _ensure_startup_reports():
         return 1
 
-    # Streamlit açılmadan hemen önce 32/32 setin güvenli görüntüleme kopyasını al.
+    # Streamlit açılmadan hemen önce 33/33 setin güvenli görüntüleme kopyasını al.
     _snapshot_complete_reports()
 
     os.execvp(

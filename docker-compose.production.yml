@@ -6,6 +6,9 @@ x-app: &app
     OMEHR_BOOTSTRAP_RUNTIME: "1"
     OMEHR_RUNTIME_ROOT: /runtime
     OMEHR_RUN_ENGINE_ON_START: "0"
+    # Bu kurulumda ayrı alert-watcher servisi bulunduğu için web süreçleri
+    # ikinci/üçüncü watcher thread'i başlatmaz.
+    OMEHR_EMBEDDED_ALERT_WATCHER: "0"
   volumes:
     - ${OMEHR_TENANT_DATA:-./tenant_data/OMEHR}:/runtime
   restart: unless-stopped
