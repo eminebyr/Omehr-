@@ -780,8 +780,21 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
         ns = norm[norm[nm].map(canon) == canon(store_name)].copy()
         ps = staff[staff[sm].map(canon) == canon(store_name)].copy()
 
-        msum = (ps.assign(_Key=ps[dep].map(_title_key))
-                  .groupby('_Key',dropna=False)[pname].count().reset_index(name='Mevcut'))
+        # DÜZELTME (tutarlılık, 30 Ağustos 2026): önceden msum/persons
+        # eşleştirmesi DOĞRUDAN Departman'a (_title_key(ps[dep])) bakıyordu
+        # — src.state_engine._staff_norm_family'nin (resmi motor, panelin/
+        # PDF'nin kullandığı) yaptığı "gerçek unvan UZMAN/ELİT ise doğru
+        # aileye bağla" düzeltmesini UYGULAMIYORDU. Somut etki: gerçek
+        # unvanı "Uzman Kasiyer" olan bir personel bu raporda AYRI, norm
+        # tanımı olmayan bir "UZMAN KASİYER" satırında (yapay Fazla=1
+        # olarak) görünürken, aynı kişi resmi motorda doğru şekilde
+        # KASİYER ailesinin eksiğini kapatan biri sayılıyordu — iki rapor
+        # aynı kişi için çelişen tablolar üretiyordu. Artık her ikisi de
+        # AYNI (_staff_norm_family) ortak fonksiyonu kullanır.
+        from src.state_engine import _staff_norm_family
+        ps['_NormKey'] = [_staff_norm_family(u, d) for u, d in zip(ps[su], ps[dep])]
+
+        msum = (ps.groupby('_NormKey',dropna=False)[pname].count().reset_index(name='Mevcut').rename(columns={'_NormKey':'_Key'}))
         nsum = (ns.assign(_Key=ns[nu].map(_title_key))
                   .groupby('_Key',dropna=False)[nn].sum().reset_index(name='Norm'))
         role_names = (ns.assign(_Key=ns[nu].map(_title_key))
@@ -805,7 +818,7 @@ def build_boxed_manager_excel(st, norm, staff, kpi=None, output_path=None):
 
         rows=[]
         for _, r in td.iterrows():
-            persons = ps[ps[dep].map(_title_key)==r['_Key']].copy()
+            persons = ps[ps['_NormKey']==r['_Key']].copy()
             if entry_col and entry_col in persons.columns:
                 persons['_Tarih']=pd.to_datetime(persons[entry_col],errors='coerce')
                 persons=persons.sort_values('_Tarih',ascending=False,na_position='last')
