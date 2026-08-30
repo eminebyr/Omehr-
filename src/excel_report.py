@@ -1256,5 +1256,61 @@ def build_compact_norm_roster_excel(st, norm, staff, kpi=None, output_path=None,
         _write_pivot_sheet('EKSİK', 1)
         _write_pivot_sheet('FAZLA', 2)
 
+        # Aktif personelde bulunup Fact_Norm'da şirket genelinde hiç
+        # tanımlanmayan unvanlar ayrı bir karar listesinde gösterilir.
+        # Bu sayfa Fact_Norm'a otomatik yazmaz; İK'nın norm ekleme/değer
+        # belirleme kararını görünür ve denetlenebilir hale getirir.
+        if tt is not None and not tt.empty and {
+            'Bölge Sorumlusu', 'Mağaza', 'Unvan', 'Aktif Mevcut',
+            'Norm Kadro', 'Norm Fazlası', 'Norm Tanımı Durumu',
+        }.issubset(tt.columns):
+            _undefined = tt[tt['Norm Tanımı Durumu'].fillna('').astype(str).str.strip().ne('')].copy()
+        else:
+            _defined_keys = set(normx['_unvan'].dropna())
+            _undefined_staff = staffx[~staffx['_unvan'].isin(_defined_keys)].copy()
+            if _undefined_staff.empty:
+                _undefined = pd.DataFrame()
+            else:
+                _undefined = (
+                    _undefined_staff.groupby(['_magaza', '_unvan'], dropna=False)
+                    .size().reset_index(name='Aktif Mevcut')
+                )
+                _undefined['Mağaza'] = _undefined['_magaza'].map(
+                    stx.drop_duplicates('_magaza').set_index('_magaza')['Mağaza'].to_dict()
+                )
+                _undefined['Bölge Sorumlusu'] = _undefined['_magaza'].map(
+                    stx.drop_duplicates('_magaza').set_index('_magaza')['Bölge Sorumlusu'].to_dict()
+                )
+                _undefined['Unvan'] = _undefined['_unvan'].map(lambda value: txt(value).upper())
+                _undefined['Norm Kadro'] = 0
+                _undefined['Norm Fazlası'] = _undefined['Aktif Mevcut']
+                _undefined['Norm Tanımı Durumu'] = _undefined['Aktif Mevcut'].map(
+                    lambda value: f'NORMDA TANIMLI DEĞİL (+{int(value)})'
+                )
+
+        ws_undefined = wb.create_sheet('NORMDA TANIMSIZ')
+        ws_undefined.sheet_view.showGridLines = False
+        undefined_columns = [
+            'Bölge Sorumlusu', 'Mağaza', 'Unvan', 'Aktif Mevcut',
+            'Norm Kadro', 'Norm Fazlası', 'Norm Tanımı Durumu',
+        ]
+        for column_index, header in enumerate(undefined_columns, 1):
+            _paint(ws_undefined.cell(1, column_index, header), colors['summary'], bold=True, align='center')
+        if _undefined.empty:
+            ws_undefined.cell(2, 1, 'Normda tanımlı olmayan aktif unvan bulunmuyor.')
+            ws_undefined.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(undefined_columns))
+        else:
+            _undefined = _undefined[undefined_columns].sort_values(['Bölge Sorumlusu', 'Mağaza', 'Unvan'])
+            for row_index, (_, record) in enumerate(_undefined.iterrows(), 2):
+                for column_index, column_name in enumerate(undefined_columns, 1):
+                    cell = ws_undefined.cell(row_index, column_index, record[column_name])
+                    cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+                    if column_name in {'Norm Fazlası', 'Norm Tanımı Durumu'}:
+                        cell.fill = PatternFill('solid', fgColor=colors['fazla'])
+        for column_index, width in enumerate((22, 24, 24, 14, 12, 14, 34), 1):
+            ws_undefined.column_dimensions[get_column_letter(column_index)].width = width
+        ws_undefined.freeze_panes = 'A2'
+        ws_undefined.auto_filter.ref = f'A1:G{max(2, ws_undefined.max_row)}'
+
     wb.save(out)
     return out
