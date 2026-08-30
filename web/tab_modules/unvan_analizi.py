@@ -120,6 +120,9 @@ def _prepare_title_view(detail: pd.DataFrame, staff: pd.DataFrame) -> pd.DataFra
 
     view["Personel Adı Soyadı"] = view["Personel Adı Soyadı"].fillna("").map(_text)
     view["Gerçek Unvanlar"] = view["Gerçek Unvanlar"].fillna("").map(_text)
+    if "Norm Tanımı Durumu" not in view.columns:
+        view["Norm Tanımı Durumu"] = ""
+    view["Norm Tanımı Durumu"] = view["Norm Tanımı Durumu"].fillna("").map(_text)
     view["Net Fark"] = view["Fazla"] - view["Eksik"]
     # DÜZELTME: "Ana Unvan Personelsiz Uyarısı" bayrağı (state_engine.py'de
     # hesaplanıyor — ana unvanda gerçek kişi olmadığı halde aile dengesiyle
@@ -135,10 +138,26 @@ def _prepare_title_view(detail: pd.DataFrame, staff: pd.DataFrame) -> pd.DataFra
 def render(ctx: PageContext) -> None:
     """Ünvan Analizi sekmesinin içeriğini çizer."""
     title_view = _prepare_title_view(ctx.detail, ctx.fm)
+    tanimsiz = title_view[title_view["Norm Tanımı Durumu"].ne("")].copy()
+    if not tanimsiz.empty:
+        toplam = int(tanimsiz["Mevcut"].sum())
+        st.warning(
+            f"⚠ Normda tanımlı olmayan {len(tanimsiz)} aktif mağaza/unvan satırı var "
+            f"({toplam} personel). Bu kişiler norm 0 kabul edilerek fazlaya dahil edilmiştir; "
+            "resmî norma otomatik ekleme yapılmamıştır."
+        )
+        st.dataframe(
+            tanimsiz[[
+                "Bölge Sorumlusu", "Mağaza", "Unvan", "Mevcut", "Norm", "Fazla",
+                "Norm Tanımı Durumu",
+            ]].sort_values(["Bölge Sorumlusu", "Mağaza", "Unvan"]),
+            use_container_width=True,
+            hide_index=True,
+        )
     cols = [
         "Bölge Sorumlusu", "Mağaza", "Unvan", "Gerçek Unvanlar",
         "Personel Adı Soyadı", "Mevcut", "Norm", "Eksik", "Fazla", "Net Fark",
-        "Yetkinlik Uyarısı",
+        "Norm Tanımı Durumu", "Yetkinlik Uyarısı",
     ]
     st.dataframe(
         title_view[cols].sort_values(["Bölge Sorumlusu", "Mağaza", "Unvan"]),

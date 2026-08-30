@@ -201,58 +201,9 @@ def active_people(frame):
 
 
 def _build_model_from_sheets(sheets):
-    fm, detail, stores, kpis = build_dashboard_model(sheets, _root() / "reference" / CONTROL_FILENAME)
-    # ÖNEMLİ: build_dashboard_model'in kendi kpis hesaplaması, engine_core.py'de
-    # (main.py / testler / tüm raporlar) titizlikle doğrulanan resmi Norm
-    # Eksiği/Fazlası mantığından TAMAMEN AYRI, eski bir kalibrasyon (Kalibrasyon/
-    # NORM_KAPSAM_BAZI.json) yöntemi kullanıyordu. Bu yüzden ekranın en üstündeki
-    # KPI kartları (Aktif Mevcut/Toplam Norm/Norm Eksiği/Norm Fazlası/Net İhtiyaç)
-    # main.py'nin ürettiği resmi rakamlarla TUTARSIZ görünüyordu. Aşağıda bu 5
-    # kart, tek doğru kaynak olan engine_core.py'nin state()/kpis() çıktısıyla
-    # değiştirilir; "detail"/"stores"/"fm" ise diğer sekmelerde (ısı haritaları,
-    # transfer önerileri) kullanıldığı için olduğu gibi bırakılır.
-    try:
-        import sys as _sys
-        # engine_core bir çalışma verisi değil, depo içindeki kod modülüdür.
-        # Runtime volume yerine her zaman kod kökünden yüklenmelidir.
-        _sys.path.insert(0, str(CODE_ROOT / "src"))
-        import engine_core as _ec
-        # read_input() bu çalışma için bütün kaynak sayfaları zaten yükledi.
-        # engine_core.load() çağrısı aynı Excel/DB kaynağını ikinci kez okuyup
-        # model kuruyordu. Resmî state/kpi motorlarını koruyarak mevcut veri
-        # nesneleri üzerinden hesapla; sonuç aynı, ikinci I/O yoktur.
-        from services.personnel_status import active_people as _active_people
-        _norm = sheets["Fact_Norm"]
-        _staff = _active_people(sheets["Fact_Mevcut"])
-        _st, _tt = _ec.state(_norm, _staff, sheets)
-        # KPI kartları, mağaza/unvan detayları ve transfer sekmeleri aynı resmi
-        # state çıktısını kullanır; ikinci bir eski dashboard hesabı kalmaz.
-        #
-        # engine_core şeması raporlama adlarını kullanır:
-        #   Aktif Mevcut / Norm Kadro / Norm Eksiği / Norm Fazlası
-        # Web sekmeleri ise tarihsel olarak şu kısa adları bekler:
-        #   Mevcut / Norm / Eksik / Fazla
-        # Her iki ad grubunu birlikte taşıyarak bütün sekmeleri aynı Python
-        # hesabına bağlarız. Böylece LibreOffice/Excel formül önbelleğine bağlı
-        # kalmadan Genel Özet dahil tüm sayfalar aynı 48/37 sonucunu kullanır.
-        fm = _staff.copy()
-        detail = _tt.copy()
-        stores = _st.copy()
-        _aliases = {
-            "Aktif Mevcut": "Mevcut",
-            "Norm Kadro": "Norm",
-            "Norm Eksiği": "Eksik",
-            "Norm Fazlası": "Fazla",
-        }
-        for _df in (detail, stores):
-            for _source, _target in _aliases.items():
-                if _source in _df.columns:
-                    _df[_target] = pd.to_numeric(_df[_source], errors="coerce").fillna(0).astype(int)
-        kpis = _ec.kpis(_st)
-    except Exception as _exc:
-        log_swallowed("web.app.build_model: beklenmeyen hata", _exc)
-        pass  # engine_core çalışmazsa eski (dashboard_model) kpis ile devam et
-    return fm, detail, stores, kpis
+    # Panel, Excel ve PDF aynı resmi state motorunu kullanır. Dashboard modeli
+    # artık kendi içinde bu sözleşmeyi sağladığı için ikinci hesap/fallback yok.
+    return build_dashboard_model(sheets, _root() / "reference" / CONTROL_FILENAME)
 
 
 @st.cache_data(show_spinner=False)

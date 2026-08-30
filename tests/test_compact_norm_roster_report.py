@@ -134,3 +134,30 @@ def test_compact_report_applies_status_colors_and_comments(tmp_path: Path):
     assert cells['ECE TEST'].fill.fgColor.rgb.endswith('92D050')
     assert cells['ALİ TEST'].fill.fgColor.rgb.endswith('E4DFEC')
     assert cells['ALİ TEST'].comment and 'raporlu' in cells['ALİ TEST'].comment.text.lower()
+
+
+def test_compact_report_lists_active_titles_missing_from_fact_norm(tmp_path: Path):
+    from src.state_engine import state
+
+    st, norm, staff = _frames()
+    staff = pd.concat([staff, pd.DataFrame([{
+        'Mağaza': 'MAĞAZA A', 'MağazaID': '1', 'Bölge Sorumlusu': 'DENEME BÖLGESİ',
+        'Departman': 'ANAHTARCI', 'Unvan': 'ANAHTARCI',
+        'İsim Soyisim': 'EMİNE AKSARI', 'İşe Giriş': '2026-08-29', 'Açıklama': '',
+    }, {
+        'Mağaza': 'MAĞAZA A', 'MağazaID': '1', 'Bölge Sorumlusu': 'DENEME BÖLGESİ',
+        'Departman': 'ANAHTARCI', 'Unvan': 'ANAHTARCI',
+        'İsim Soyisim': 'HAKAN AKSARI', 'İşe Giriş': '2026-08-29', 'Açıklama': '',
+    }])], ignore_index=True)
+    norm = norm.assign(MağazaID=['1', '2', '3'], **{'Bölge Sorumlusu': 'DENEME BÖLGESİ'})
+    _, tt = state(norm, staff, {})
+
+    out = build_compact_norm_roster_excel(st, norm, staff, output_path=tmp_path / 'tanimsiz.xlsx', tt=tt)
+    ws = load_workbook(out)['NORMDA TANIMSIZ']
+    rows = list(ws.iter_rows(min_row=2, values_only=True))
+    anahtarci = next(row for row in rows if row[2] == 'ANAHTARCI')
+    assert anahtarci[1] == 'MAĞAZA A'
+    assert anahtarci[3] == 2
+    assert anahtarci[4] == 0
+    assert anahtarci[5] == 2
+    assert anahtarci[6] == 'NORMDA TANIMLI DEĞİL (+2)'
