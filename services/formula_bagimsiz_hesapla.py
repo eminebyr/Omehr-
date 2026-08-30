@@ -97,7 +97,21 @@ def statiklestir(input_path: Path) -> bool:
     # sabit bir üst sınır yoktur; satırlar inputtan dinamik okunur.
     kontrol_eksik = {}
     kontrol_fazla = {}
-    try:
+    # DÜZELTME (KRİTİK, 29 Ağustos 2026 — src.state_engine.state()'te
+    # DAHA ÖNCE 20.08.2026'da bulunup düzeltilmiş, aynı hata sınıfı bu
+    # dosyaya HİÇ yansıtılmamıştı): REFERENTIAL_CONTROL sayfası, input
+    # dosyasında BİR KEZ (muhtemelen main.py'nin geçmiş bir çalıştırma
+    # anında) yazılan DONMUŞ bir tabloydu — personel eklense/çıkarılsa
+    # (Fact_Mevcut güncellense) bile bu sayfa OTOMATİK güncellenmiyordu.
+    # Bu satır koşulsuz "sayfa varsa kullan" dediği için, CEO Özet'in
+    # okuduğu Norm_Durumu/Magaza_KPI_Skor_Karti sürekli BAYAT rakamlar
+    # (canlı üretimde doğrulandı: 49/23 donmuş — doğrusu main.py'nin
+    # ürettiği 48/37) gösterebiliyordu. Artık state_engine.py ile AYNI
+    # feature flag (varsayılan KAPALI) kullanılıyor — REFERENTIAL_CONTROL
+    # yalnız OMEHR_USE_REFERENTIAL_CONTROL=1 açıkça ayarlanırsa okunur.
+    import os as _os_ref_ctl
+    if _os_ref_ctl.getenv('OMEHR_USE_REFERENTIAL_CONTROL', '0') == '1':
+      try:
         rc = _oku_ham(input_path, 'REFERENTIAL_CONTROL')
         if {'MağazaID','UnvanID','Norm Eksiği Kontrol','Norm Fazlası Kontrol'}.issubset(rc.columns):
             for _, rr in rc.iterrows():
@@ -110,7 +124,7 @@ def statiklestir(input_path: Path) -> bool:
                 if key not in ciftler:
                     ciftler.append(key)
             ciftler=sorted(set(ciftler))
-    except Exception as _exc:
+      except Exception as _exc:
         log_swallowed('statiklestir: REFERENTIAL_CONTROL okunamadı', _exc)
 
     # DÜZELTME (tutarlılık, 29 Ağustos 2026): main_names/helper_pairs sabit
@@ -149,6 +163,16 @@ def statiklestir(input_path: Path) -> bool:
                 # yanlışlıkla dengelemeden bırakıyordu.
                 helper_fazla_ham = max(0, mevcut_sayim.get((mid,helper_uid),0)-norm_toplam.get((mid,helper_uid),0))
                 kontrol_fazla[(mid,helper_uid)] = max(0, int(kontrol_fazla.get((mid,helper_uid),helper_fazla_ham))-int(support))
+
+    # DÜZELTME (tutarlılık, 29 Ağustos 2026): src.state_engine.state()'te
+    # "kapsam" (scope) mantığı var — bir unvanın Fact_Norm'da (herhangi
+    # bir mağazada) GERÇEKTEN bir norm satırı yoksa VE bir aile
+    # dengelemesinin yardımcısı da değilse, o unvan "norm dışı görev"
+    # sayılır ve Eksik/Fazla hesabına HİÇ dahil edilmez (0 kalır). Bu
+    # dosyada böyle bir filtre YOKTU — TÜM (mid,uid) çiftleri için ham
+    # hesaplama yapılıyordu. Aynı kapsam kümesi burada da uygulanır.
+    kapsam_uidleri = {uid for (_, uid) in norm_toplam.keys()}
+    kapsam_uidleri |= {unvan_id_by_key.get(v) for v in _pairs.values() if unvan_id_by_key.get(v)}
 
     wb = openpyxl.load_workbook(input_path)
     degisti = False
@@ -204,6 +228,12 @@ def statiklestir(input_path: Path) -> bool:
             if (mid, uid) in kontrol_eksik or (mid, uid) in kontrol_fazla:
                 eksik = int(kontrol_eksik.get((mid,uid),0))
                 fazla = int(kontrol_fazla.get((mid,uid),0))
+            elif uid not in kapsam_uidleri:
+                # Norm dışı görev (Fact_Norm'da hiç tanımlı değil, yardımcı
+                # da değil) — state_engine.py::state() ile aynı: hesaba
+                # dahil edilmez.
+                eksik = 0
+                fazla = 0
             else:
                 eksik = max(0, nk - mevcut)
                 fazla = max(0, mevcut - nk)
