@@ -42,7 +42,7 @@ def test_full_self_service_onboarding_chain_end_to_end(tmp_path, monkeypatch):
     giris_sonucu = authenticate("admin1", "GucluSifre2026!", tenant_id="TAMZINCIR")
     assert giris_sonucu[0] is True, "REGRESYON: yeni oluşturulan admin hesabıyla giriş başarısız."
 
-    sonuc = import_initial_data("TAMZINCIR", "ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
+    sonuc = import_initial_data("TAMZINCIR", "ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
     basarili = sum(1 for v in sonuc.values() if v.get("durum") == "OK")
     assert basarili == 64
 
@@ -72,7 +72,7 @@ def test_deneme_plan_quota_blocks_oversized_import_as_designed(tmp_path, monkeyp
     register_first_admin("DENEMEKOTA", "admin1", "GucluSifre2026!")
 
     try:
-        import_initial_data("DENEMEKOTA", "ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx")
+        import_initial_data("DENEMEKOTA", "ORNEK_VERI_GUVENLI/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
         assert False, "REGRESYON: deneme planı kota aşımını engellemiyor."
     except KotaAsimiHatasi:
         pass
