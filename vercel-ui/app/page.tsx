@@ -97,6 +97,8 @@ export default function HomePage() {
   const [access, setAccess] = useState<AccessRow | null>(null)
   const [activePage, setActivePage] = useState<PageKey>('Genel Özet')
   const [navOpen, setNavOpen] = useState(false)
+  const [engineRunning, setEngineRunning] = useState(false)
+  const [engineMessage, setEngineMessage] = useState('')
 
   useEffect(() => {
     if (!supabaseConfigured) { setLoading(false); return }
@@ -142,6 +144,50 @@ export default function HomePage() {
     if (signInError) setError('Giriş yapılamadı. E-posta ve parolanızı kontrol edin.')
   }
 
+  async function runEngine() {
+    if (!session) return
+    setEngineRunning(true); setEngineMessage('Railway norm motoru çalıştırılıyor…'); setError('')
+    try {
+      const response = await fetch('/api/engine/run', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Motor çalıştırılamadı.')
+      const run = result.run
+      const calculatedAt = new Date().toISOString()
+      if (run?.kpis) {
+        setKpi({
+          active_current: Number(run.kpis.aktif_mevcut ?? 0),
+          total_norm: Number(run.kpis.toplam_norm ?? 0),
+          norm_deficit: Number(run.kpis.norm_eksigi ?? 0),
+          norm_surplus: Number(run.kpis.norm_fazlasi ?? 0),
+          net_need: Number(run.kpis.net_ihtiyac ?? 0),
+          engine_version: 'Railway canlı motor',
+          calculated_at: calculatedAt,
+        })
+      }
+      if (Array.isArray(run?.magaza_bazli)) {
+        setStores(run.magaza_bazli.map((row: Record<string, unknown>, index: number) => ({
+          store_id: String(row.magaza ?? index),
+          region_name: String(row.bolge_sorumlusu ?? ''),
+          store_name: String(row.magaza ?? ''),
+          active_current: Number(row.mevcut ?? 0),
+          total_norm: Number(row.norm ?? 0),
+          norm_deficit: Number(row.eksik ?? 0),
+          norm_surplus: Number(row.fazla ?? 0),
+          calculated_at: calculatedAt,
+        })))
+      }
+      setEngineMessage('Motor tamamlandı; güncel Railway sonuçları ekrana yüklendi.')
+    } catch (runError) {
+      setEngineMessage('')
+      setError(runError instanceof Error ? runError.message : 'Motor çalıştırılamadı.')
+    } finally {
+      setEngineRunning(false)
+    }
+  }
+
   if (!supabaseConfigured) {
     return <main className="login-shell"><section className="login-brand"><div className="eyebrow">OMEHR • Yönetim Platformu</div><h1>Doğru kadro. Güvenilir karar.</h1><p>Profesyonel Vercel arayüzü hazır. Supabase bağlantısı bekleniyor.</p></section><section className="login-panel"><div className="login-card"><h2>Bağlantı bekleniyor</h2><p>Supabase bağlantı ayarları bu deployment için tanımlı değil.</p></div></section></main>
   }
@@ -183,7 +229,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">O</div><div><div className="brand-title">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div></div>
-        <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span><button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
+        <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span><button className="ghost engine-button" onClick={runEngine} disabled={engineRunning}>{engineRunning ? 'Motor çalışıyor…' : 'Verileri güncelle'}</button><button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
       </header>
 
       <div className="app-frame">
@@ -196,7 +242,8 @@ export default function HomePage() {
         <div className="container main-content">
           <section className="hero"><div><div className="eyebrow">{activePage}</div><h1>{pageMeta[activePage].subtitle}</h1><p className="lead">Yetkiniz dahilindeki OMEHR verileri Supabase üzerinden güvenli biçimde görüntülenir.</p></div><div className="status-pill">Son veri: {fmtDate(kpi?.calculated_at ?? null)} · {kpi?.engine_version || 'motor bilgisi bekleniyor'}</div></section>
           {renderPage()}
-          {error && <div className="error">Veri okuma uyarısı: {error}</div>}
+          {engineMessage && <div className="engine-message">{engineMessage}</div>}
+          {error && <div className="error">İşlem uyarısı: {error}</div>}
         </div>
       </div>
     </main>
