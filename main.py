@@ -142,6 +142,17 @@ def main():
         except Exception as exc:
             audit['workforce_forecast'] = {'status':'FAILED','error':str(exc)}
             LOGGER.exception('İş gücü tahmini başarısız')
+        # Yüksek turnover riskli mağaza-unvan kombinasyonları için otomatik
+        # İK/bölge uyarısı — az önce üretilen İş Gücü Tahmini dosyasına bağımlı
+        # olduğu için o adımdan HEMEN SONRA, ayrı bir try/except ile çalışır;
+        # burada oluşacak bir hata ana rapor motorunu ASLA durdurmaz.
+        try:
+            from services.turnover_alert import run as _run_turnover_alert
+            audit['turnover_alert'] = _run_turnover_alert(_sheets_on_kontrol, _output())
+            LOGGER.info('Turnover risk uyarısı adımı: %s', audit['turnover_alert'])
+        except Exception as exc:
+            audit['turnover_alert'] = {'status':'FAILED','error':str(exc)}
+            LOGGER.exception('Turnover risk uyarısı başarısız')
         print('[5/6] Mevcut, yönetim normu, bölge ve yönetici raporları...',flush=True); result=run_all()
         audit['report_schema']=validate_report_schema(result)
         from services.report_contract import validate_report_set
