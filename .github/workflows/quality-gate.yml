@@ -36,8 +36,14 @@ jobs:
           python -m compileall -q .
           python tools/check_architecture.py
 
-      - name: Full pytest suite
-        run: pytest -q
+      - name: Full pytest suite (isolated files)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from tools.verify_release import run_pytest_isolated
+          result = run_pytest_isolated(Path('.'))
+          print(result)
+          PY
 
       - name: Prepare isolated runtime
         run: |

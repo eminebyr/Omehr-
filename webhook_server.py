@@ -40,18 +40,11 @@ def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
     Dashboard'da müşteri oluştururken ya da Checkout Session'da
     metadata={'tenant_id': '...'} ile ayarlanır).
 
-    DÜZELTME (bizzat gerçek bir imzalı Stripe payload'ıyla test
-    edilirken bulundu): stripe.Webhook.construct_event() DÜZ bir dict
-    DEĞİL, Stripe'ın kendi StripeObject sınıfını döner — bu sınıf
-    .get() metodunu DESTEKLEMİYOR (yalnız öznitelik erişimi/[]
-    destekliyor). to_dict() ile GÜVENLİ, tip-bağımsız bir dict'e
-    çevrilir (hem gerçek Stripe nesneleriyle hem test amaçlı düz
-    dict'lerle çalışır)."""
-    stripe_olay = stripe_olay.to_dict() if hasattr(stripe_olay, "to_dict") else dict(stripe_olay)
+    StripeObject ve düz test sözlükleri Mapping arayüzünü (.get) destekler.
+    Eski ``to_dict()`` çağrısı Stripe 14'te deprecated olduğu için doğrudan
+    bu ortak arayüz kullanılır."""
     tur = stripe_olay.get("type", "")
     veri = stripe_olay.get("data", {}).get("object", {})
-    if hasattr(veri, "to_dict"):
-        veri = veri.to_dict()
     metadata = dict(veri.get("metadata") or {})
     tenant_id = metadata.get("tenant_id")
     if not tenant_id:

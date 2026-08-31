@@ -14,17 +14,14 @@ Streamlit sunucusu + ekran görüntüsü testiyle bulundu ve doğrulandı.
 """
 
 
-def test_engine_core_import_uses_code_root_not_runtime_root():
-    """web/app.py'nin engine_core.py'yi ARTIK CODE_ROOT/src altında
-    aradığını (runtime_root/src DEĞİL) kod incelemesiyle doğrular."""
+def test_dashboard_uses_shared_model_from_code_root_not_runtime_root():
+    """Panel, kod deposundan import edilen ortak dashboard modelini kullanır;
+    çalışma verisi dizininde dinamik Python modülü aramaz."""
     kaynak = open("web/app.py", encoding="utf-8").read()
-    assert 'CODE_ROOT / "src"' in kaynak, (
-        "REGRESYON: engine_core importu artık CODE_ROOT/src kullanmıyor "
-        "olabilir — bu, gerçek dağıtımda sessizce yanlış KPI gösterimine "
-        "yol açar (runtime_root ve code_root farklı yollar olduğunda)."
-    )
+    assert "from services.dashboard_model import build_dashboard_model" in kaynak
+    assert "return build_dashboard_model(" in kaynak
     assert '_root() / "src"' not in kaynak, (
-        "REGRESYON: engine_core hâlâ (yanlış) _root()/src altında aranıyor."
+        "REGRESYON: panel çalışma verisi dizininde Python modülü arıyor."
     )
     assert "_ec.load()" not in kaynak, (
         "REGRESYON: panel, read_input ile yüklenmiş sayfalar varken kaynağı "

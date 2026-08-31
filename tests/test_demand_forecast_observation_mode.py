@@ -104,7 +104,8 @@ def test_missing_operational_sheet_still_skips_gracefully(isolated_root):
 def test_existing_monthly_operation_sheet_is_accepted(isolated_root):
     """Canlı inputtaki kurumsal başlık + gömülü kolon satırı biçimi doğrudan
     tarihsel kaynak olarak kullanılmalı; ayrı bir kopya sayfa gerekmemeli."""
-    months = pd.date_range("2026-01-01", periods=7, freq="MS").strftime("%Y-%m")
+    # Motorun iki bağımsız eşiğini de karşılar: en az 6 ay ve en az 8 ham gözlem.
+    months = pd.date_range("2026-01-01", periods=8, freq="MS").strftime("%Y-%m")
     raw = pd.DataFrame([
         ["Ay", "MagazaID", "Mağaza", "Aylık Ciro"],
         *[[month, "M1", "TEST", 1000 + index * 100] for index, month in enumerate(months)],

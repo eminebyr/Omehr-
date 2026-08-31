@@ -56,7 +56,7 @@ def test_cache_data_reflects_new_row_after_write_via_version_marker(tmp_path, mo
     from services.input_data_access import tenant_content_version, read_sheet, write_sheet
 
     create_tenant("CANLIAKIS", "Canlı Akış Test", plan="kurumsal", sube_kotasi=10000, kullanici_kotasi=10000)
-    migrate_excel_to_db("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", tenant_id="CANLIAKIS")
+    migrate_excel_to_db("input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", tenant_id="CANLIAKIS")
 
     sayac = {"n": 0}
 
@@ -118,7 +118,7 @@ def test_excel_mode_still_uses_real_file_mtime(tmp_path, monkeypatch):
 
     import shutil
     hedef = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
-    shutil.copyfile("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", hedef)
+    shutil.copyfile("input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", hedef)
 
     from services.input_data_access import input_source
     assert input_source() == "excel"

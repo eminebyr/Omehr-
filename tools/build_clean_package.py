@@ -75,7 +75,10 @@ def build_clean_zip(source: Path, destination: Path, *, verification: dict | Non
     release_manifest={
         'built_at_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
         'file_count': len(files),
-        'verification': verification or {'status':'NOT_RUN'},
+        'verification': verification or {
+            'status': 'UNKNOWN_UNVERIFIED',
+            'warning': 'Doğrulama sonucu verilmeden üretildi; teslim edilmeden önce doğrulanmalıdır.',
+        },
         'files': {str(p.relative_to(source)): _sha256(p) for p in files},
     }
     with ZipFile(destination, 'w', compression=ZIP_DEFLATED, compresslevel=6) as zf:
@@ -89,10 +92,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='OMEHR temiz/opsiyonel doğrulanmış dağıtım ZIP paketi oluşturur.')
     parser.add_argument('source', type=Path)
     parser.add_argument('destination', type=Path)
-    parser.add_argument('--verify', action='store_true', help='Derleme + mimari + secret scan + tüm pytest koşusunu zorunlu kılar.')
+    verification_group = parser.add_mutually_exclusive_group()
+    verification_group.add_argument('--verify', action='store_true', help='Derleme + mimari + secret scan + tüm pytest koşusunu zorunlu kılar.')
+    verification_group.add_argument('--skip-verify', action='store_true', help='Doğrulamayı bilinçli olarak atlar; paket teslim edilmemelidir.')
     args = parser.parse_args()
     verification=None
-    if args.verify:
+    if args.skip_verify:
+        verification={
+            'status': 'SKIPPED_BY_USER',
+            'warning': 'DOĞRULAMA ATLANDI — BU PAKET TESLİM EDİLMEMELİDİR.',
+        }
+        print('UYARI: Doğrulama atlandı; BU PAKET TESLİM EDİLMEMELİDİR.')
+    elif args.verify:
         import importlib.util
         verifier_path=Path(__file__).with_name('verify_release.py')
         spec=importlib.util.spec_from_file_location('verify_release', verifier_path)
