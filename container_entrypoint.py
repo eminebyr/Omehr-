@@ -130,6 +130,34 @@ def main() -> int:
     # Streamlit açılmadan hemen önce 34/34 setin güvenli görüntüleme kopyasını al.
     _snapshot_complete_reports()
 
+    # DÜZELTME (Railway Volume paylaşım kısıtı): webhook_server.py (Stripe +
+    # Vercel/Railway motor köprüsü) AYRI bir Railway servisi olarak
+    # çalıştırılamaz — Railway aynı Volume'u iki farklı servise bağlamayı
+    # DESTEKLEMİYOR, oysa /api/run-engine input/reference dosyalarını bu
+    # servisin Volume'undan DİSKTEN okumak zorunda. Çözüm: webhook sunucusu
+    # bu servisin İÇİNDE, Streamlit ile AYNI container'da, ikinci bir arka
+    # plan süreci olarak başlatılır — böylece Volume otomatik paylaşılır.
+    # subprocess.Popen (execvp'den ÖNCE, arka planda) kullanılır; execvp
+    # mevcut süreci Streamlit'in görüntüsüyle DEĞİŞTİRSE de, daha önce
+    # başlatılmış bu çocuk süreç PID'i korur ve çalışmaya devam eder.
+    # Railway'de bu servisin Networking ayarlarından İKİNCİ bir domain
+    # üretilip 8502 portuna (Target Port) yönlendirilmelidir — iki portu
+    # olan tek bir servis olarak.
+    if os.getenv("OMEHR_RUN_WEBHOOK_SERVER", "0") == "1":
+        webhook_port = os.getenv("OMEHR_WEBHOOK_PORT", "8502")
+        try:
+            subprocess.Popen(
+                [
+                    sys.executable, "-m", "gunicorn",
+                    "-w", "1", "-b", f"0.0.0.0:{webhook_port}", "--timeout", "90",
+                    "webhook_server:app",
+                ],
+                cwd=ROOT,
+            )
+            print(f"Webhook sunucusu (gunicorn) arka planda başlatıldı: port {webhook_port}.", flush=True)
+        except Exception as exc:
+            print(f"UYARI: Webhook sunucusu başlatılamadı (Streamlit yine de devam ediyor): {exc}", flush=True)
+
     os.execvp(
         sys.executable,
         [
