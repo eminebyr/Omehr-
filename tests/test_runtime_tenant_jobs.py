@@ -19,10 +19,16 @@ def test_worker_uses_job_tenant_and_restores_environment(monkeypatch):
     assert os.environ["OMEHR_TENANT"] == "ORIGINAL"
 
 
-def test_scheduled_job_is_unique_per_tenant_and_slot(tmp_path, monkeypatch):
+def test_scheduled_job_is_unique_per_tenant_and_slot(isolated_root):
+    # DÜZELTME: services/job_queue.py'deki modül-seviyesi "DB" sabiti
+    # kaldırıldı (bkz. job_queue.py'deki gerekçe — path doubling/stale DB
+    # kaynağı bug'ı). Artık DB yolu her çağrıda taze runtime_root()'tan
+    # hesaplanıyor; bu yüzden test izolasyonu da projedeki diğer tüm
+    # testlerle AYNI şekilde (isolated_root fixture'ı ile OMEHR_RUNTIME_ROOT
+    # ortam değişkenini geçici bir klasöre yönlendirerek) yapılır —
+    # job_queue.DB'yi doğrudan monkeypatch etmek yerine.
     from services import job_queue
 
-    monkeypatch.setattr(job_queue, "DB", tmp_path / "jobs.db")
     first = job_queue.enqueue_scheduled_once("RUN_REPORTS", {}, "FIRMA_A", "2026-08-29T10:00")
     duplicate = job_queue.enqueue_scheduled_once("RUN_REPORTS", {}, "FIRMA_A", "2026-08-29T10:00")
     other_tenant = job_queue.enqueue_scheduled_once("RUN_REPORTS", {}, "FIRMA_B", "2026-08-29T10:00")
@@ -30,4 +36,3 @@ def test_scheduled_job_is_unique_per_tenant_and_slot(tmp_path, monkeypatch):
     assert first is not None
     assert duplicate is None
     assert other_tenant is not None
-
