@@ -6,12 +6,25 @@ from datetime import datetime
 
 from services.runtime_paths import runtime_root
 
-DB = runtime_root() / "data" / "jobs.db"
+
+def _db_path():
+    # DÜZELTME (path doubling / stale DB kaynağı): DB yolu önceden modül
+    # importunda BİR KEZ (DB = runtime_root()/"data"/"jobs.db") sabitleniyordu.
+    # Bu, projedeki TÜM diğer veritabanı erişimcilerinin (security.py,
+    # web_runtime.py, download_audit.py, vb.) izlediği "her çağrıda taze
+    # runtime_root() çöz" kuralını bozan tek istisnaydı. Eğer bu modül,
+    # OMEHR_RUNTIME_ROOT ortam değişkeni işlem içinde henüz tam oturmadan
+    # import edilirse, jobs.db o andaki (yanlış) köke SÜRESİZ sabitlenir —
+    # diğer tüm DB'ler /app/data/data/ altında doğru yola giderken, jobs.db
+    # farklı/eski bir konumda kalmaya devam eder. Artık her çağrıda taze
+    # hesaplanıyor, diğer modüllerle tutarlı.
+    return runtime_root() / "data" / "jobs.db"
 
 
 def connect() -> sqlite3.Connection:
-    DB.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(DB, timeout=30)
+    db = _db_path()
+    db.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(db, timeout=30)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("""CREATE TABLE IF NOT EXISTS jobs(
