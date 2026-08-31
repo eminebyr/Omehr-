@@ -123,6 +123,31 @@ def render(ctx):
             st.markdown("#### Mağaza–unvan kadro doğruluğu")
             st.dataframe(kadro_validation,use_container_width=True,hide_index=True,height=300)
 
+    # Turnover ORANI tahmininin kendisinin doğruluğu — headcount_backtest
+    # yalnız TOPLAM kadroyu ölçtüğü için turnover bileşeni ayrıca hiç
+    # doğrulanmıyordu; bu bölüm doğrudan Fact_Mevcut'taki İşe Giriş/İşten
+    # Çıkış tarihlerinden rolling-origin backtest ile üretilir (ek bir
+    # geçmiş-snapshot sayfasına ihtiyaç DUYMAZ, bu yüzden Kadro Backtest'in
+    # aksine üretimde fiilen çalışır).
+    try:
+        from services.cached_excel_reader import read_sheet_cached
+        turnover_validation=read_sheet_cached(path,"Turnover_Backtest_Ozet")
+    except Exception:
+        turnover_validation=pd.DataFrame()
+    if turnover_validation.empty:
+        st.info("Turnover oranı backtest sonucu henüz oluşmadı. Tahmini yeniden hesaplayın.")
+    elif "Durum" in turnover_validation.columns:
+        st.info(str(turnover_validation.iloc[0].get("Açıklama", "Turnover backtest için veri yetersiz.")))
+    else:
+        st.markdown("#### Turnover oranı tahmin doğruluğu")
+        st.caption("Geçmişteki bir tarihte (cutoff) o ana kadar bilinen veriyle tahmin edilen 90 günlük "
+                   "turnover oranı, cutoff'tan SONRAKİ 90 günde GERÇEKTE gözlenen oranla karşılaştırılır.")
+        overall_to=turnover_validation[turnover_validation.get("MağazaID",pd.Series(dtype=str)).astype(str).eq("TÜMÜ")].copy()
+        if overall_to.empty: overall_to=turnover_validation.copy()
+        st.dataframe(overall_to,use_container_width=True,hide_index=True)
+        with st.expander("Mağaza-unvan bazında turnover backtest detayı"):
+            st.dataframe(turnover_validation,use_container_width=True,hide_index=True,height=300)
+
     with open(path,"rb") as f:
         st.download_button("Tahmin Excel raporunu indir",f,file_name=path.name,mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",use_container_width=True)
     st.warning("Tahmin, resmî yönetim normunun yerine geçmez. Düşük güvenli satırlar saha zaman etüdü ve yönetici değerlendirmesi olmadan uygulanmamalıdır.")

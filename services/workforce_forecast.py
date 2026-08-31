@@ -198,12 +198,19 @@ def _store_buffers(sheets: dict[str, pd.DataFrame], current_by_store: pd.Series,
     return stores
 
 
-def _turnover_rates(staff: pd.DataFrame, sid: str, tid: str, params: dict[str, float]) -> pd.DataFrame:
+def _turnover_rates(staff: pd.DataFrame, sid: str, tid: str, params: dict[str, float], as_of: pd.Timestamp | None = None) -> pd.DataFrame:
     """Mağaza-unvan-kıdem bazlı beklenen turnover oranı üretir.
 
     Son 180 günlük çıkışlar, aynı dönemde risk altında bulunan girişler ile
     oranlanır. Küçük örneklemlerde oran şirket geneline doğru yumuşatılır
     (empirical-Bayes shrinkage). Veri yetersizse parametre varsayımına döner.
+
+    as_of: verilirse (geriye dönük doğrulama/backtest amaçlı), "bugün" yerine
+    bu tarih referans alınır VE bu tarihten SONRAKİ çıkış kayıtları hesaba
+    katılmadan önce bilinmiyormuş gibi maskelenir — aksi halde backtest,
+    henüz gerçekleşmemiş (gelecekteki) çıkışları "biliyormuş" gibi kullanıp
+    yapay olarak isabetli görünürdü (bakış-ileri sızıntısı/look-ahead leak).
+    Canlı tahmin akışı (as_of=None) davranışı BİREBİR AYNI kalır.
     """
     entry = _find_col(staff, "ise", "giris")
     exit_col = _find_col(staff, "isten", "cikis")
@@ -215,7 +222,11 @@ def _turnover_rates(staff: pd.DataFrame, sid: str, tid: str, params: dict[str, f
     x = staff.copy()
     x[entry] = pd.to_datetime(x[entry], errors="coerce")
     x[exit_col] = pd.to_datetime(x[exit_col], errors="coerce")
-    reference = max([d for d in [x[entry].max(), x[exit_col].max(), pd.Timestamp.today().normalize()] if pd.notna(d)])
+    if as_of is not None:
+        x.loc[x[exit_col] > as_of, exit_col] = pd.NaT
+        reference = as_of
+    else:
+        reference = max([d for d in [x[entry].max(), x[exit_col].max(), pd.Timestamp.today().normalize()] if pd.notna(d)])
     start = reference - pd.Timedelta(days=180)
     x["_tenure_days"] = (x[exit_col].fillna(reference) - x[entry]).dt.days.clip(lower=0)
     x["_tenure_group"] = np.where(x["_tenure_days"] <= 90, "İlk 90 Gün", "90 Gün Üzeri")

@@ -174,12 +174,130 @@ def headcount_backtest(sheets: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, p
     return x, pd.DataFrame(rows)
 
 
+def turnover_rate_backtest(sheets: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Turnover ORANI tahmininin kendisini geriye dönük doğrular.
+
+    BOŞLUK: headcount_backtest yalnız TOPLAM kadro tahminini (iş yükü +
+    tampon + turnover'ın birleşimi) ölçer; turnover'ın kendisi ayrı hiç
+    doğrulanmıyordu. Ayrıca headcount_backtest, gerçekte hiçbir modülün
+    üretmediği bir geçmiş-snapshot sayfasına (Tarihsel_Mevcut vb.) bağımlı —
+    bu fonksiyon ise doğrudan Fact_Mevcut'taki İşe Giriş/İşten Çıkış
+    tarihlerinden, EK BİR SAYFAYA İHTİYAÇ DUYMADAN rolling-origin backtest
+    üretir: geçmişteki bir "cutoff" anında bilinen bilgiyle tahmin edilen
+    90 günlük turnover oranı, o cutoff'tan SONRAKİ 90 günde GERÇEKTE
+    gözlenen oranla karşılaştırılır.
+
+    Tahmin formülü, services/workforce_forecast.py::_turnover_rates ile
+    BİREBİR AYNIDIR (as_of parametresiyle geçmişe uygulanır) — paralel/
+    ayrışabilecek bir kopya YAZILMAZ, üretimdeki gerçek formül tekrar
+    kullanılır.
+    """
+    staff = _sheet(sheets, "Fact_Mevcut")
+    if staff.empty:
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "VERİ YOK", "Açıklama": "Fact_Mevcut sayfası bulunamadı.",
+        }])
+    sid = _find_col(staff, "magaza", "id")
+    tid = _find_col(staff, "unvan", "id")
+    entry = _find_col(staff, "ise", "giris")
+    exit_col = _find_col(staff, "isten", "cikis")
+    if not all([sid, tid, entry, exit_col]):
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "ŞEMA EKSİK",
+            "Açıklama": "MağazaID, UnvanID, İşe Giriş ve İşten Çıkış kolonları gerekir.",
+        }])
+
+    from services.workforce_forecast import _parameter_map, _turnover_rates
+    params = _parameter_map(sheets)
+
+    x = staff[[sid, tid, entry, exit_col]].copy()
+    x[entry] = pd.to_datetime(x[entry], errors="coerce")
+    x[exit_col] = pd.to_datetime(x[exit_col], errors="coerce")
+    x = x.dropna(subset=[sid, tid, entry])
+    if x.empty:
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "VERİ YOK", "Açıklama": "Geçerli işe giriş tarihi bulunan kayıt yok.",
+        }])
+
+    today = pd.Timestamp.today().normalize()
+    horizon = pd.Timedelta(days=90)
+    lookback = pd.Timedelta(days=180)
+
+    # Rolling-origin: 90 günlük aralıklarla geriye giden cutoff'lar; her
+    # cutoff'un SONUÇ penceresi (cutoff+90) bugünden ÖNCE bitmiş olmalı ki
+    # gerçek sonuç bilinsin. En fazla 4 dönem (~1 yıl) geriye gidilir.
+    cutoffs: list[pd.Timestamp] = []
+    c = today - horizon
+    for _ in range(4):
+        if c - lookback < x[entry].min():
+            break
+        cutoffs.append(c)
+        c -= horizon
+    if not cutoffs:
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "YETERSİZ GEÇMİŞ",
+            "Açıklama": "Rolling-origin turnover backtest için en az ~270 günlük işe giriş geçmişi gerekir.",
+        }])
+
+    rows = []
+    for cutoff in cutoffs:
+        predicted = _turnover_rates(staff, sid, tid, params, as_of=cutoff)
+        start = cutoff - lookback
+        at_risk = (x[entry] <= cutoff) & (x[exit_col].isna() | (x[exit_col] >= start))
+        exited_after = (x[exit_col] > cutoff) & (x[exit_col] <= cutoff + horizon)
+        pool = x.loc[at_risk].copy()
+        if pool.empty:
+            continue
+        pool["_exited_after"] = exited_after.loc[at_risk]
+        actual = pool.groupby([sid, tid], dropna=False).agg(
+            **{"Gerçekleşen Çıkış": ("_exited_after", "sum"),
+               "Risk Altındaki Kişi (Gerçek)": ("_exited_after", "size")}
+        ).reset_index()
+        actual["Gerçekleşen Oran (90G)"] = (
+            actual["Gerçekleşen Çıkış"] / actual["Risk Altındaki Kişi (Gerçek)"].replace(0, np.nan)
+        )
+        merged = predicted.merge(actual, on=[sid, tid], how="inner")
+        if merged.empty:
+            continue
+        merged.insert(0, "Cutoff", cutoff.date().isoformat())
+        rows.append(merged)
+
+    if not rows:
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "VERİ YOK",
+            "Açıklama": "Rolling-origin pencerelerinde eşleşen mağaza-unvan grubu bulunamadı.",
+        }])
+
+    detail = pd.concat(rows, ignore_index=True)
+    detail = detail.dropna(subset=["Gerçekleşen Oran (90G)"])
+    if detail.empty:
+        return pd.DataFrame(), pd.DataFrame([{
+            "Durum": "VERİ YOK", "Açıklama": "Gerçekleşen oran hesaplanabilecek grup bulunamadı.",
+        }])
+
+    summary_rows = []
+    for (store, title), g in detail.groupby([sid, tid]):
+        summary_rows.append({
+            sid: str(store), tid: str(title), "Gözlem (Dönem)": len(g),
+            **_metrics(g["Gerçekleşen Oran (90G)"], g["Beklenen Turnover Oranı (90G)"]),
+        })
+    summary_rows.append({
+        sid: "TÜMÜ", tid: "TÜMÜ", "Gözlem (Dönem)": len(detail),
+        **_metrics(detail["Gerçekleşen Oran (90G)"], detail["Beklenen Turnover Oranı (90G)"]),
+    })
+    summary = pd.DataFrame(summary_rows)
+    return detail, summary
+
+
 def run(sheets: dict[str, pd.DataFrame], outdir: Path | None = None) -> dict[str, pd.DataFrame]:
     op_detail, op_summary = operational_backtest(sheets)
     hc_detail, hc_summary = headcount_backtest(sheets)
+    to_detail, to_summary = turnover_rate_backtest(sheets)
     return {
         "Operasyon_Backtest_Detay": op_detail,
         "Operasyon_Backtest_Ozet": op_summary,
         "Kadro_Backtest_Detay": hc_detail,
         "Kadro_Backtest_Ozet": hc_summary,
+        "Turnover_Backtest_Detay": to_detail,
+        "Turnover_Backtest_Ozet": to_summary,
     }
