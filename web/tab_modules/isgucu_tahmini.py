@@ -58,6 +58,40 @@ def render(ctx):
         fig=px.bar(chart,x="Tahmini Açık/Fazla",y="Mağaza",orientation="h",text="Tahmini Açık/Fazla",title=f"{horizon} Günlük Mağaza Bazında Tahmini Açık / Fazla")
         fig.update_traces(textposition="outside",cliponaxis=False)
         st.plotly_chart(fig,use_container_width=True)
+
+    st.markdown("### Turnover Riski")
+    st.caption("Yalnız gerçek gözleme dayalı (Yüksek/Orta/Düşük veri durumu) satırlar gösterilir; "
+               "'Varsayılan' (gözlemsiz) kayıtlar asılsız alarm üretmesin diye hariç tutulur.")
+    turnover_view = view[view.get("Turnover Veri Durumu", pd.Series(dtype=object)).isin(["Yüksek", "Orta", "Düşük"])].copy()
+    if turnover_view.empty:
+        st.info("Seçilen filtre için gözleme dayalı turnover riski verisi yok.")
+    else:
+        turnover_view["Turnover Riski FTE"] = pd.to_numeric(turnover_view.get("Turnover Riski FTE"), errors="coerce").fillna(0)
+        turnover_chart = (turnover_view.groupby("Mağaza", as_index=False)["Turnover Riski FTE"].sum()
+                           .sort_values("Turnover Riski FTE", ascending=False).head(20))
+        if not turnover_chart.empty:
+            fig2 = px.bar(turnover_chart, x="Turnover Riski FTE", y="Mağaza", orientation="h",
+                          text="Turnover Riski FTE", title=f"{horizon} Günlük Mağaza Bazında Turnover Riski (FTE)")
+            fig2.update_traces(texttemplate="%{text:.2f}", textposition="outside", cliponaxis=False, marker_color="#d64545")
+            st.plotly_chart(fig2, use_container_width=True)
+        # Panelde gösterilen "eşik üstü" satırlar, mail uyarısını (services/
+        # turnover_alert.py) tetikleyen AYNI eşik mantığıyla hesaplanır —
+        # panel ile mail arasında tutarsızlık olmaması için threshold burada
+        # tekrar yazılmaz, doğrudan aynı fonksiyon çağrılır.
+        try:
+            from services.turnover_alert import high_risk_rows
+            alert_rows = high_risk_rows(Path(ctx.output_path))
+            if not alert_rows.empty:
+                alert_rows = alert_rows[pd.to_numeric(alert_rows.get("Tahmin Ufku Gün"), errors="coerce").eq(horizon)]
+        except Exception:
+            alert_rows = pd.DataFrame()
+        if not alert_rows.empty:
+            st.warning(f"{len(alert_rows)} mağaza-unvan kombinasyonu otomatik uyarı eşiğini aşıyor — İK/bölge sorumlularına mail kuyruklanır.")
+            st.dataframe(alert_rows[["Mağaza", "Unvan", "Turnover Riski FTE", "Tahmin Güveni %", "Turnover Veri Durumu"]],
+                         use_container_width=True, hide_index=True)
+        else:
+            st.caption("Bu ufuk için otomatik uyarı eşiğini aşan mağaza-unvan kombinasyonu yok.")
+
     st.markdown("### Açıklanabilir tahmin ayrıntısı")
     st.dataframe(view,use_container_width=True,hide_index=True,height=520,
                  column_config={"Karar Durumu":st.column_config.TextColumn(width="large"),"Takvim Açıklaması":st.column_config.TextColumn(width="medium")})
