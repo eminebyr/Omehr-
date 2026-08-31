@@ -22,6 +22,11 @@ fastapi>=0.115,<1
 uvicorn>=0.30,<1
 flask>=3.1,<4
 stripe>=11,<15
+# webhook_server.py (Stripe webhook + Vercel/Railway motor köprüsü) prod'da
+# Flask'ın kendi geliştirme sunucusuyla DEĞİL, gunicorn ile çalıştırılır —
+# tek thread'li dev server, eşzamanlı istekleri kuyruğa alır ve çökme
+# durumunda otomatik worker yeniden başlatması yapmaz.
+gunicorn>=22,<27
 pytest>=8.3,<9
 pymupdf>=1.24,<2
 psycopg2-binary>=2.9,<3
