@@ -16,8 +16,8 @@ vb.) çalışır.
 
 Çalıştırma: python3 webhook_server.py (varsayılan port 8502)
 Ortam değişkenleri:
-  BASDAS_STRIPE_WEBHOOK_SECRET — Stripe Dashboard'dan alınan imza sırrı
-  BASDAS_WEBHOOK_PORT — varsayılan 8502
+  OMEHR_STRIPE_WEBHOOK_SECRET — Stripe Dashboard'dan alınan imza sırrı
+  OMEHR_WEBHOOK_PORT — varsayılan 8502
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from flask import Flask, request, jsonify
 from services.billing import process_billing_event
 from services.observability import get_logger
 
-LOGGER = get_logger("basdas.webhook")
+LOGGER = get_logger("omehr.webhook")
 app = Flask(__name__)
 
 
@@ -67,10 +67,10 @@ def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
 def stripe_webhook():
     payload = request.get_data()
     imza = request.headers.get("Stripe-Signature", "")
-    sir = os.getenv("BASDAS_STRIPE_WEBHOOK_SECRET", "")
+    sir = os.getenv("OMEHR_STRIPE_WEBHOOK_SECRET", "")
 
     if not sir:
-        LOGGER.error("BASDAS_STRIPE_WEBHOOK_SECRET ayarlanmamış — webhook reddediliyor.")
+        LOGGER.error("OMEHR_STRIPE_WEBHOOK_SECRET ayarlanmamış — webhook reddediliyor.")
         return jsonify({"hata": "sunucu yapılandırması eksik"}), 500
 
     try:
@@ -113,15 +113,15 @@ def health():
 #
 # GÜVENLİK: bu endpoint dışarıya (internete) açık bir Railway domain'i
 # üzerinden erişilebilir olacağı için, paylaşılan bir gizli anahtar
-# (BASDAS_ENGINE_API_SECRET) ile korunur — yalnız bu anahtarı bilen (Vercel
+# (OMEHR_ENGINE_API_SECRET) ile korunur — yalnız bu anahtarı bilen (Vercel
 # tarafındaki sunucu kodu) motoru tetikleyebilir.
 # ============================================================================
 @app.route("/api/run-engine", methods=["POST"])
 def run_engine_for_cloud():
-    beklenen_sir = os.getenv("BASDAS_ENGINE_API_SECRET", "")
+    beklenen_sir = os.getenv("OMEHR_ENGINE_API_SECRET", "")
     gelen_sir = request.headers.get("X-Engine-Secret", "")
     if not beklenen_sir:
-        LOGGER.error("BASDAS_ENGINE_API_SECRET ayarlanmamış — /api/run-engine reddediliyor.")
+        LOGGER.error("OMEHR_ENGINE_API_SECRET ayarlanmamış — /api/run-engine reddediliyor.")
         return jsonify({"error": "sunucu yapılandırması eksik"}), 500
     if not gelen_sir or gelen_sir != beklenen_sir:
         LOGGER.warning("/api/run-engine: geçersiz veya eksik X-Engine-Secret.")
@@ -143,5 +143,5 @@ def run_engine_for_cloud():
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("BASDAS_WEBHOOK_PORT", "8502"))
+    port = int(os.getenv("OMEHR_WEBHOOK_PORT", "8502"))
     app.run(host="0.0.0.0", port=port)
