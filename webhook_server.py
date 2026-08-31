@@ -67,7 +67,7 @@ def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
 def stripe_webhook():
     payload = request.get_data()
     imza = request.headers.get("Stripe-Signature", "")
-    sir = os.getenv("OMEHR_STRIPE_WEBHOOK_SECRET", "")
+    # OMEHR is the canonical variable name. Keep the former BASDAS name as a\n    # temporary compatibility fallback so existing deployments and tests do\n    # not fail during the product-name migration.\n    sir = os.getenv("OMEHR_STRIPE_WEBHOOK_SECRET", "") or os.getenv(\n        "BASDAS_STRIPE_WEBHOOK_SECRET", ""\n    )
 
     if not sir:
         LOGGER.error("OMEHR_STRIPE_WEBHOOK_SECRET ayarlanmamış — webhook reddediliyor.")
