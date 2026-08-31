@@ -38,11 +38,20 @@ def secret_scan(root: Path) -> list[str]:
         if any(part in {'.git','__pycache__','.pytest_cache'} for part in p.parts):
             continue
         text=p.read_text(encoding='utf-8', errors='ignore')
-        for pat in SECRET_PATTERNS:
-            if pat.search(text):
-                if p.name == '.env.example' and any(x in text.lower() for x in ('change_me','example','your_')):
+        for line in text.splitlines():
+            for pat in SECRET_PATTERNS:
+                if not pat.search(line):
+                    continue
+                normalized = line.casefold()
+                placeholder = any(token in normalized for token in (
+                    'change_me', 'example', 'your_', 'kendi-seçtiğiniz',
+                    'kendi-sectiginiz', 'örnek-şifre', 'ornek-sifre',
+                ))
+                if placeholder:
                     continue
                 hits.append(str(p.relative_to(root)))
+                break
+            if str(p.relative_to(root)) in hits:
                 break
     return sorted(set(hits))
 

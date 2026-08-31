@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -10,13 +9,6 @@ import numpy as np
 import pandas as pd
 from services.runtime_paths import runtime_root
 from services.safe_exec import log_swallowed
-
-warnings.filterwarnings(
-    "ignore",
-    message=r"`sklearn\.utils\.parallel\.delayed` should be used.*",
-    category=UserWarning,
-)
-
 
 def _output(): return runtime_root() / "output"
 def _ai_file(): return _output() / "V19_AI_Norm_Sonuclari.xlsx"
@@ -105,8 +97,13 @@ def _pipelines(numeric: list[str], categorical: list[str]):
         "KNN": pipeline(KNeighborsRegressor(n_neighbors=12, weights="distance")),
         "SVR RBF": pipeline(SVR(C=10, epsilon=0.1, gamma="scale")),
         "Karar Ağacı": pipeline(DecisionTreeRegressor(max_depth=8, min_samples_leaf=5, random_state=42)),
-        "Random Forest": pipeline(RandomForestRegressor(n_estimators=450, min_samples_leaf=3, max_features=0.75, random_state=42, n_jobs=-1)),
-        "Extra Trees": pipeline(ExtraTreesRegressor(n_estimators=450, min_samples_leaf=3, max_features=0.85, random_state=42, n_jobs=-1)),
+        # Cross-validation katları aşağıda kontrollü ve sıralı çalışır.
+        # Ağaçların ayrıca n_jobs=-1 ile iç içe süreç açması Railway CPU'sunu
+        # aşırı paylaştırıyor ve sklearn/joblib paralellik uyarısını her ağaç
+        # görevinde tekrar üretiyordu. Tek kat/tek model düzeyinde n_jobs=1,
+        # aynı random_state ile aynı sonucu daha düşük süreç maliyetiyle verir.
+        "Random Forest": pipeline(RandomForestRegressor(n_estimators=450, min_samples_leaf=3, max_features=0.75, random_state=42, n_jobs=1)),
+        "Extra Trees": pipeline(ExtraTreesRegressor(n_estimators=450, min_samples_leaf=3, max_features=0.85, random_state=42, n_jobs=1)),
         "Gradient Boosting": pipeline(GradientBoostingRegressor(n_estimators=250, learning_rate=0.035, max_depth=3, loss="huber", random_state=42)),
         "HistGradientBoosting": pipeline(HistGradientBoostingRegressor(max_iter=300, learning_rate=0.05, max_leaf_nodes=20, l2_regularization=1.0, random_state=42)),
         "AdaBoost": pipeline(AdaBoostRegressor(n_estimators=250, learning_rate=0.04, loss="square", random_state=42)),
@@ -117,8 +114,8 @@ def _pipelines(numeric: list[str], categorical: list[str]):
         "KNN": pipeline(KNeighborsClassifier(n_neighbors=15, weights="distance")),
         "SVC RBF": pipeline(SVC(C=5, probability=True, class_weight="balanced", random_state=42)),
         "Karar Ağacı": pipeline(DecisionTreeClassifier(max_depth=8, min_samples_leaf=5, class_weight="balanced", random_state=42)),
-        "Random Forest": pipeline(RandomForestClassifier(n_estimators=450, min_samples_leaf=3, max_features=0.75, class_weight="balanced", random_state=42, n_jobs=-1)),
-        "Extra Trees": pipeline(ExtraTreesClassifier(n_estimators=450, min_samples_leaf=3, max_features=0.85, class_weight="balanced", random_state=42, n_jobs=-1)),
+        "Random Forest": pipeline(RandomForestClassifier(n_estimators=450, min_samples_leaf=3, max_features=0.75, class_weight="balanced", random_state=42, n_jobs=1)),
+        "Extra Trees": pipeline(ExtraTreesClassifier(n_estimators=450, min_samples_leaf=3, max_features=0.85, class_weight="balanced", random_state=42, n_jobs=1)),
         "Gradient Boosting": pipeline(GradientBoostingClassifier(n_estimators=250, learning_rate=0.035, max_depth=3, random_state=42)),
         "HistGradientBoosting": pipeline(HistGradientBoostingClassifier(max_iter=300, learning_rate=0.05, max_leaf_nodes=20, l2_regularization=1.0, random_state=42)),
         "AdaBoost": pipeline(AdaBoostClassifier(n_estimators=250, learning_rate=0.04, random_state=42)),
@@ -127,18 +124,23 @@ def _pipelines(numeric: list[str], categorical: list[str]):
 
 
 def _regression_benchmark(data, features, groups, models, cv):
-    from sklearn.model_selection import cross_val_predict, cross_validate
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
     from sklearn.base import clone
 
     y = data["İş Yükü FTE"].to_numpy(float)
+    x = data[features]
     rows, predictions = [], {}
     for name, model in models.items():
-        scores = cross_validate(
-            model, data[features], y, groups=groups, cv=cv, n_jobs=1,
-            scoring={"mae": "neg_mean_absolute_error", "rmse": "neg_root_mean_squared_error", "r2": "r2"},
-        )
-        pred = cross_val_predict(model, data[features], y, groups=groups, cv=cv, n_jobs=1)
+        # Önceden cross_validate + cross_val_predict aynı modeli aynı beş
+        # katta iki kez eğitiyordu. Tek kontrollü CV döngüsü hem grup-dışı
+        # tahminleri hem kat metriklerini üretir; eğitim sayısı 10'dan 5'e iner.
+        pred = np.empty(len(data), dtype=float)
+        fold_r2 = []
+        for train_index, test_index in cv.split(x, y, groups):
+            fold_model = clone(model).fit(x.iloc[train_index], y[train_index])
+            fold_prediction = fold_model.predict(x.iloc[test_index])
+            pred[test_index] = fold_prediction
+            fold_r2.append(r2_score(y[test_index], fold_prediction))
         predictions[name] = pred
         abs_error = np.abs(y - pred)
         mae_low, mae_high = _bootstrap_interval(abs_error)
@@ -147,8 +149,8 @@ def _regression_benchmark(data, features, groups, models, cv):
         # GroupKFold (mağaza-dışı) skoruyla karşılaştırılır. Eğitim skoru CV
         # skorundan ÇOK yüksekse (büyük "fark"), model eğitim verisini ezberlemiş
         # (overfit) demektir — sadece tek bir yüksek R²'ye bakmak yanıltıcıdır.
-        fitted = clone(model).fit(data[features], y)
-        train_pred = fitted.predict(data[features])
+        fitted = clone(model).fit(x, y)
+        train_pred = fitted.predict(x)
         train_mae = mean_absolute_error(y, train_pred)
         train_r2 = r2_score(y, train_pred)
         cv_mae = mean_absolute_error(y, pred)
@@ -169,8 +171,8 @@ def _regression_benchmark(data, features, groups, models, cv):
                 "MAE %95 GA Üst": mae_high,
                 "GroupKFold RMSE": math.sqrt(mean_squared_error(y, pred)),
                 "GroupKFold R²": cv_r2,
-                "Kat Ort. R²": scores["test_r2"].mean(),
-                "Kat R² Std": scores["test_r2"].std(ddof=1),
+                "Kat Ort. R²": float(np.mean(fold_r2)),
+                "Kat R² Std": float(np.std(fold_r2, ddof=1)),
                 "Naif Modele Göre MAE İyileşmesi %": np.nan,
                 "Eğitim MAE": train_mae,
                 "Eğitim R²": train_r2,
@@ -196,16 +198,26 @@ def _classification_benchmark(data, features, groups, models, cv):
     from sklearn.metrics import (
         accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score, roc_auc_score,
     )
-    from sklearn.model_selection import cross_val_predict
     from sklearn.base import clone
 
     y = data["AI Açık"].to_numpy(int)
+    x = data[features]
     rows = []
     for name, model in models.items():
-        pred = cross_val_predict(model, data[features], y, groups=groups, cv=cv, method="predict")
+        # predict ve predict_proba için iki ayrı CV eğitimi yerine her katı
+        # bir kez eğitip iki çıktıyı aynı fitted modelden al.
+        pred = np.empty(len(data), dtype=int)
+        probability = np.full(len(data), np.nan, dtype=float)
+        for train_index, test_index in cv.split(x, y, groups):
+            fold_model = clone(model).fit(x.iloc[train_index], y[train_index])
+            pred[test_index] = fold_model.predict(x.iloc[test_index])
+            if hasattr(fold_model, "predict_proba"):
+                proba = fold_model.predict_proba(x.iloc[test_index])
+                classes = list(fold_model.classes_)
+                if 1 in classes:
+                    probability[test_index] = proba[:, classes.index(1)]
         try:
-            probability = cross_val_predict(model, data[features], y, groups=groups, cv=cv, method="predict_proba")[:, 1]
-            auc = roc_auc_score(y, probability)
+            auc = roc_auc_score(y, probability) if np.isfinite(probability).all() else np.nan
         except Exception as _exc:
             log_swallowed("model_benchmark._classification_benchmark: beklenmeyen hata", _exc)
             auc = np.nan
@@ -213,8 +225,8 @@ def _classification_benchmark(data, features, groups, models, cv):
         # veride ölçmek (eğitim F1) ile mağaza-dışı GroupKFold F1 karşılaştırılır.
         cv_f1 = f1_score(y, pred, zero_division=0)
         try:
-            fitted = clone(model).fit(data[features], y)
-            train_pred = fitted.predict(data[features])
+            fitted = clone(model).fit(x, y)
+            train_pred = fitted.predict(x)
             train_f1 = f1_score(y, train_pred, zero_division=0)
         except Exception as _exc:
             log_swallowed("model_benchmark._classification_benchmark: beklenmeyen hata", _exc)

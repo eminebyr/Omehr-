@@ -391,10 +391,10 @@ def _machine_learning(model: pd.DataFrame, operation: pd.DataFrame) -> tuple[pd.
         "Ridge Regresyon": Ridge(alpha=1.0),
         "ElasticNet": ElasticNet(alpha=0.02, l1_ratio=0.35, max_iter=20000),
         "Random Forest": RandomForestRegressor(
-            n_estimators=350, min_samples_leaf=3, max_features=0.75, random_state=42, n_jobs=-1
+            n_estimators=350, min_samples_leaf=3, max_features=0.75, random_state=42, n_jobs=1
         ),
         "Extra Trees": ExtraTreesRegressor(
-            n_estimators=350, min_samples_leaf=3, max_features=0.85, random_state=42, n_jobs=-1
+            n_estimators=350, min_samples_leaf=3, max_features=0.85, random_state=42, n_jobs=1
         ),
     }
     folds = min(5, max(3, len(data) // 60))

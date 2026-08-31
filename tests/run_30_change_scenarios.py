@@ -177,9 +177,9 @@ def _():
     assert regions_from_sheets(s) == ["BÖLGE 1", "YENİ BÖLGE"]
 
 
-@scenario("15 Altı bölge için zorunlu rapor sayısı 33")
+@scenario("15 Altı bölge için zorunlu rapor sayısı 34")
 def _():
-    assert len(required_report_paths([f"BÖLGE {i}" for i in range(1, 7)])) == 33
+    assert len(required_report_paths([f"BÖLGE {i}" for i in range(1, 7)])) == 34
 
 
 def operation_raw() -> pd.DataFrame:

@@ -205,7 +205,7 @@ def _surplus_people_report(tt,staff):
 
 
 
-def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None):
+def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validation_summary=None,input_sheets=None,staff=None,return_workbook=False):
     """Sadece Fact_Mevcut ve Fact_Norm karşılaştırmasını içeren sade yönetici Excel'i."""
     out=runtime_root()/'output'/'OMEHR_Executive_Data.xlsx'
     wb=Workbook(); wb.remove(wb.active)
@@ -229,11 +229,14 @@ def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validatio
     deficit_cols=['Bölge Sorumlusu','MağazaID','Mağaza','Departman','Aktif Mevcut','Norm Kadro','Norm Eksiği','Norm Fazlası','Net Fark']
     surplus_cols=['Bölge Sorumlusu','MağazaID','Mağaza','Departman','Unvan','Personel Adı Soyadı','Açıklama','Aktif Mevcut','Norm Kadro','Norm Eksiği','Norm Fazlası','Net Fark']
     write_df(wb,'Mağaza Bazlı',st[store_cols].sort_values(['Bölge Sorumlusu','Mağaza']))
-    write_df(wb,'Mağaza-Unvan Bazlı',unvan_sirali(title_source[title_cols],['Bölge Sorumlusu','Mağaza'],unvan_kolonu='Departman'))
+    # ``staff`` isteğe bağlıdır. Personel detayı verilmeden kullanılan eski
+    # çağrılarda Açıklama gibi ayrıntı sütunları bulunmayabilir; rapor şeması
+    # yine de aynı kalmalı ve eksik ayrıntılar boş hücre olarak yazılmalıdır.
+    write_df(wb,'Mağaza-Unvan Bazlı',unvan_sirali(title_source.reindex(columns=title_cols),['Bölge Sorumlusu','Mağaza'],unvan_kolonu='Departman'))
     region=st.groupby('Bölge Sorumlusu',dropna=False)[['Aktif Mevcut','Norm Kadro','Norm Eksiği','Norm Fazlası']].sum().reset_index()
     write_df(wb,'Bölge Müdürü Bazlı',region.sort_values('Bölge Sorumlusu'))
     write_df(wb,'Norm Eksikleri',deficit_source.loc[deficit_source['Norm Eksiği']>0,deficit_cols].sort_values(['Bölge Sorumlusu','Mağaza','Norm Eksiği'],ascending=[True,True,False]))
-    write_df(wb,'Norm Fazlaları',surplus_source[surplus_cols].sort_values(['Bölge Sorumlusu','Mağaza'],ascending=[True,True]))
+    write_df(wb,'Norm Fazlaları',surplus_source.reindex(columns=surplus_cols).sort_values(['Bölge Sorumlusu','Mağaza'],ascending=[True,True]))
     if input_sheets is not None:
         inventory=[]
         for sheet_name,frame in input_sheets.items():
@@ -244,6 +247,8 @@ def executive_excel(kpi,st,tt,scens,risk,hash_,ai=None,validation=None,validatio
             write_df(wb,('Transfer - '+scenario_name)[:31],frame)
     if risk is not None and not risk.empty:
         write_df(wb,'Transfer Riskleri',risk)
+    if return_workbook:
+        return out, wb
     wb.save(out)
     return out
 

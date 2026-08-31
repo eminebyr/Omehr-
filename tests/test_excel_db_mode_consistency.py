@@ -20,7 +20,7 @@ def test_db_mode_write_is_visible_to_dashboard(tmp_path, monkeypatch):
     (tmp_path / "data").mkdir()
 
     from services.input_excel_migration import migrate_excel_to_db
-    migrate_excel_to_db("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", kullanici="kurulum")
+    migrate_excel_to_db("input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", kullanici="kurulum")
 
     from services.input_data_access import read_sheet, write_sheet
     import pandas as pd
@@ -38,14 +38,17 @@ def test_db_mode_write_is_visible_to_dashboard(tmp_path, monkeypatch):
     )
 
 
-def test_excel_mode_warns_before_data_editor_shown():
+def test_excel_mode_stops_before_data_editor_shown():
     """tum_sayfalar_veri_yonetimi.py'nin, Excel modunda çalışırken
     kullanıcıyı AÇIKÇA uyardığını (kod incelemesiyle) doğrular — bu
     olmadan kullanıcı, veritabanına yazılan ama dashboard'a hiç
     yansımayan bir değişikliği fark etmeden 'kaydedildi' sanabilirdi."""
     kaynak = open("web/tab_modules/tum_sayfalar_veri_yonetimi.py", encoding="utf-8").read()
-    assert 'input_source() != "db"' in kaynak
-    assert "YANSIMAZ" in kaynak
+    assert 'kaynak != "db"' in kaynak
+    assert "Bu panel yalnız sistem veritabanı modunda" in kaynak
+    guard = kaynak.index('if kaynak != "db":')
+    editor = kaynak.index("st.data_editor(")
+    assert "return" in kaynak[guard:editor]
 
 
 def test_ana_veri_yonetimi_excel_mode_write_is_visible_to_dashboard(tmp_path, monkeypatch):
@@ -57,7 +60,7 @@ def test_ana_veri_yonetimi_excel_mode_write_is_visible_to_dashboard(tmp_path, mo
     monkeypatch.delenv("OMEHR_INPUT_SOURCE", raising=False)
     (tmp_path / "input").mkdir()
     yol = tmp_path / "input" / "BASDAS_AI_NORM_TRANSFER_INPUT.xlsx"
-    shutil.copyfile("ORNEK_VERI_GUVENLI/BASDAS_AI_NORM_TRANSFER_INPUT.xlsx", yol)
+    shutil.copyfile("input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx", yol)
 
     from services.master_data_admin import read_tables, save_tables
     import pandas as pd

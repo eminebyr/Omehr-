@@ -85,15 +85,13 @@ def run_all():
     risk=risk_table(st)
     ai=ai_norm_table(sheets,tt,scens)
     validation,validation_summary=validate_ai_decisions(ai,kp,st)
-    outx=executive_excel(kp,st,tt,scens,risk,h,ai=ai,validation=validation,validation_summary=validation_summary,input_sheets=sheets,staff=staff)
+    outx,wb=executive_excel(kp,st,tt,scens,risk,h,ai=ai,validation=validation,validation_summary=validation_summary,input_sheets=sheets,staff=staff,return_workbook=True)
     try:
-        _yaz_kpi_mutabakat_sayfasi(outx, mutabakat)
+        _yaz_kpi_mutabakat_sayfasi(outx, mutabakat, workbook=wb)
     except Exception as _exc:
         from services.safe_exec import log_swallowed
         log_swallowed("KPI_Mutabakat_Kontrolu sayfası Excel'e yazılamadı", _exc, level="ERROR")
     # AI sonuçları ve model açıklamaları aynı yönetici Excel'inde ayrıca sunulur.
-    from openpyxl import load_workbook
-    wb=load_workbook(outx)
     write_df(wb,'AI Norm ve Aksiyon',ai)
     if validation is not None and not validation.empty:write_df(wb,'AI Karar Doğrulama',validation)
     # YÖNETİCİ ÖZETİ (P0 — "AI-resmi norm farkı unvan/mağaza bazında NEDEN

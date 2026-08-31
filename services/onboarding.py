@@ -53,7 +53,15 @@ def register_tenant(tenant_id: str, firma_adi: str, plan: str = "deneme") -> dic
         raise ValueError(hata)
     if not firma_adi.strip():
         raise ValueError("Firma adı boş olamaz.")
-    return tenant_registry.create_tenant(tenant_id, firma_adi.strip(), plan=plan)
+    # Plan adı tek başına kaydedilirse create_tenant'ın varsayılan 10/5
+    # kotası her plana uygulanır. Faturalama katmanındaki tek doğru eşlemeyi
+    # kullanarak seçilen planın gerçek sınırlarını ilk kayıtta uygula.
+    from services.billing import PLAN_KOTALARI
+    if plan not in PLAN_KOTALARI:
+        raise ValueError(f"Geçersiz plan: {plan}. Geçerli: {sorted(PLAN_KOTALARI)}")
+    return tenant_registry.create_tenant(
+        tenant_id, firma_adi.strip(), plan=plan, **PLAN_KOTALARI[plan]
+    )
 
 
 def register_first_admin(tenant_id: str, username: str, password: str, e_posta: str = "") -> dict:
