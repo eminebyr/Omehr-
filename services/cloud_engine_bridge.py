@@ -23,7 +23,7 @@ import sys
 
 import pandas as pd
 
-from services.runtime_paths import code_root
+from services.runtime_paths import code_root, runtime_root
 
 
 def _df_to_records(df: pd.DataFrame, limit: int | None = None) -> list[dict]:
@@ -135,6 +135,15 @@ def run_official_engine_summary() -> dict:
         },
         "ai_summary": {},
     }
+    from services.cloud_module_snapshots import build_module_snapshots
+
+    summary["modules"] = build_module_snapshots(
+        sheets=sheets,
+        staff=staff,
+        store_title_detail=tt,
+        scenarios=scens,
+        output_dir=runtime_root() / "output",
+    )
     from services.supabase_sync import sync_dashboard_summaries
 
     summary["supabase_sync"] = sync_dashboard_summaries(summary)
