@@ -26,11 +26,21 @@ type StoreRow = {
 }
 
 type AccessRow = {
+  tenant_id: string
   display_name: string | null
   email: string | null
   role_code: string | null
-  region_scope_text: string | null
-  store_scope_text: string | null
+  region_scope: string[] | null
+  store_scope: string[] | null
+}
+
+type TitleRow = {
+  title_name: string
+  active_current: number | null
+  total_norm: number | null
+  norm_deficit: number | null
+  norm_surplus: number | null
+  calculated_at: string | null
 }
 
 type PageKey =
@@ -94,6 +104,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [kpi, setKpi] = useState<KpiRow | null>(null)
   const [stores, setStores] = useState<StoreRow[]>([])
+  const [titles, setTitles] = useState<TitleRow[]>([])
   const [access, setAccess] = useState<AccessRow | null>(null)
   const [activePage, setActivePage] = useState<PageKey>('Genel Özet')
   const [navOpen, setNavOpen] = useState(false)
@@ -112,20 +123,34 @@ export default function HomePage() {
     const userId = session.user.id
     async function loadDashboard() {
       setLoading(true); setError('')
-      const [kpiRes, storeRes, accessRes] = await Promise.all([
+      const accessRes = await supabase.from('omehr_user_access')
+        .select('tenant_id,display_name,email,role_code,region_scope,store_scope')
+        .eq('auth_user_id', userId).maybeSingle()
+      if (accessRes.error || !accessRes.data?.tenant_id) {
+        setAccess(null)
+        setError(accessRes.error?.message || 'Kullanıcı için aktif kiracı erişimi bulunamadı.')
+        setLoading(false)
+        return
+      }
+      setAccess(accessRes.data)
+      const tenantId = accessRes.data.tenant_id
+      const [kpiRes, storeRes, titleRes] = await Promise.all([
         supabase.from('omehr_kpi_snapshot')
           .select('active_current,total_norm,norm_deficit,norm_surplus,net_need,engine_version,calculated_at')
+          .eq('tenant_id', tenantId)
           .order('calculated_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('omehr_store_summary')
           .select('store_id,region_name,store_name,active_current,total_norm,norm_deficit,norm_surplus,calculated_at')
+          .eq('tenant_id', tenantId)
           .order('norm_deficit', { ascending: false }).limit(200),
-        supabase.from('omehr_user_access')
-          .select('display_name,email,role_code,region_scope_text,store_scope_text')
-          .eq('auth_user_id', userId).maybeSingle(),
+        supabase.from('omehr_title_summary')
+          .select('title_name,active_current,total_norm,norm_deficit,norm_surplus,calculated_at')
+          .eq('tenant_id', tenantId)
+          .order('norm_deficit', { ascending: false }).limit(100),
       ])
       if (kpiRes.error) setError(kpiRes.error.message); else setKpi(kpiRes.data)
       if (!storeRes.error) setStores(storeRes.data ?? [])
-      if (!accessRes.error) setAccess(accessRes.data)
+      if (!titleRes.error) setTitles(titleRes.data ?? [])
       setLoading(false)
     }
     loadDashboard()
@@ -179,6 +204,16 @@ export default function HomePage() {
           calculated_at: calculatedAt,
         })))
       }
+      if (Array.isArray(run?.unvan_bazli)) {
+        setTitles(run.unvan_bazli.map((row: Record<string, unknown>) => ({
+          title_name: String(row.unvan ?? ''),
+          active_current: Number(row.mevcut ?? 0),
+          total_norm: Number(row.norm ?? 0),
+          norm_deficit: Number(row.eksik ?? 0),
+          norm_surplus: Number(row.fazla ?? 0),
+          calculated_at: calculatedAt,
+        })))
+      }
       setEngineMessage('Motor tamamlandı; güncel Railway sonuçları ekrana yüklendi.')
     } catch (runError) {
       setEngineMessage('')
@@ -218,10 +253,18 @@ export default function HomePage() {
     </section>
   )
 
+  const renderTitleTable = () => (
+    <section className="section">
+      <div className="section-title"><h2>Ünvan bazlı norm görünümü</h2><div className="status-pill">{titles.length} ünvan</div></div>
+      <div className="table-wrap">{loading ? <div className="empty">Veriler yükleniyor…</div> : titles.length ? <table><thead><tr><th>Ünvan</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Net Fark</th><th>Son Hesaplama</th></tr></thead><tbody>{titles.map((row) => <tr key={row.title_name}><td>{row.title_name}</td><td>{row.active_current ?? '—'}</td><td>{row.total_norm ?? '—'}</td><td>{row.norm_deficit ?? '—'}</td><td>{row.norm_surplus ?? '—'}</td><td>{(row.norm_surplus ?? 0) - (row.norm_deficit ?? 0)}</td><td>{fmtDate(row.calculated_at)}</td></tr>)}</tbody></table> : <div className="empty">Henüz ünvan özeti bulunamadı. Verileri güncellediğinizde Railway motoru bu alanı kalıcı olarak dolduracak.</div>}</div>
+    </section>
+  )
+
   const renderPage = () => {
     if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}</>
     if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}</>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
+    if (activePage === 'Unvan Analizi') return renderTitleTable()
     return <section className="module-card"><div className="module-icon">OMEHR</div><div><h2>{activePage}</h2><p>{pageMeta[activePage].subtitle}</p><div className="module-source">Veri kaynağı: {pageMeta[activePage].source}</div><div className="module-note">Arayüz modülü hazır. İlgili Supabase tablosu güncel Railway sonuçlarıyla beslendiğinde bu ekran canlı veriye geçecek.</div></div></section>
   }
 

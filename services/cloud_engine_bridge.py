@@ -112,7 +112,7 @@ def run_official_engine_summary() -> dict:
     except Exception:
         pass
 
-    return {
+    summary = {
         "kpis": {
             "aktif_mevcut": kp.get("Aktif Mevcut", 0),
             "toplam_norm": kp.get("Toplam Norm", 0),
@@ -135,3 +135,7 @@ def run_official_engine_summary() -> dict:
         },
         "ai_summary": {},
     }
+    from services.supabase_sync import sync_dashboard_summaries
+
+    summary["supabase_sync"] = sync_dashboard_summaries(summary)
+    return summary
