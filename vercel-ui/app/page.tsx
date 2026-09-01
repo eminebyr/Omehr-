@@ -46,6 +46,17 @@ type TitleRow = {
 type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[] }
 type ModuleRow = { module_key: string; payload: ModulePayload; calculated_at: string | null }
 
+type SalesTargetRow = {
+  period: string
+  store_id: string
+  store_name: string
+  sales_target: number
+  explanation: string | null
+  action_plan: string | null
+  owner_name: string | null
+  updated_at: string
+}
+
 type PageKey =
   | 'Genel Özet'
   | 'CEO Özeti'
@@ -60,6 +71,7 @@ type PageKey =
   | 'AI Operasyon & Verimlilik'
   | 'Operasyon Görselleri'
   | 'Verimlilik Görselleri'
+  | 'Satış Hesap Verme'
   | 'Raporlar'
   | 'Şubelere Toplu Mail'
   | 'Bildirimler'
@@ -74,6 +86,7 @@ const pages: PageKey[] = [
   'Personel Performansı', 'İş Gücü Tahmini', 'Transfer Optimizasyonu',
   'Transfer Merkezi', 'Onaylar',
   'AI Operasyon & Verimlilik', 'Operasyon Görselleri', 'Verimlilik Görselleri',
+  'Satış Hesap Verme',
   'Raporlar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama',
   'Ana Veri Yönetimi', 'Tüm Sayfalar (Veritabanı)', 'Ayarlar',
 ]
@@ -92,6 +105,7 @@ const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
   'AI Operasyon & Verimlilik': { subtitle: 'AI norm ve operasyon önerileri', source: 'omehr_ai_norm_recommendations' },
   'Operasyon Görselleri': { subtitle: 'Operasyon metriklerinin görsel özeti', source: 'omehr_daily_operations + omehr_hourly_density' },
   'Verimlilik Görselleri': { subtitle: 'Mağaza ve dönem verimlilik analizi', source: 'omehr_monthly_store_metrics + omehr_period_metrics' },
+  'Satış Hesap Verme': { subtitle: 'Norm karşılama ve satış hedef gerçekleşme karşılaştırması', source: 'omehr_store_summary + Aylık Operasyon KPI + omehr_sales_targets' },
   'Raporlar': { subtitle: 'Yönetici ve bölge rapor merkezi', source: 'omehr_report_jobs + ileride Storage' },
   'Şubelere Toplu Mail': { subtitle: 'Yetkili toplu iletişim merkezi', source: 'omehr_mail_jobs + omehr_recipient_directory' },
   'Bildirimler': { subtitle: 'Kullanıcı ve operasyon bildirimleri', source: 'omehr_notifications' },
@@ -116,6 +130,21 @@ function displayValue(value: unknown) {
   return String(value)
 }
 
+function asNumber(value: unknown) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const normalized = String(value ?? '').replace(/\./g, '').replace(',', '.')
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value)
+}
+
+function percent(value: number | null) {
+  return value === null ? '—' : `%${new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 }).format(value)}`
+}
+
 function ModuleTable({ payload }: { payload?: ModulePayload }) {
   const [query, setQuery] = useState('')
   const rows = payload?.rows ?? []
@@ -138,6 +167,51 @@ function ModuleTable({ payload }: { payload?: ModulePayload }) {
   </section>
 }
 
+function SalesTargetForm({ access, stores, latestPeriod, onSaved }: {
+  access: AccessRow | null
+  stores: StoreRow[]
+  latestPeriod: string
+  onSaved: (row: SalesTargetRow) => void
+}) {
+  const role = (access?.role_code ?? '').toLocaleUpperCase('tr-TR')
+  const canWrite = ['ADMIN', 'SATIS_DIREKTORU', 'SATIŞ_DİREKTÖRÜ', 'SALES_DIRECTOR'].includes(role)
+  const [period, setPeriod] = useState(latestPeriod)
+  const [storeId, setStoreId] = useState('')
+  const [target, setTarget] = useState('')
+  const [explanation, setExplanation] = useState('')
+  const [actionPlan, setActionPlan] = useState('')
+  const [ownerName, setOwnerName] = useState('')
+  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => { if (!period && latestPeriod) setPeriod(latestPeriod) }, [latestPeriod, period])
+  if (!canWrite) return <div className="accountability-note">Satış hedefi, gerekçe ve aksiyon alanları yalnız Satış Direktörü veya yönetici rolü tarafından girilir. İK ekranı sonuçları görüntüler; manuel eşleştirme yapmaz.</div>
+
+  async function saveTarget(event: FormEvent) {
+    event.preventDefault()
+    const store = stores.find((item) => String(item.store_id ?? item.store_name) === storeId)
+    if (!access || !store || !period || asNumber(target) <= 0) { setMessage('Dönem, mağaza ve geçerli satış hedefi zorunludur.'); return }
+    setSaving(true); setMessage('')
+    const row = {
+      tenant_id: access.tenant_id,
+      period,
+      store_id: storeId,
+      store_name: store.store_name || storeId,
+      sales_target: asNumber(target),
+      explanation: explanation.trim() || null,
+      action_plan: actionPlan.trim() || null,
+      owner_name: ownerName.trim() || access.display_name || null,
+      updated_at: new Date().toISOString(),
+    }
+    const { data, error } = await supabase.from('omehr_sales_targets').upsert(row, { onConflict: 'tenant_id,period,store_id' }).select('period,store_id,store_name,sales_target,explanation,action_plan,owner_name,updated_at').single()
+    setSaving(false)
+    if (error) { setMessage(`Kayıt yapılamadı: ${error.message}`); return }
+    onSaved(data as SalesTargetRow); setMessage('Satış hedefi ve açıklaması kaydedildi.')
+  }
+
+  return <section className="section target-entry"><div className="section-title"><div><h2>Satış hedefi ve hesap verme girişi</h2><p>Bu alan Satış tarafından doldurulur; gerçekleşen ciro sistemden alınır.</p></div></div><form className="target-form" onSubmit={saveTarget}><label>Dönem<input value={period} onChange={(event) => setPeriod(event.target.value)} placeholder="2026-09" required /></label><label>Mağaza<select value={storeId} onChange={(event) => setStoreId(event.target.value)} required><option value="">Mağaza seçin</option>{stores.map((store) => { const id = String(store.store_id ?? store.store_name ?? ''); return <option key={id} value={id}>{store.store_name || id}</option> })}</select></label><label>Satış hedefi (TL)<input inputMode="decimal" value={target} onChange={(event) => setTarget(event.target.value)} required /></label><label>Sorumlu<input value={ownerName} onChange={(event) => setOwnerName(event.target.value)} /></label><label className="wide">Hedef sapma açıklaması<textarea value={explanation} onChange={(event) => setExplanation(event.target.value)} /></label><label className="wide">Aksiyon planı<textarea value={actionPlan} onChange={(event) => setActionPlan(event.target.value)} /></label><button className="primary form-submit" disabled={saving}>{saving ? 'Kaydediliyor…' : 'Satış hesabını kaydet'}</button></form>{message && <div className="engine-message">{message}</div>}</section>
+}
+
 export default function HomePage() {
   const [session, setSession] = useState<Session | null>(null)
   const [email, setEmail] = useState('')
@@ -148,6 +222,7 @@ export default function HomePage() {
   const [stores, setStores] = useState<StoreRow[]>([])
   const [titles, setTitles] = useState<TitleRow[]>([])
   const [modules, setModules] = useState<Record<string, ModulePayload>>({})
+  const [salesTargets, setSalesTargets] = useState<SalesTargetRow[]>([])
   const [access, setAccess] = useState<AccessRow | null>(null)
   const [activePage, setActivePage] = useState<PageKey>('Genel Özet')
   const [navOpen, setNavOpen] = useState(false)
@@ -177,7 +252,7 @@ export default function HomePage() {
       }
       setAccess(accessRes.data)
       const tenantId = accessRes.data.tenant_id
-      const [kpiRes, storeRes, titleRes, moduleRes] = await Promise.all([
+      const [kpiRes, storeRes, titleRes, moduleRes, salesTargetRes] = await Promise.all([
         supabase.from('omehr_kpi_snapshot')
           .select('active_current,total_norm,norm_deficit,norm_surplus,net_need,engine_version,calculated_at')
           .eq('tenant_id', tenantId)
@@ -193,6 +268,10 @@ export default function HomePage() {
         supabase.from('omehr_module_snapshots')
           .select('module_key,payload,calculated_at')
           .eq('tenant_id', tenantId),
+        supabase.from('omehr_sales_targets')
+          .select('period,store_id,store_name,sales_target,explanation,action_plan,owner_name,updated_at')
+          .eq('tenant_id', tenantId)
+          .order('period', { ascending: false }),
       ])
       if (kpiRes.error) setError(kpiRes.error.message); else setKpi(kpiRes.data)
       if (!storeRes.error) setStores(storeRes.data ?? [])
@@ -201,6 +280,7 @@ export default function HomePage() {
         const mapped = Object.fromEntries(((moduleRes.data ?? []) as ModuleRow[]).map((row) => [row.module_key, row.payload]))
         setModules(mapped)
       }
+      if (!salesTargetRes.error) setSalesTargets((salesTargetRes.data ?? []) as SalesTargetRow[])
       setLoading(false)
     }
     loadDashboard()
@@ -313,6 +393,46 @@ export default function HomePage() {
     </section>
   )
 
+  const renderSalesAccountability = () => {
+    const operationRows = modules.operations?.rows ?? []
+    const periods = operationRows.map((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '')).filter(Boolean).sort()
+    const latestPeriod = periods.at(-1) ?? salesTargets[0]?.period ?? ''
+    const actualByStore = new Map<string, number>()
+    operationRows.filter((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '') === latestPeriod).forEach((row) => {
+      const key = String(row.MagazaID ?? row['MağazaID'] ?? row.Mağaza ?? '').trim()
+      actualByStore.set(key, asNumber(row['Aylık Ciro'] ?? row.Ciro))
+    })
+    const firstPeriod = periods.at(0) ?? ''
+    const firstActualByStore = new Map<string, number>()
+    operationRows.filter((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '') === firstPeriod).forEach((row) => {
+      const key = String(row.MagazaID ?? row['MağazaID'] ?? row.Mağaza ?? '').trim()
+      firstActualByStore.set(key, asNumber(row['Aylık Ciro'] ?? row.Ciro))
+    })
+    const targetByStore = new Map(salesTargets.filter((row) => row.period === latestPeriod).map((row) => [row.store_id, row]))
+    return <>
+      <section className="accountability-intro">
+        <div><span>İK göstergesi</span><strong>Norm Karşılama %</strong><small>Aktif mevcut / toplam norm</small></div>
+        <div><span>Satış göstergesi</span><strong>Hedef Gerçekleşme %</strong><small>Gerçekleşen ciro / satış hedefi</small></div>
+        <div><span>İncelenen dönem</span><strong>{latestPeriod || 'Veri bekleniyor'}</strong><small>Reel büyüme baz oranı: %32,11</small></div>
+      </section>
+      <section className="section">
+        <div className="section-title"><div><h2>Karşılıklı performans tablosu</h2><p>İK ve Satış aynı mağaza ve aynı dönem için kendi göstergeleriyle değerlendirilir.</p></div><div className="status-pill">{stores.length} mağaza</div></div>
+        <div className="table-wrap">{stores.length ? <table><thead><tr><th>Mağaza</th><th>Norm</th><th>Mevcut</th><th>Norm Karşılama %</th><th>Satış Hedefi</th><th>Gerçekleşen Ciro</th><th>Hedef Gerçekleşme %</th><th>Reel Büyüme %</th><th>Sapma</th><th>Satış Açıklaması / Aksiyon</th></tr></thead><tbody>{stores.map((store, index) => {
+          const storeKey = String(store.store_id ?? store.store_name ?? '').trim()
+          const target = targetByStore.get(storeKey)
+          const actual = actualByStore.get(storeKey) ?? actualByStore.get(String(store.store_name ?? '').trim()) ?? 0
+          const firstActual = firstActualByStore.get(storeKey) ?? firstActualByStore.get(String(store.store_name ?? '').trim()) ?? 0
+          const normRate = (store.total_norm ?? 0) > 0 ? ((store.active_current ?? 0) / (store.total_norm ?? 1)) * 100 : null
+          const salesRate = target && target.sales_target > 0 ? (actual / target.sales_target) * 100 : null
+          const nominalGrowth = firstActual > 0 ? (actual / firstActual) - 1 : null
+          const realGrowth = nominalGrowth === null ? null : (((1 + nominalGrowth) / 1.3211) - 1) * 100
+          return <tr key={`${storeKey}-${index}`}><td>{store.store_name || store.store_id || '—'}</td><td>{store.total_norm ?? '—'}</td><td>{store.active_current ?? '—'}</td><td><strong>{percent(normRate)}</strong></td><td>{target ? money(target.sales_target) : 'Satış girişi bekleniyor'}</td><td>{actual ? money(actual) : '—'}</td><td><strong className={salesRate !== null && salesRate >= 100 ? 'good-text' : 'bad-text'}>{percent(salesRate)}</strong></td><td><strong className={realGrowth !== null && realGrowth >= 0 ? 'good-text' : 'bad-text'}>{percent(realGrowth)}</strong></td><td>{target ? money(actual - target.sales_target) : '—'}</td><td>{target ? <>{target.explanation || 'Açıklama yok'}{target.action_plan && <small className="cell-note">Aksiyon: {target.action_plan}</small>}</> : 'Satış açıklaması bekleniyor'}</td></tr>
+        })}</tbody></table> : <div className="empty">Mağaza norm sonuçları bekleniyor.</div>}</div>
+      </section>
+      <SalesTargetForm access={access} stores={stores} latestPeriod={latestPeriod} onSaved={(row) => setSalesTargets((current) => [row, ...current.filter((item) => !(item.period === row.period && item.store_id === row.store_id))])} />
+    </>
+  }
+
   const renderPage = () => {
     if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}</>
     if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}<ModuleTable payload={modules.forecast_summary} /></>
@@ -325,6 +445,7 @@ export default function HomePage() {
     if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
     if (activePage === 'Operasyon Görselleri') return <><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
     if (activePage === 'Verimlilik Görselleri') return <><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
+    if (activePage === 'Satış Hesap Verme') return renderSalesAccountability()
     if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
     if (activePage === 'Tüm Sayfalar (Veritabanı)') return <>{Object.entries(modules).map(([key, payload]) => <ModuleTable key={key} payload={payload} />)}</>
     const operational = ['Transfer Merkezi', 'Onaylar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama', 'Ana Veri Yönetimi', 'Ayarlar'].includes(activePage)

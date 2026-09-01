@@ -15,7 +15,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
 body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-button, input { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 
 .shell { min-height: 100vh; background: radial-gradient(circle at top right, rgba(22,166,173,.14), transparent 30%), var(--bg); }
@@ -102,6 +102,22 @@ tr:last-child td { border-bottom:none; }
 .table-search { width:min(460px,100%); margin:0 0 12px; border:1px solid var(--line); background:#0b1727; color:var(--text); border-radius:11px; padding:11px 13px; outline:none; }
 .table-search:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(22,166,173,.1); }
 .table-limit { color:var(--muted); font-size:12px; margin-top:8px; }
+.accountability-intro { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.accountability-intro > div { background:linear-gradient(135deg,#102748,#0c1b2f); border:1px solid #284563; border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:7px; }
+.accountability-intro span { color:#85a0ba; font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+.accountability-intro strong { font-size:21px; }
+.accountability-intro small,.cell-note { color:var(--muted); }
+.cell-note { display:block; margin-top:5px; }
+.good-text { color:var(--success); }
+.bad-text { color:var(--danger); }
+.accountability-note { margin-top:22px; border:1px solid #654f28; background:rgba(213,169,92,.08); color:#e8d3aa; border-radius:14px; padding:15px; }
+.target-entry { border:1px solid var(--line); border-radius:18px; padding:20px; background:var(--panel); }
+.target-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.target-form label { color:var(--muted); font-size:12px; font-weight:700; }
+.target-form input,.target-form select,.target-form textarea { width:100%; margin-top:7px; border:1px solid var(--line); background:#0b1727; color:var(--text); border-radius:10px; padding:11px 12px; }
+.target-form textarea { min-height:82px; resize:vertical; }
+.target-form .wide { grid-column:span 2; }
+.form-submit { width:auto; align-self:end; }
 
 @media (max-width:1180px) {
   .grid { grid-template-columns:repeat(3,1fr); }
@@ -115,6 +131,8 @@ tr:last-child td { border-bottom:none; }
   .userbox > span { display:none; }
   .grid { grid-template-columns:repeat(2,1fr); }
   .login-shell { grid-template-columns:1fr; }
+  .accountability-intro,.target-form { grid-template-columns:1fr; }
+  .target-form .wide { grid-column:auto; }
   .login-brand { display:none; }
 }
 @media (max-width:640px) {
