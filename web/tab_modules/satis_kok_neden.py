@@ -63,6 +63,6 @@ def render(ctx: PageContext) -> None:
         use_container_width=True,
     )
 
-    st.markdown("#### Satışın Hesap Verme Tablosu")
+    st.markdown("#### Mağaza Satış Performansı ve Kök Neden Tablosu")
     st.dataframe(result.sort_values(["Hedef Gerçekleşme %", "Norm Karşılama %"], na_position="first"), use_container_width=True, hide_index=True)
     st.caption("Satış hedefi, açıklama ve aksiyon Vercel'deki yetkili Satış girişiyle Supabase'e kaydedilir; Streamlit aynı kaydı salt okunur gösterir.")
