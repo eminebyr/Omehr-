@@ -99,6 +99,16 @@ def build_sales_root_cause(
     workload = _indexed(sheets.get("İş Yükü Endeksi", sheets.get("Is Yuku Endeksi")))
     waste = _indexed(sheets.get("Fire ve İade", sheets.get("Fire ve Iade")), latest)
     performance = _indexed(sheets.get("Performans"), latest)
+    # DÜZELTME: Satış hedefi ARTIK ÖNCELİKLE Excel'deki "Satış Hedefi" sayfasından
+    # okunuyor (Ay, MagazaID, Hedef Ciro sütunları) — çünkü gerçek kullanım akışı
+    # "Excel yükle -> Railway motoru hesaplar" şeklinde, Vercel'de ayrıca elle hedef
+    # girilmesini beklemek bu akışla uyuşmuyordu. Vercel/Supabase girişi (varsa)
+    # yalnız Excel'de o mağaza/ay için değer YOKSA yedek olarak kullanılır; açıklama/
+    # aksiyon planı/sorumlu alanları hâlâ yalnız Vercel'den gelir (Excel'de karşılığı yok).
+    excel_targets = _indexed(
+        sheets.get("Satış Hedefi", sheets.get("Satis Hedefi", sheets.get("Satış Hedefi ", pd.DataFrame()))),
+        latest,
+    )
     target_frame = pd.DataFrame(targets)
     if not target_frame.empty:
         target_frame = target_frame[target_frame.get("period", "").astype(str).eq(latest)].copy()
@@ -115,7 +125,10 @@ def build_sales_root_cause(
         tickets = _value(current, source_key, "Aylık Fiş", "Fiş Adedi")
         basket = _value(current, source_key, "Ort. Sepet", "Ortalama Sepet")
         revenue_change = _change(revenue, _value(prior, source_key, "Aylık Ciro", "Ciro"))
-        target = _value(target_frame, target_key, "sales_target")
+        excel_key = store_id if store_id in excel_targets.index else store_name
+        target = _value(excel_targets, excel_key, "Hedef Ciro", "Satış Hedefi")
+        if target is None:
+            target = _value(target_frame, target_key, "sales_target")
         norm = _number(store.get("Norm", store.get("Norm Kadro"))) or 0
         current_staff = _number(store.get("Mevcut", store.get("Aktif Mevcut"))) or 0
         row = {
