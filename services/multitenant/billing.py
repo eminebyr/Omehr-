@@ -15,7 +15,7 @@ from __future__ import annotations
 from services.multitenant import tenant_registry
 from services.observability import get_logger
 
-LOGGER = get_logger("basdas.billing")
+LOGGER = get_logger("omehr.billing")
 
 # Plan -> (şube kotası, kullanıcı kotası) eşlemesi. Fiyatlandırma
 # BURADA DEĞİL — bu yalnız KOTA sınırlarını belirler; fiyat, ödeme
