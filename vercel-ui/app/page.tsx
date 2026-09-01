@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, supabaseConfigured } from '@/lib/supabase'
+import { buildSalesEvidence, diagnoseSales } from '@/lib/sales-root-cause'
 
 type KpiRow = {
   active_current: number | null
@@ -71,7 +72,7 @@ type PageKey =
   | 'AI Operasyon & Verimlilik'
   | 'Operasyon Görselleri'
   | 'Verimlilik Görselleri'
-  | 'Satış Hesap Verme'
+  | 'Satış Kök Neden Analizi'
   | 'Raporlar'
   | 'Şubelere Toplu Mail'
   | 'Bildirimler'
@@ -86,7 +87,7 @@ const pages: PageKey[] = [
   'Personel Performansı', 'İş Gücü Tahmini', 'Transfer Optimizasyonu',
   'Transfer Merkezi', 'Onaylar',
   'AI Operasyon & Verimlilik', 'Operasyon Görselleri', 'Verimlilik Görselleri',
-  'Satış Hesap Verme',
+  'Satış Kök Neden Analizi',
   'Raporlar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama',
   'Ana Veri Yönetimi', 'Tüm Sayfalar (Veritabanı)', 'Ayarlar',
 ]
@@ -105,7 +106,7 @@ const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
   'AI Operasyon & Verimlilik': { subtitle: 'AI norm ve operasyon önerileri', source: 'omehr_ai_norm_recommendations' },
   'Operasyon Görselleri': { subtitle: 'Operasyon metriklerinin görsel özeti', source: 'omehr_daily_operations + omehr_hourly_density' },
   'Verimlilik Görselleri': { subtitle: 'Mağaza ve dönem verimlilik analizi', source: 'omehr_monthly_store_metrics + omehr_period_metrics' },
-  'Satış Hesap Verme': { subtitle: 'Norm karşılama ve satış hedef gerçekleşme karşılaştırması', source: 'omehr_store_summary + Aylık Operasyon KPI + omehr_sales_targets' },
+  'Satış Kök Neden Analizi': { subtitle: 'Satış sapmasını fiş, sepet, reel büyüme ve iş gücü kanıtlarıyla açıkla', source: 'Norm + satış + operasyon + verimlilik + omehr_sales_targets' },
   'Raporlar': { subtitle: 'Yönetici ve bölge rapor merkezi', source: 'omehr_report_jobs + ileride Storage' },
   'Şubelere Toplu Mail': { subtitle: 'Yetkili toplu iletişim merkezi', source: 'omehr_mail_jobs + omehr_recipient_directory' },
   'Bildirimler': { subtitle: 'Kullanıcı ve operasyon bildirimleri', source: 'omehr_notifications' },
@@ -395,39 +396,48 @@ export default function HomePage() {
 
   const renderSalesAccountability = () => {
     const operationRows = modules.operations?.rows ?? []
-    const periods = operationRows.map((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '')).filter(Boolean).sort()
-    const latestPeriod = periods.at(-1) ?? salesTargets[0]?.period ?? ''
-    const actualByStore = new Map<string, number>()
-    operationRows.filter((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '') === latestPeriod).forEach((row) => {
-      const key = String(row.MagazaID ?? row['MağazaID'] ?? row.Mağaza ?? '').trim()
-      actualByStore.set(key, asNumber(row['Aylık Ciro'] ?? row.Ciro))
+    const inflationPct = 32.11
+    const analysis = buildSalesEvidence({
+      operations: operationRows,
+      overtime: modules.overtime?.rows ?? [],
+      absence: modules.absence?.rows ?? [],
+      productivity: modules.productivity?.rows ?? [],
+      wasteReturns: modules.waste_returns?.rows ?? [],
+      performance: modules.store_performance?.rows ?? [],
+      onlineOrders: modules.online_orders?.rows ?? [],
+      goodsReceipt: modules.goods_receipt?.rows ?? [],
+      inflationPct,
     })
-    const firstPeriod = periods.at(0) ?? ''
-    const firstActualByStore = new Map<string, number>()
-    operationRows.filter((row) => String(row.Ay ?? row.Dönem ?? row.Donem ?? '') === firstPeriod).forEach((row) => {
-      const key = String(row.MagazaID ?? row['MağazaID'] ?? row.Mağaza ?? '').trim()
-      firstActualByStore.set(key, asNumber(row['Aylık Ciro'] ?? row.Ciro))
-    })
+    const latestPeriod = analysis.latestPeriod || salesTargets[0]?.period || ''
     const targetByStore = new Map(salesTargets.filter((row) => row.period === latestPeriod).map((row) => [row.store_id, row]))
+    const evaluated = stores.map((store) => {
+      const storeKey = String(store.store_id ?? store.store_name ?? '').trim()
+      const evidence = analysis.byStore.get(storeKey) ?? [...analysis.byStore.values()].find((item) => item.storeName === store.store_name)
+      const target = targetByStore.get(storeKey)
+      const normRate = (store.total_norm ?? 0) > 0 ? ((store.active_current ?? 0) / (store.total_norm ?? 1)) * 100 : null
+      const salesRate = target && target.sales_target > 0 && evidence?.revenue !== null && evidence?.revenue !== undefined ? (evidence.revenue / target.sales_target) * 100 : null
+      return { store, storeKey, evidence, target, normRate, salesRate, diagnosis: diagnoseSales({ evidence, normRate, salesRate }) }
+    })
+    const belowTarget = evaluated.filter((row) => row.salesRate !== null && row.salesRate < 100).length
+    const unsupportedPersonnel = evaluated.filter((row) => row.diagnosis.personnelClaim === 'unsupported' && row.salesRate !== null && row.salesRate < 100).length
+    const missing = evaluated.filter((row) => row.diagnosis.severity === 'missing').length
     return <>
       <section className="accountability-intro">
-        <div><span>İK göstergesi</span><strong>Norm Karşılama %</strong><small>Aktif mevcut / toplam norm</small></div>
-        <div><span>Satış göstergesi</span><strong>Hedef Gerçekleşme %</strong><small>Gerçekleşen ciro / satış hedefi</small></div>
-        <div><span>İncelenen dönem</span><strong>{latestPeriod || 'Veri bekleniyor'}</strong><small>Reel büyüme baz oranı: %32,11</small></div>
+        <div><span>Hedef altında</span><strong>{belowTarget} mağaza</strong><small>Satış kök neden açıklaması gereken mağazalar</small></div>
+        <div><span>Personel iddiası kanıtsız</span><strong>{unsupportedPersonnel} mağaza</strong><small>Norm veya satış verisi iddiayı desteklemiyor</small></div>
+        <div><span>Veri açığı</span><strong>{missing} mağaza</strong><small>Hedef/gerçekleşen eşleşmesi tamamlanmalı</small></div>
+        <div><span>İncelenen dönem</span><strong>{latestPeriod || 'Veri bekleniyor'}</strong><small>Önceki dönem: {analysis.previousPeriod || '—'} · Enflasyon %{inflationPct}</small></div>
       </section>
       <section className="section">
-        <div className="section-title"><div><h2>Karşılıklı performans tablosu</h2><p>İK ve Satış aynı mağaza ve aynı dönem için kendi göstergeleriyle değerlendirilir.</p></div><div className="status-pill">{stores.length} mağaza</div></div>
-        <div className="table-wrap">{stores.length ? <table><thead><tr><th>Mağaza</th><th>Norm</th><th>Mevcut</th><th>Norm Karşılama %</th><th>Satış Hedefi</th><th>Gerçekleşen Ciro</th><th>Hedef Gerçekleşme %</th><th>Reel Büyüme %</th><th>Sapma</th><th>Satış Açıklaması / Aksiyon</th></tr></thead><tbody>{stores.map((store, index) => {
-          const storeKey = String(store.store_id ?? store.store_name ?? '').trim()
-          const target = targetByStore.get(storeKey)
-          const actual = actualByStore.get(storeKey) ?? actualByStore.get(String(store.store_name ?? '').trim()) ?? 0
-          const firstActual = firstActualByStore.get(storeKey) ?? firstActualByStore.get(String(store.store_name ?? '').trim()) ?? 0
-          const normRate = (store.total_norm ?? 0) > 0 ? ((store.active_current ?? 0) / (store.total_norm ?? 1)) * 100 : null
-          const salesRate = target && target.sales_target > 0 ? (actual / target.sales_target) * 100 : null
-          const nominalGrowth = firstActual > 0 ? (actual / firstActual) - 1 : null
-          const realGrowth = nominalGrowth === null ? null : (((1 + nominalGrowth) / 1.3211) - 1) * 100
-          return <tr key={`${storeKey}-${index}`}><td>{store.store_name || store.store_id || '—'}</td><td>{store.total_norm ?? '—'}</td><td>{store.active_current ?? '—'}</td><td><strong>{percent(normRate)}</strong></td><td>{target ? money(target.sales_target) : 'Satış girişi bekleniyor'}</td><td>{actual ? money(actual) : '—'}</td><td><strong className={salesRate !== null && salesRate >= 100 ? 'good-text' : 'bad-text'}>{percent(salesRate)}</strong></td><td><strong className={realGrowth !== null && realGrowth >= 0 ? 'good-text' : 'bad-text'}>{percent(realGrowth)}</strong></td><td>{target ? money(actual - target.sales_target) : '—'}</td><td>{target ? <>{target.explanation || 'Açıklama yok'}{target.action_plan && <small className="cell-note">Aksiyon: {target.action_plan}</small>}</> : 'Satış açıklaması bekleniyor'}</td></tr>
-        })}</tbody></table> : <div className="empty">Mağaza norm sonuçları bekleniyor.</div>}</div>
+        <div className="section-title"><div><h2>Satış kök neden matrisi</h2><p>“Personel eksikti” açıklaması; norm açığına ek olarak mesai, kayıp FTE veya yüksek iş yükü kanıtı gerektirir.</p></div><div className="status-pill">{stores.length} mağaza</div></div>
+        <div className="table-wrap">{stores.length ? <table className="root-cause-table"><thead><tr><th>Mağaza</th><th>Norm %</th><th>Hedef %</th><th>Fiş Δ</th><th>Sepet Δ</th><th>Reel Büyüme</th><th>Mesai / Kayıp FTE</th><th>İş Yükü</th><th>Fire</th><th>Yönetici</th><th>Otomatik Kök Neden</th><th>Satışın Açıklaması / Aksiyonu</th></tr></thead><tbody>{evaluated.map(({ store, storeKey, evidence, target, normRate, salesRate, diagnosis }, index) => <tr key={`${storeKey}-${index}`}>
+          <td><strong>{store.store_name || store.store_id || '—'}</strong><small className="cell-note">{evidence?.revenue !== null && evidence?.revenue !== undefined ? money(evidence.revenue) : 'Ciro yok'} / {target ? money(target.sales_target) : 'hedef yok'}</small></td>
+          <td>{percent(normRate)}</td><td><strong className={salesRate !== null && salesRate >= 100 ? 'good-text' : 'bad-text'}>{percent(salesRate)}</strong></td>
+          <td>{percent(evidence?.ticketChange ?? null)}</td><td>{percent(evidence?.basketChange ?? null)}</td><td>{percent(evidence?.realGrowth ?? null)}</td>
+          <td>{evidence?.overtimeHours ?? '—'} sa. / {evidence?.lostFte ?? '—'} FTE</td><td>{evidence?.workloadIndex ?? '—'}</td><td>{percent(evidence?.wasteRate ?? null)}</td><td>{evidence?.managerScore ?? '—'}</td>
+          <td><span className={`cause-badge ${diagnosis.severity}`}>{diagnosis.title}</span>{diagnosis.evidence.map((item) => <small className="cell-note" key={item}>{item}</small>)}<small className="cell-note"><strong>İK iddiası:</strong> {diagnosis.personnelClaim === 'supported' ? 'Kanıtlı' : diagnosis.personnelClaim === 'unsupported' ? 'Desteklenmiyor' : 'Belirsiz'}</small><small className="cell-note">İstenen aksiyon: {diagnosis.requiredAction}</small></td>
+          <td>{target ? <>{target.explanation || 'Kök neden açıklaması yok'}{target.action_plan && <small className="cell-note">Aksiyon: {target.action_plan}</small>}{target.owner_name && <small className="cell-note">Sorumlu: {target.owner_name}</small>}</> : 'Satış girişi bekleniyor'}</td>
+        </tr>)}</tbody></table> : <div className="empty">Mağaza norm sonuçları bekleniyor.</div>}</div>
       </section>
       <SalesTargetForm access={access} stores={stores} latestPeriod={latestPeriod} onSaved={(row) => setSalesTargets((current) => [row, ...current.filter((item) => !(item.period === row.period && item.store_id === row.store_id))])} />
     </>
@@ -445,7 +455,7 @@ export default function HomePage() {
     if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
     if (activePage === 'Operasyon Görselleri') return <><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
     if (activePage === 'Verimlilik Görselleri') return <><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
-    if (activePage === 'Satış Hesap Verme') return renderSalesAccountability()
+    if (activePage === 'Satış Kök Neden Analizi') return renderSalesAccountability()
     if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
     if (activePage === 'Tüm Sayfalar (Veritabanı)') return <>{Object.entries(modules).map(([key, payload]) => <ModuleTable key={key} payload={payload} />)}</>
     const operational = ['Transfer Merkezi', 'Onaylar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama', 'Ana Veri Yönetimi', 'Ayarlar'].includes(activePage)
