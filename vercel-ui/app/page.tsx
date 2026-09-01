@@ -43,6 +43,9 @@ type TitleRow = {
   calculated_at: string | null
 }
 
+type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[] }
+type ModuleRow = { module_key: string; payload: ModulePayload; calculated_at: string | null }
+
 type PageKey =
   | 'Genel Özet'
   | 'CEO Özeti'
@@ -52,21 +55,27 @@ type PageKey =
   | 'Personel Performansı'
   | 'İş Gücü Tahmini'
   | 'Transfer Optimizasyonu'
+  | 'Transfer Merkezi'
+  | 'Onaylar'
   | 'AI Operasyon & Verimlilik'
   | 'Operasyon Görselleri'
   | 'Verimlilik Görselleri'
   | 'Raporlar'
   | 'Şubelere Toplu Mail'
   | 'Bildirimler'
+  | 'AI Geri Bildirim'
   | 'Veri Toplama'
   | 'Ana Veri Yönetimi'
+  | 'Tüm Sayfalar (Veritabanı)'
   | 'Ayarlar'
 
 const pages: PageKey[] = [
   'Genel Özet', 'CEO Özeti', 'Bölge & Mağaza', 'Personel Kartları', 'Unvan Analizi',
   'Personel Performansı', 'İş Gücü Tahmini', 'Transfer Optimizasyonu',
+  'Transfer Merkezi', 'Onaylar',
   'AI Operasyon & Verimlilik', 'Operasyon Görselleri', 'Verimlilik Görselleri',
-  'Raporlar', 'Şubelere Toplu Mail', 'Bildirimler', 'Veri Toplama', 'Ana Veri Yönetimi', 'Ayarlar',
+  'Raporlar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama',
+  'Ana Veri Yönetimi', 'Tüm Sayfalar (Veritabanı)', 'Ayarlar',
 ]
 
 const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
@@ -78,14 +87,18 @@ const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
   'Personel Performansı': { subtitle: 'İK yetkili performans görünümü', source: 'omehr_person_performance_snapshot' },
   'İş Gücü Tahmini': { subtitle: 'Talep ve iş gücü tahmin sonuçları', source: 'omehr_workforce_forecast' },
   'Transfer Optimizasyonu': { subtitle: 'Transfer önerileri ve rota görünümü', source: 'omehr_transfer_requests + omehr_transfer_routes' },
+  'Transfer Merkezi': { subtitle: 'Transfer talebi, takip ve karar akışı', source: 'Railway transfer iş akışı' },
+  'Onaylar': { subtitle: 'Bölge ve İK onay merkezi', source: 'Railway onay iş akışı' },
   'AI Operasyon & Verimlilik': { subtitle: 'AI norm ve operasyon önerileri', source: 'omehr_ai_norm_recommendations' },
   'Operasyon Görselleri': { subtitle: 'Operasyon metriklerinin görsel özeti', source: 'omehr_daily_operations + omehr_hourly_density' },
   'Verimlilik Görselleri': { subtitle: 'Mağaza ve dönem verimlilik analizi', source: 'omehr_monthly_store_metrics + omehr_period_metrics' },
   'Raporlar': { subtitle: 'Yönetici ve bölge rapor merkezi', source: 'omehr_report_jobs + ileride Storage' },
   'Şubelere Toplu Mail': { subtitle: 'Yetkili toplu iletişim merkezi', source: 'omehr_mail_jobs + omehr_recipient_directory' },
   'Bildirimler': { subtitle: 'Kullanıcı ve operasyon bildirimleri', source: 'omehr_notifications' },
+  'AI Geri Bildirim': { subtitle: 'AI önerilerine insan geri bildirimi', source: 'AI norm sonuçları + karar kaydı' },
   'Veri Toplama': { subtitle: 'Atanmış veri toplama formları', source: 'omehr_form_assignments + omehr_data_collection_submissions' },
   'Ana Veri Yönetimi': { subtitle: 'Kontrollü referans ve iş kuralı yönetimi', source: 'omehr_referential_control' },
+  'Tüm Sayfalar (Veritabanı)': { subtitle: 'Motor veri sayfalarının denetimli görünümü', source: 'Railway modül snapshotları' },
   'Ayarlar': { subtitle: 'Kullanıcı, rol ve görünüm ayarları', source: 'omehr_user_access' },
 }
 
@@ -94,6 +107,35 @@ function fmtDate(value: string | null) {
   return new Intl.DateTimeFormat('tr-TR', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul',
   }).format(new Date(value))
+}
+
+function displayValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır'
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+function ModuleTable({ payload }: { payload?: ModulePayload }) {
+  const [query, setQuery] = useState('')
+  const rows = payload?.rows ?? []
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('tr-TR')
+    if (!needle) return rows
+    return rows.filter((row) => Object.values(row).some((value) => displayValue(value).toLocaleLowerCase('tr-TR').includes(needle)))
+  }, [query, rows])
+  const columns = useMemo(() => {
+    const names: string[] = []
+    filtered.slice(0, 100).forEach((row) => Object.keys(row).forEach((key) => { if (!names.includes(key)) names.push(key) }))
+    return names
+  }, [filtered])
+  if (!rows.length) return <div className="empty">Bu modül için Railway çıktısı henüz oluşmadı. İlgili motor veya rapor çalıştırıldığında burada görünecek.</div>
+  return <section className="section module-data">
+    <div className="section-title"><div><h2>{payload?.title || 'Canlı sonuçlar'}</h2>{payload?.description && <p>{payload.description}</p>}</div><div className="status-pill">{filtered.length} / {rows.length} kayıt</div></div>
+    <input className="table-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Bu tabloda ara…" />
+    <div className="table-wrap"><table><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{filtered.slice(0, 500).map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{displayValue(row[column])}</td>)}</tr>)}</tbody></table></div>
+    {filtered.length > 500 && <div className="table-limit">İlk 500 kayıt gösteriliyor. Arama ile sonucu daraltabilirsiniz.</div>}
+  </section>
 }
 
 export default function HomePage() {
@@ -105,6 +147,7 @@ export default function HomePage() {
   const [kpi, setKpi] = useState<KpiRow | null>(null)
   const [stores, setStores] = useState<StoreRow[]>([])
   const [titles, setTitles] = useState<TitleRow[]>([])
+  const [modules, setModules] = useState<Record<string, ModulePayload>>({})
   const [access, setAccess] = useState<AccessRow | null>(null)
   const [activePage, setActivePage] = useState<PageKey>('Genel Özet')
   const [navOpen, setNavOpen] = useState(false)
@@ -134,7 +177,7 @@ export default function HomePage() {
       }
       setAccess(accessRes.data)
       const tenantId = accessRes.data.tenant_id
-      const [kpiRes, storeRes, titleRes] = await Promise.all([
+      const [kpiRes, storeRes, titleRes, moduleRes] = await Promise.all([
         supabase.from('omehr_kpi_snapshot')
           .select('active_current,total_norm,norm_deficit,norm_surplus,net_need,engine_version,calculated_at')
           .eq('tenant_id', tenantId)
@@ -147,10 +190,17 @@ export default function HomePage() {
           .select('title_name,active_current,total_norm,norm_deficit,norm_surplus,calculated_at')
           .eq('tenant_id', tenantId)
           .order('norm_deficit', { ascending: false }).limit(100),
+        supabase.from('omehr_module_snapshots')
+          .select('module_key,payload,calculated_at')
+          .eq('tenant_id', tenantId),
       ])
       if (kpiRes.error) setError(kpiRes.error.message); else setKpi(kpiRes.data)
       if (!storeRes.error) setStores(storeRes.data ?? [])
       if (!titleRes.error) setTitles(titleRes.data ?? [])
+      if (!moduleRes.error) {
+        const mapped = Object.fromEntries(((moduleRes.data ?? []) as ModuleRow[]).map((row) => [row.module_key, row.payload]))
+        setModules(mapped)
+      }
       setLoading(false)
     }
     loadDashboard()
@@ -214,6 +264,9 @@ export default function HomePage() {
           calculated_at: calculatedAt,
         })))
       }
+      if (run?.modules && typeof run.modules === 'object') {
+        setModules(run.modules as Record<string, ModulePayload>)
+      }
       setEngineMessage('Motor tamamlandı; güncel Railway sonuçları ekrana yüklendi.')
     } catch (runError) {
       setEngineMessage('')
@@ -262,10 +315,20 @@ export default function HomePage() {
 
   const renderPage = () => {
     if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}</>
-    if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}</>
+    if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}<ModuleTable payload={modules.forecast_summary} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
-    if (activePage === 'Unvan Analizi') return renderTitleTable()
-    return <section className="module-card"><div className="module-icon">OMEHR</div><div><h2>{activePage}</h2><p>{pageMeta[activePage].subtitle}</p><div className="module-source">Veri kaynağı: {pageMeta[activePage].source}</div><div className="module-note">Arayüz modülü hazır. İlgili Supabase tablosu güncel Railway sonuçlarıyla beslendiğinde bu ekran canlı veriye geçecek.</div></div></section>
+    if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
+    if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
+    if (activePage === 'Personel Performansı') return <ModuleTable payload={modules.performance} />
+    if (activePage === 'İş Gücü Tahmini') return <><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
+    if (activePage === 'Transfer Optimizasyonu') return <ModuleTable payload={modules.transfer} />
+    if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
+    if (activePage === 'Operasyon Görselleri') return <><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
+    if (activePage === 'Verimlilik Görselleri') return <><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
+    if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
+    if (activePage === 'Tüm Sayfalar (Veritabanı)') return <>{Object.entries(modules).map(([key, payload]) => <ModuleTable key={key} payload={payload} />)}</>
+    const operational = ['Transfer Merkezi', 'Onaylar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama', 'Ana Veri Yönetimi', 'Ayarlar'].includes(activePage)
+    return <section className="module-card"><div className="module-icon">OMEHR</div><div><h2>{activePage}</h2><p>{pageMeta[activePage].subtitle}</p><div className="module-source">Veri kaynağı: {pageMeta[activePage].source}</div><div className="module-note">{operational ? 'Bu ekran kayıt veya onay işlemi yapar. Streamlit ile aynı yetki, belge ve bildirim kuralları güvenli API üzerinden bağlanıyor; salt-okunur veri ekranlarından ayrı doğrulanacaktır.' : 'Bu modül için henüz yayımlanmış Railway sonucu bulunmuyor.'}</div></div></section>
   }
 
   return (

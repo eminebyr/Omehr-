@@ -50,7 +50,12 @@ def _post_rows(table: str, payload: dict | list[dict], *, upsert: bool = False) 
     suffix = ""
     if upsert:
         prefer = "resolution=merge-duplicates,return=minimal"
-        conflict = "tenant_id,store_name" if table == "omehr_store_summary" else "tenant_id,title_name"
+        conflicts = {
+            "omehr_store_summary": "tenant_id,store_name",
+            "omehr_title_summary": "tenant_id,title_name",
+            "omehr_module_snapshots": "tenant_id,module_key",
+        }
+        conflict = conflicts.get(table, "tenant_id")
         suffix = f"?on_conflict={conflict}"
     request = Request(
         f"{base_url}/rest/v1/{table}{suffix}",
@@ -122,7 +127,17 @@ def sync_dashboard_summaries(summary: dict) -> dict[str, bool]:
         for row in summary.get("unvan_bazli", [])
         if row.get("unvan")
     ]
+    modules = [
+        {
+            "tenant_id": tenant_id,
+            "module_key": str(key),
+            "payload": value,
+            "calculated_at": calculated_at,
+        }
+        for key, value in (summary.get("modules") or {}).items()
+    ]
     return {
         "stores": bool(stores) and _post_rows("omehr_store_summary", stores, upsert=True),
         "titles": bool(titles) and _post_rows("omehr_title_summary", titles, upsert=True),
+        "modules": bool(modules) and _post_rows("omehr_module_snapshots", modules, upsert=True),
     }

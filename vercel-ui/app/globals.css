@@ -97,6 +97,11 @@ tr:last-child td { border-bottom:none; }
 .error { margin-top:14px; color:#a83d3d; background:#fff0f0; border:1px solid #ffd0d0; padding:10px 12px; border-radius:10px; font-size:13px; }
 .note { margin-top:18px; color:#708096; font-size:12px; line-height:1.5; }
 .empty { padding:30px; color:var(--muted); text-align:center; }
+.module-data + .module-data { margin-top:28px; }
+.section-title p { color:var(--muted); margin:5px 0 0; font-size:13px; }
+.table-search { width:min(460px,100%); margin:0 0 12px; border:1px solid var(--line); background:#0b1727; color:var(--text); border-radius:11px; padding:11px 13px; outline:none; }
+.table-search:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(22,166,173,.1); }
+.table-limit { color:var(--muted); font-size:12px; margin-top:8px; }
 
 @media (max-width:1180px) {
   .grid { grid-template-columns:repeat(3,1fr); }
