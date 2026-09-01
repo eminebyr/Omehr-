@@ -75,6 +75,26 @@ def _post_rows(table: str, payload: dict | list[dict], *, upsert: bool = False) 
         return False
 
 
+def fetch_sales_targets() -> list[dict]:
+    """Streamlit için aynı kiracının satış hedeflerini salt okunur getirir."""
+    connection = _connection()
+    if connection is None:
+        return []
+    base_url, secret_key = connection
+    tenant = _tenant_id()
+    request = Request(
+        f"{base_url}/rest/v1/omehr_sales_targets?tenant_id=eq.{tenant}&select=period,store_id,store_name,sales_target,explanation,action_plan,owner_name,updated_at",
+        method="GET",
+        headers={"apikey": secret_key, "User-Agent": "OMEHR-Railway-Sync/1.0"},
+    )
+    try:
+        with urlopen(request, timeout=12) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            return payload if isinstance(payload, list) else []
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError):
+        return []
+
+
 def sync_kpi_snapshot(kpis: dict, *, engine_version: str = "") -> bool:
     """Başarılı motor KPI'larını Supabase'e ekler.
 
