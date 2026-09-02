@@ -14,7 +14,7 @@ seviyesi durumuna bağımlı; ayrı dosyaya taşınsalar bu sessizce bozulurdu.
 
 import pandas as pd
 
-from services.security import authenticate as secure_authenticate
+from services.security import authenticate as secure_authenticate, set_password as secure_set_password
 from web.formatting import norm_text
 
 # DÜZELTME (çok kiracılı SaaS): önceden burada 4 SABİT, gerçek bir
@@ -31,7 +31,61 @@ def accounts(sheets):
     ml = sheets.get("Mail_Listesi", pd.DataFrame()).copy()
     if ml.empty: return pd.DataFrame()
     if "Aktif" in ml.columns: ml = ml[ml["Aktif"].astype(str).str.casefold().isin(["evet", "e", "yes", "1", "true"])]
+    # Eski veri setlerinde `admin` hesabının rolü HR_DIRECTOR olarak kalmış
+    # olabiliyor. ADMIN hiç yoksa önce Web Kullanıcı=admin olan uygun hesabı;
+    # o da yoksa ilk global ve 2. seviye İK Direktörünü yönetici yaparız.
+    # Böylece belirli bir demo kullanıcı adına bağımlılık oluşmaz.
+    roles = ml.get("Rol", pd.Series(index=ml.index, dtype=str)).astype(str).str.upper()
+    if not roles.eq("ADMIN").any():
+        scopes = ml.get("Yetki Kapsamı", pd.Series(index=ml.index, dtype=str)).astype(str).str.upper()
+        levels = pd.to_numeric(
+            ml.get("Onay Seviyesi", pd.Series(index=ml.index, dtype=float)), errors="coerce"
+        ).fillna(0)
+        eligible = roles.eq("HR_DIRECTOR") & scopes.eq("ALL") & levels.ge(2)
+        usernames = ml.get("Web Kullanıcı", pd.Series(index=ml.index, dtype=str)).astype(str).str.strip().str.casefold()
+        named_admin = ml.index[eligible & usernames.eq("admin")]
+        candidates = named_admin if len(named_admin) else ml.index[eligible]
+        if len(candidates):
+            ml.loc[candidates[0], "Rol"] = "ADMIN"
     return ml
+
+
+def can_manage_user_passwords(role: str) -> bool:
+    """Yalnız ADMIN rolü başka kullanıcılar için geçici şifre atayabilir."""
+    return str(role or "").strip().upper() == "ADMIN"
+
+
+def password_reset_usernames(account_frame: pd.DataFrame, current_username: str) -> list[str]:
+    """Aktif hesaplardan yöneticinin kendisi dışındaki kullanıcı adlarını döndürür."""
+    if account_frame is None or account_frame.empty or "Web Kullanıcı" not in account_frame.columns:
+        return []
+    current = str(current_username or "").strip().casefold()
+    return sorted({
+        username
+        for value in account_frame["Web Kullanıcı"].dropna()
+        if (username := str(value).strip()) and username.casefold() != current
+    })
+
+
+def password_reset_labels(account_frame: pd.DataFrame) -> dict[str, str]:
+    """Şifre seçim kutusunda kullanıcı adı yanında sorumlu ve rolü gösterir."""
+    if account_frame is None or account_frame.empty or "Web Kullanıcı" not in account_frame.columns:
+        return {}
+    labels: dict[str, str] = {}
+    for _, row in account_frame.iterrows():
+        username = str(row.get("Web Kullanıcı") or "").strip()
+        if not username:
+            continue
+        responsible = str(row.get("Sorumlu") or "").strip()
+        role = str(row.get("Rol") or "").strip()
+        description = responsible or username
+        labels[username] = f"{description} ({username}) · {role}" if role else f"{description} ({username})"
+    return labels
+
+
+def reset_user_password(username: str, password: str, tenant_id: str) -> None:
+    """Geçici şifre atar; güvenlik katmanı kilidi ve hata sayacını da temizler."""
+    secure_set_password(username, password, must_change=True, tenant_id=tenant_id)
 
 
 def verify_password(user_row, password, tenant_id=None):
@@ -92,4 +146,3 @@ def transfer_recipients(account_frame, row, sheet_frames=None):
         + region_email_list(account_frame, row.get("target_region"))
         + branch_email_list(sheet_frames,row.get("source_store"),row.get("target_store"))
     ))
-
