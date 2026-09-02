@@ -71,7 +71,24 @@ def _post_rows(table: str, payload: dict | list[dict], *, upsert: bool = False) 
     try:
         with urlopen(request, timeout=12) as response:
             return 200 <= int(getattr(response, "status", 0)) < 300
-    except (HTTPError, URLError, TimeoutError, OSError, ValueError):
+    except HTTPError as exc:
+        # DÜZELTME (görünürlük): bu hata daha önce TAMAMEN sessiz
+        # yutuluyordu — örn. Supabase'de ilgili tablo/migration henüz
+        # uygulanmamışsa (404) veya RLS politikası reddederse (401/403),
+        # webhook_server.py yine de 200 dönüyordu ve hiçbir log basılmıyordu.
+        # Artık en azından Railway loglarında görünür.
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")[:300]
+        except Exception:
+            detail = ""
+        print(
+            f"[supabase_sync] '{table}' tablosuna yazma başarısız: "
+            f"HTTP {exc.code} {exc.reason} — {detail}",
+            flush=True,
+        )
+        return False
+    except (URLError, TimeoutError, OSError, ValueError) as exc:
+        print(f"[supabase_sync] '{table}' tablosuna yazma başarısız: {exc}", flush=True)
         return False
 
 
