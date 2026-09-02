@@ -144,7 +144,16 @@ def run_official_engine_summary() -> dict:
         scenarios=scens,
         output_dir=runtime_root() / "output",
     )
-    from services.supabase_sync import sync_dashboard_summaries
+    from services.supabase_sync import sync_dashboard_summaries, sync_kpi_snapshot
+    from services.version import APP_VERSION
 
     summary["supabase_sync"] = sync_dashboard_summaries(summary)
+    # DÜZELTME: bu köprü daha önce yalnız sync_dashboard_summaries()
+    # çağırıyordu (mağaza/unvan/modül tabloları) ama omehr_kpi_snapshot'ı
+    # HİÇ güncellemiyordu — panelin "Son veri" saati bu tablodan okunduğu
+    # için, "Motoru çalıştır" butonuna basınca arka planda gerçekten
+    # başarılı çalışsa bile ekrandaki saat DEĞİŞMİYORDU (kullanıcı için
+    # görünür bir teyit yoktu). kp, ec.kpis(st)'nin HAM (Türkçe anahtarlı)
+    # çıktısı — sync_kpi_snapshot'ın beklediği formatla zaten birebir uyumlu.
+    summary["kpi_sync_ok"] = sync_kpi_snapshot(kp, engine_version=APP_VERSION)
     return summary
