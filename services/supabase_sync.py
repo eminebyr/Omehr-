@@ -12,6 +12,7 @@ Güvenlik davranışı:
 """
 
 import json
+import math
 import os
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
@@ -41,6 +42,27 @@ def _connection() -> tuple[str, str] | None:
     return base_url, secret_key
 
 
+def _json_safe(value):
+    """NaN/Infinity içeren yapıları RFC 8259 uyumlu (null'a çevrilmiş) hale getirir.
+
+    DÜZELTME: Python'un json.dumps'ı varsayılan olarak NaN/Infinity'i çıplak
+    `NaN`/`Infinity` token'ları olarak yazar — bu Python'un KENDİ json'una
+    göre "geçerli" görünse de RFC 8259'a AYKIRIDIR. Supabase'in kullandığı
+    PostgREST bunu sıkı şekilde reddediyor ("Empty or invalid json" / 400
+    PGRST102) — module_snapshots'a yazarken canlıda gözlemlendi. DataFrame
+    kaynaklı sayısal sütunlarda (numpy float64 NaN gibi) bu her zaman risk;
+    bu yüzden TÜM Supabase gönderimleri buradan geçirilir, tek tek çağıran
+    tarafların hatırlaması gerekmez.
+    """
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return None
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    return value
+
+
 def _post_rows(table: str, payload: dict | list[dict], *, upsert: bool = False) -> bool:
     connection = _connection()
     if connection is None:
@@ -59,7 +81,7 @@ def _post_rows(table: str, payload: dict | list[dict], *, upsert: bool = False) 
         suffix = f"?on_conflict={conflict}"
     request = Request(
         f"{base_url}/rest/v1/{table}{suffix}",
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        data=json.dumps(_json_safe(payload), ensure_ascii=False).encode("utf-8"),
         method="POST",
         headers={
             "apikey": secret_key,
