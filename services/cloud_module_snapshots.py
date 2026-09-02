@@ -75,7 +75,13 @@ def build_module_snapshots(
         for scenario_name, frame in scenarios.items():
             if isinstance(frame, pd.DataFrame) and not frame.empty:
                 data = frame.copy()
-                data.insert(0, "Senaryo", str(scenario_name))
+                # DÜZELTME: .insert(0, "Senaryo", ...) bazı senaryo
+                # DataFrame'lerinde ZATEN "Senaryo" adlı bir sütun varsa
+                # "cannot insert Senaryo, already exists" hatasıyla
+                # çöküyordu (canlıda /api/run-engine üzerinden gözlendi).
+                # Doğrudan atama, sütun var/yok fark etmeksizin güvenli:
+                # varsa üzerine yazar, yoksa oluşturur.
+                data["Senaryo"] = str(scenario_name)
                 transfer_rows.extend(_records(data, limit=500))
 
     forecast_path = output_dir / "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
