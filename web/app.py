@@ -235,7 +235,8 @@ def build_model_cached(mtime: float, tenant_id: str = ""):
 
 
 from web.accounts import (
-    accounts, verify_password, transfer_recipients,
+    accounts, verify_password, transfer_recipients, can_manage_user_passwords,
+    password_reset_usernames, password_reset_labels, reset_user_password,
 )
 
 
@@ -794,7 +795,7 @@ if st.session_state.get("must_change_password", False):
         if new1!=new2:st.error("Şifreler aynı değil.")
         elif error:st.error(error)
         else:
-            set_password(username,new1,must_change=False)
+            set_password(username,new1,must_change=False,tenant_id=current_tenant_id())
             st.session_state.must_change_password=False
             log(username,"MANDATORY_PASSWORD_CHANGE")
             st.success("Şifreniz güvenli biçimde değiştirildi.")
@@ -827,35 +828,42 @@ with st.sidebar:
             if new1 != new2: st.error("Şifreler aynı olmalı")
             elif error:st.error(error)
             else:
-                set_password(username,new1,must_change=False); log(username,"PASSWORD_CHANGE"); st.success("Şifre değiştirildi")
-    if username.strip().casefold() == "admin":
+                set_password(username,new1,must_change=False,tenant_id=current_tenant_id()); log(username,"PASSWORD_CHANGE"); st.success("Şifre değiştirildi")
+    if can_manage_user_passwords(role):
         with st.expander("Kullanıcı şifresi sıfırla"):
             st.caption("Mevcut şifreler görüntülenmez. Kullanıcıya yeni geçici şifre verilir.")
-            reset_users = sorted(
-                {
-                    str(value).strip()
-                    for value in acc.get("Web Kullanıcı", pd.Series(dtype=str)).dropna()
-                    if str(value).strip() and str(value).strip().casefold() != "admin"
-                }
-            )
-            reset_username = st.selectbox("Kullanıcı", reset_users, key="admin_reset_user")
-            reset_password = st.text_input("Yeni geçici şifre", type="password", key="admin_reset_password")
-            reset_password_again = st.text_input(
-                "Yeni geçici şifre tekrar", type="password", key="admin_reset_password_again"
-            )
-            if st.button("Geçici şifreyi tanımla", key="admin_reset_submit"):
-                error = password_error(reset_password)
-                if reset_password != reset_password_again:
-                    st.error("Şifreler aynı olmalı.")
-                elif error:
-                    st.error(error)
-                else:
-                    set_password(reset_username, reset_password, must_change=True)
-                    log(username, "ADMIN_PASSWORD_RESET", reset_username)
-                    st.success(
-                        f"{reset_username} için geçici şifre tanımlandı. "
-                        "Kullanıcı ilk girişte bu şifreyi değiştirecek."
-                    )
+            reset_users = password_reset_usernames(acc, username)
+            if not reset_users:
+                st.info("Şifre atanabilecek başka aktif kullanıcı bulunmuyor.")
+            else:
+                reset_labels = password_reset_labels(acc)
+                reset_username = st.selectbox(
+                    "Kullanıcı",
+                    reset_users,
+                    format_func=lambda value: reset_labels.get(value, value),
+                    key="admin_reset_user",
+                )
+                reset_password = st.text_input("Yeni geçici şifre", type="password", key="admin_reset_password")
+                reset_password_again = st.text_input(
+                    "Yeni geçici şifre tekrar", type="password", key="admin_reset_password_again"
+                )
+                if st.button("Geçici şifreyi tanımla", key="admin_reset_submit"):
+                    error = password_error(reset_password)
+                    if reset_password != reset_password_again:
+                        st.error("Şifreler aynı olmalı.")
+                    elif error:
+                        st.error(error)
+                    else:
+                        reset_user_password(
+                            reset_username,
+                            reset_password,
+                            tenant_id=current_tenant_id(),
+                        )
+                        log(username, "ADMIN_PASSWORD_RESET", reset_username)
+                        st.success(
+                            f"{reset_username} için geçici şifre tanımlandı. "
+                            "Kullanıcı ilk girişte bu şifreyi değiştirecek."
+                        )
     if st.button("Çıkış", use_container_width=True): del st.session_state.user; st.rerun()
 
 fm, detail, stores, kpis = build_model_cached(_input_version(current_tenant_id()), tenant_id=current_tenant_id())

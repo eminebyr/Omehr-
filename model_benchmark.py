@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from services.runtime_paths import runtime_root
+from services.settings import input_path
+from services.model_lifecycle import assess_model_maturity, independent_classification_target, temporal_workload_backtest
 from services.safe_exec import log_swallowed
 
 def _output(): return runtime_root() / "output"
@@ -313,14 +315,36 @@ def run() -> dict:
     from sklearn.model_selection import GroupKFold
 
     data, numeric, categorical = _dataset()
+    source_sheets = pd.read_excel(input_path(runtime_root()), sheet_name=None)
+    # AI operasyon adımı aynı motor çalıştırmasında bu backtesti zaten üretir.
+    # Railway CPU'sunu iki kez harcamamak için önce o sonucu yeniden kullan.
+    try:
+        temporal_summary = pd.read_excel(_analytics_file(), sheet_name="Zamansal_Backtest_Ozet")
+    except Exception:
+        temporal_detail, temporal_summary = temporal_workload_backtest(source_sheets)
+    else:
+        try:
+            temporal_detail = pd.read_excel(_analytics_file(), sheet_name="Zamansal_Backtest_Detay")
+        except Exception:
+            temporal_detail = pd.DataFrame()
+    lifecycle = assess_model_maturity(source_sheets, backtest_summary=temporal_summary)
     features = numeric + categorical
     groups = data["MağazaID"].astype(str)
     unique_groups = groups.nunique()
     folds = min(5, unique_groups)
     cv = GroupKFold(n_splits=folds)
-    regression_models, classification_models = _pipelines(numeric, categorical)
+    regression_models, _classification_models = _pipelines(numeric, categorical)
     regression, residuals, best_regression = _regression_benchmark(data, features, groups, regression_models, cv)
-    classification, best_classification = _classification_benchmark(data, features, groups, classification_models, cv)
+    independent_target, classification_reason = independent_classification_target(source_sheets)
+    # AI Açık, AI-Mevcut Fark'tan türetildiği için bağımsız hedef değildir.
+    # Bu hedefle çok yüksek F1 üretmek yerine sınıflandırma kanıtını, sonradan
+    # gerçekleşen/onaylanan ihtiyaç etiketi gelene kadar açıkça bekletiriz.
+    classification = pd.DataFrame([{
+        "Model": "YAYINLANMADI",
+        "Durum": "Bağımsız hedef bulundu" if not independent_target.empty else "Bağımsız hedef bekleniyor",
+        "Açıklama": classification_reason,
+    }])
+    best_classification = None
     importance = _importance(data, features, groups, best_regression, regression_models[best_regression])
     residual_summary = (
         residuals.groupby(["Bölge", "Unvan"], as_index=False)
@@ -339,13 +363,16 @@ def run() -> dict:
     with pd.ExcelWriter(_benchmark_file(), engine="openpyxl") as writer:
         regression.to_excel(writer, sheet_name="Regresyon_Model_Karsilastirma", index=False)
         classification.to_excel(writer, sheet_name="Siniflandirma_Karsilastirma", index=False)
+        lifecycle.to_frame().to_excel(writer, sheet_name="Model_Yasam_Dongusu", index=False)
+        temporal_summary.to_excel(writer, sheet_name="Zamansal_Backtest_Ozet", index=False)
+        if not temporal_detail.empty:
+            temporal_detail.to_excel(writer, sheet_name="Zamansal_Backtest_Detay", index=False)
         importance.to_excel(writer, sheet_name="Degisken_Onemi", index=False)
         residual_summary.to_excel(writer, sheet_name="Segment_Hata_Analizi", index=False)
         residuals.sort_values("Mutlak Hata", ascending=False).to_excel(writer, sheet_name="Grup_Disi_Tahminler", index=False)
         limitations.to_excel(writer, sheet_name="Model_Sinirliliklari", index=False)
     _format(_benchmark_file())
     best_row = regression.loc[regression["Model"].eq(best_regression)].iloc[0]
-    best_class_row = classification.loc[classification["Model"].eq(best_classification)].iloc[0]
     payload = {
         "version": "V19.1",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -359,10 +386,13 @@ def run() -> dict:
         "best_regression": best_row.replace({np.nan: None}).to_dict(),
         "best_regression_overfitting_status": best_row.get("Aşırı Öğrenme Durumu"),
         "best_classification_model": best_classification,
-        "best_classification": best_class_row.replace({np.nan: None}).to_dict(),
-        "best_classification_overfitting_status": best_class_row.get("Aşırı Öğrenme Durumu"),
-        "share_status": "Share with caveats",
-        "required_caveat": "Gerçek çok dönemli saha verisi bulunmadığından ileri zaman doğrulaması yapılamadı; model karar desteğidir.",
+        "best_classification": None,
+        "best_classification_overfitting_status": None,
+        "classification_status": classification_reason,
+        "model_lifecycle": lifecycle.to_dict(),
+        "temporal_backtest": temporal_summary.replace({np.nan: None}).to_dict("records"),
+        "share_status": "Production decision support" if lifecycle.release_allowed else "Experimental / observation only",
+        "required_caveat": lifecycle.reason,
     }
     _model_card().write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     return payload
