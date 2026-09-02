@@ -241,6 +241,11 @@ def render(ctx: PageContext) -> None:
                 log_swallowed("web.tab_modules.ai_operasyon.render: beklenmeyen hata", _exc)
                 class_metrics=pd.DataFrame()
             try:
+                lifecycle=read_sheet_cached(analytics_path, "Model_Yasam_Dongusu")
+            except Exception as _exc:
+                log_swallowed("web.tab_modules.ai_operasyon.render: model yaşam döngüsü okunamadı", _exc)
+                lifecycle=pd.DataFrame()
+            try:
                 test_results=read_sheet_cached(analytics_path, "Hipotez_Testleri")
             except Exception as _exc:
                 log_swallowed("web.tab_modules.ai_operasyon.render: beklenmeyen hata", _exc)
@@ -270,28 +275,20 @@ def render(ctx: PageContext) -> None:
                 class_chart=class_chart.dropna(subset=["Değer"])
             else:
                 class_chart=pd.DataFrame()
-            if class_chart.empty and deep_path.is_file():
-                try:
-                    deep_class=read_sheet_cached(deep_path, "Siniflandirma_Karsilastirma")
-                except Exception as _exc:
-                    log_swallowed("web.tab_modules.ai_operasyon.render: beklenmeyen hata", _exc)
-                    deep_class=pd.DataFrame()
-                metric_columns=[
-                    column for column in
-                    ["Precision","Recall","F1","Accuracy","Balanced Accuracy","ROC AUC"]
-                    if column in deep_class.columns
-                ]
-                if not deep_class.empty and metric_columns:
-                    rank_column="F1" if "F1" in deep_class.columns else metric_columns[0]
-                    ranked=deep_class.assign(
-                        _rank=pd.to_numeric(deep_class[rank_column],errors="coerce")
-                    ).sort_values("_rank",ascending=False)
-                    if not ranked.empty:
-                        best=ranked.iloc[0]
-                        class_chart=pd.DataFrame({
-                            "Metrik":metric_columns,
-                            "Değer":[pd.to_numeric(best.get(column),errors="coerce") for column in metric_columns],
-                        }).dropna(subset=["Değer"])
+            lifecycle_map={}
+            if {"Gösterge","Değer"}.issubset(lifecycle.columns):
+                lifecycle_map=dict(zip(lifecycle["Gösterge"].astype(str),lifecycle["Değer"]))
+                stage=lifecycle_map.get("Model yaşam evresi","Belirlenemedi")
+                release=lifecycle_map.get("Üretim yayını","Kapalı")
+                days=lifecycle_map.get("Benzersiz gerçek veri günü",0)
+                message=(
+                    f"Model yaşam evresi: **{stage}** · gerçek veri günü: **{days}** · "
+                    f"üretim yayını: **{release}**. Mağaza bazlı CV, zamansal backtest yerine geçmez."
+                )
+                if str(release).casefold()=="açık":
+                    st.success(message)
+                else:
+                    st.warning(message)
             m1,m2=st.columns(2)
             if mae_column and "Model" in model_comparison.columns:
                 regression_chart=model_comparison[["Model",mae_column]].copy()
@@ -321,20 +318,26 @@ def render(ctx: PageContext) -> None:
                     use_container_width=True,
                 )
             else:
-                m2.info("Sınıflandırma metrikleri için yeterli sınıf çeşitliliği bulunmuyor.")
+                m2.info(
+                    "Sınıflandırma bilinçli olarak çalıştırılmadı. AI-Mevcut Fark bağımsız hedef değildir; "
+                    "sonradan gerçekleşen/onaylanan kadro ihtiyacı etiketi birikince Precision, Recall ve F1 yayımlanacaktır."
+                )
             with st.expander("İstatistiksel testler ve model metodolojisi"):
                 if not test_results.empty:
                     st.dataframe(test_results,use_container_width=True,hide_index=True)
                 else:
                     st.info("İstatistiksel test sonuçları henüz oluşmadı.")
-                st.caption("AI önerisi karar desteğidir; resmi KPI ve yönetim normunu otomatik değiştirmez. Dummy işaretli veriler saha zaman etüdüyle güncellenmelidir.")
+                if not lifecycle.empty:
+                    st.markdown("**Model yaşam döngüsü ve yayın kapıları**")
+                    st.dataframe(lifecycle,use_container_width=True,hide_index=True)
+                st.caption("AI önerisi karar desteğidir; resmî KPI ve yönetim normunu otomatik değiştirmez. Dummy işaretli veriler saha zaman etüdüyle güncellenmelidir.")
 
             st.markdown("---")
             st.markdown("#### En İyi Modele Dayalı Öneri Sistemi")
             st.caption(
                 "Yukarıdaki karşılaştırmada en düşük hatayı veren model (aşağıda adı gösterilir), "
-                "her mağaza/unvan için GERÇEK bir GroupKFold tahmini üretir. Aşağıdaki tablo bu tahminleri "
-                "gösterir — sadece hangi model iyi diye durmak yerine, o modelin ürettiği sayıları kullanır."
+                "her mağaza/unvan için mağaza-dışı GroupKFold tahmini üretir. Bu karşılaştırma model geliştirme "
+                "kanıtıdır; üretim kadro önerisi ayrıca zamansal backtest ve veri olgunluk kapısını geçmelidir."
             )
             en_iyi_model_adi=None
             if mae_column and "Model" in model_comparison.columns and not model_comparison.empty:

@@ -12,6 +12,12 @@ from scipy import stats
 from services.runtime_paths import runtime_root
 from services.settings import input_path
 from services.version import MODEL_VERSION as _MODEL_VERSION
+from services.model_lifecycle import (
+    assess_model_maturity,
+    independent_classification_target,
+    retraining_due,
+    temporal_workload_backtest,
+)
 from services.safe_exec import log_swallowed
 
 
@@ -20,6 +26,7 @@ def _output(): return runtime_root() / "output"
 def _ai_file(): return _output() / "V19_AI_Norm_Sonuclari.xlsx"
 def _analytics_file(): return _output() / "V19_Istatistik_ML_Operasyon_Analizi.xlsx"
 def _json_file(): return _output() / "V19_Model_Karti.json"
+def _trained_model_file(): return _output() / "V19_Is_Yuku_Modeli.joblib"
 
 
 def _canon(value) -> str:
@@ -292,6 +299,7 @@ def _statistics(model: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                 "p-değeri": p_value,
                 "Etki Büyüklüğü": ss_between / ss_total if ss_total else 0,
                 "Sonuç": "Anlamlı fark var" if p_value < 0.05 else "Anlamlı fark kanıtlanmadı",
+                "Kullanım": "Keşifsel bölge karşılaştırması; model doğrulama skoru değildir",
             }
         )
         lev, lev_p = stats.levene(*groups, center="median")
@@ -303,6 +311,7 @@ def _statistics(model: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                 "p-değeri": lev_p,
                 "Etki Büyüklüğü": np.nan,
                 "Sonuç": "Varyanslar farklı" if lev_p < 0.05 else "Homojenlik reddedilmedi",
+                "Kullanım": "ANOVA varsayım kontrolü",
             }
         )
         kw, kw_p = stats.kruskal(*groups)
@@ -314,6 +323,7 @@ def _statistics(model: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                 "p-değeri": kw_p,
                 "Etki Büyüklüğü": np.nan,
                 "Sonuç": "Anlamlı fark var" if kw_p < 0.05 else "Anlamlı fark kanıtlanmadı",
+                "Kullanım": "Parametrik olmayan keşifsel karşılaştırma",
             }
         )
     contingency = pd.crosstab(model["Bölge"], np.where(model["AI-Mevcut Fark"] > 0, "AI Açık", "Açık Yok"))
@@ -330,13 +340,19 @@ def _statistics(model: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                 "p-değeri": p_value,
                 "Etki Büyüklüğü": cramers_v,
                 "Sonuç": "İlişki var" if p_value < 0.05 else "İlişki kanıtlanmadı",
+                "Kullanım": "Hesaplanmış AI açık dağılımı; tahmin doğruluğunu ölçmez",
             }
         )
         chi_summary = {"chi2": chi, "p_value": p_value, "dof": dof, "cramers_v": cramers_v}
     return pd.DataFrame(tests), chi_summary
 
 
-def _machine_learning(model: pd.DataFrame, operation: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+def _machine_learning(
+    model: pd.DataFrame,
+    operation: pd.DataFrame,
+    *,
+    retrain: bool = True,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     data = model.merge(operation, on="MağazaID", how="left")
     numeric_features = [
         "Aylık Ciro",
@@ -397,6 +413,31 @@ def _machine_learning(model: pd.DataFrame, operation: pd.DataFrame) -> tuple[pd.
             n_estimators=350, min_samples_leaf=3, max_features=0.85, random_state=42, n_jobs=1
         ),
     }
+    # Model haftalık eğitilir; ara günlerde kalıcı model yeni günlük girdiyi
+    # yeniden skorlar. Böylece her panel yenilemesi 4xCV eğitim maliyeti ödemez.
+    if not retrain and _trained_model_file().is_file() and _analytics_file().is_file():
+        try:
+            import joblib
+            fitted = joblib.load(_trained_model_file())
+            predictions = fitted.predict(data[numeric_features + categorical])
+            comparison = pd.read_excel(_analytics_file(), sheet_name="Model_Karsilastirma")
+            best_name = str(comparison.iloc[0]["Model"])
+            data["ML Tahmini İş Yükü FTE"] = np.maximum(predictions, 0)
+            data["ML Tahmini Norm"] = np.maximum(
+                data["Minimum Kişi"].fillna(0),
+                np.ceil(data["ML Tahmini İş Yükü FTE"] * data["Pik Katsayısı"]),
+            ).astype(int)
+            overfit = str(comparison.iloc[0].get("Aşırı Öğrenme Durumu") or "")
+            return comparison, data, {
+                "status": "SUCCESS",
+                "best_model": best_name,
+                "overfitting_status": overfit,
+                "classification": {"status": "SKIPPED", "reason": "Bağımsız hedef bekleniyor"},
+                "comparison_df": comparison,
+                "training_mode": "CACHED_MODEL_DAILY_SCORING",
+            }
+        except Exception as exc:
+            log_swallowed("Kalıcı ML modeli günlük skorlamada kullanılamadı; kontrollü yeniden eğitim yapılacak", exc, level="WARNING")
     folds = min(5, max(3, len(data) // 60))
     # DÜZELTME (P1 — reviewer önerisi): Sıradan KFold, AYNI mağazanın farklı
     # unvan satırlarının train/test arasında BÖLÜNMESİNE izin verir — bu,
@@ -477,79 +518,31 @@ def _machine_learning(model: pd.DataFrame, operation: pd.DataFrame) -> tuple[pd.
         np.ceil(data["ML Tahmini İş Yükü FTE"] * data["Pik Katsayısı"]),
     ).astype(int)
 
-    labels = (data["AI Önerilen Norm"] > data["Aktif Mevcut"]).astype(int)
-    class_summary = {"status": "SKIPPED", "reason": "Tek sınıf"}
-    if labels.nunique() == 2 and labels.value_counts().min() >= 3:
-        class_features = numeric_features + ["Yönetim Normu", "Aktif Mevcut"]
-        class_preprocessor = ColumnTransformer(
-            [
-                ("num", Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())]), class_features),
-                ("cat", OneHotEncoder(handle_unknown="ignore"), categorical),
-            ]
-        )
-        class_folds = min(5, int(labels.value_counts().min()))
-        # DÜZELTME (P1): StratifiedKFold sınıf dengesini korur ama AYNI
-        # mağazanın satırlarının train/test arasında bölünmesine izin
-        # verirdi (veri sızıntısı). StratifiedGroupKFold hem sınıf
-        # dengesini HEM mağaza ayrımını aynı anda sağlar.
-        class_grup_sayisi = data["MağazaID"].nunique() if "MağazaID" in data.columns else 0
-        if class_grup_sayisi >= class_folds:
-            class_cv = StratifiedGroupKFold(class_folds, shuffle=True, random_state=42)
-            class_cv_gruplar = data["MağazaID"]
-        else:
-            from services.safe_exec import log_swallowed
-            log_swallowed(
-                f"_machine_learning (sınıflandırma): StratifiedGroupKFold için yeterli benzersiz "
-                f"mağaza yok ({class_grup_sayisi} < {class_folds} kat) — StratifiedKFold'a düşüldü",
-                ValueError("yetersiz mağaza grubu"), level="WARNING",
-            )
-            class_cv = StratifiedKFold(class_folds, shuffle=True, random_state=42)
-            class_cv_gruplar = None
-        # KARAR: model_benchmark.py'nin sınıflandırma karşılaştırmasında
-        # Gradient Boosting (F1=0.951) Random Forest'ı (F1=0.926) geride
-        # bırakıyor ve aşırı öğrenme riski düşük çıkıyor. "En yüksek doğruluk"
-        # kararına göre üretimde de bu kullanılır.
-        from sklearn.ensemble import GradientBoostingClassifier
-        classifier = Pipeline(
-            [
-                ("prepare", class_preprocessor),
-                ("model", GradientBoostingClassifier(n_estimators=250, learning_rate=0.035, max_depth=3, random_state=42)),
-            ]
-        )
-        class_pred = cross_val_predict(
-            classifier,
-            data[class_features + categorical],
-            labels,
-            cv=class_cv,
-            groups=class_cv_gruplar,
-        )
-        class_summary = {
-            "status": "SUCCESS",
-            "model": "GradientBoostingClassifier",
-            # Model versiyonu, uygulama/kod sürümünden BİLEREK ayrı tutulur —
-            # hiperparametreler değiştiğinde bu versiyon da değişmeli, kod
-            # sürümü (APP_VERSION) değişmeden model davranışı sessizce
-            # değişmemeli. Artık services/version.py'deki TEK kaynaktan
-            # okunur (P2 — sürüm standardı merkezileştirmesi).
-            "model_version": _MODEL_VERSION,
-            "library": "scikit-learn",
-            "parameters": {
-                "n_estimators": 250,
-                "learning_rate": 0.035,
-                "max_depth": 3,
-                "random_state": 42,
-            },
-            "precision": precision_score(labels, class_pred, zero_division=0),
-            "recall": recall_score(labels, class_pred, zero_division=0),
-            "f1": f1_score(labels, class_pred, zero_division=0),
-            "accuracy": accuracy_score(labels, class_pred),
-            "positive_class": "AI normuna göre açık var",
-        }
-    return comparison, data, {"status": "SUCCESS", "best_model": best_name, "overfitting_status": _asiri_ogrenme_durumu, "classification": class_summary, "comparison_df": comparison}
+    # AI-Mevcut Fark, Yönetim Normu/Aktif Mevcut ve aynı karar zincirinden
+    # türetildiği için bağımsız bir sınıflandırma etiketi değildir. Bu hedefle
+    # alınan %99+ skorlar başarı değil hedef sızıntısıdır. Bağımsız gerçekleşen
+    # ihtiyaç etiketi run() seviyesinde doğrulanana kadar sınıflandırma eğitilmez.
+    class_summary = {
+        "status": "SKIPPED",
+        "reason": "Bağımsız gerçekleşen kadro ihtiyacı etiketi bekleniyor",
+    }
+    try:
+        import joblib
+        _output().mkdir(parents=True, exist_ok=True)
+        joblib.dump(_egitim_pipe, _trained_model_file())
+    except Exception as exc:
+        log_swallowed("Eğitilmiş iş yükü modeli kalıcı dosyaya yazılamadı", exc, level="WARNING")
+    return comparison, data, {"status": "SUCCESS", "best_model": best_name, "overfitting_status": _asiri_ogrenme_durumu, "classification": class_summary, "comparison_df": comparison, "training_mode": "WEEKLY_RETRAIN"}
 
 
 
-def _apply_model_selected_ai_norm(model: pd.DataFrame, ml_data: pd.DataFrame, model_card: dict) -> pd.DataFrame:
+def _apply_model_selected_ai_norm(
+    model: pd.DataFrame,
+    ml_data: pd.DataFrame,
+    model_card: dict,
+    *,
+    lifecycle=None,
+) -> pd.DataFrame:
     """Seçilen en iyi mağaza-dışı CV modelini güvenli karar zincirine bağlar.
 
     Resmî Fact_Norm ankrajdır. AI önerisi yalnız gerçek/karma operasyon verisi,
@@ -569,7 +562,15 @@ def _apply_model_selected_ai_norm(model: pd.DataFrame, ml_data: pd.DataFrame, mo
         best_mae = pd.to_numeric(row.get("CV MAE"), errors="coerce")
         best_r2 = pd.to_numeric(row.get("CV R²"), errors="coerce")
 
-    model_ok = bool(best_name) and np.isfinite(best_mae) and np.isfinite(best_r2) and best_r2 >= 0.25 and "YÜKSEK" not in overfit.upper()
+    temporal_ok = bool(getattr(lifecycle, "release_allowed", False))
+    model_ok = (
+        bool(best_name)
+        and np.isfinite(best_mae)
+        and np.isfinite(best_r2)
+        and best_r2 >= 0.25
+        and "YÜKSEK" not in overfit.upper()
+        and temporal_ok
+    )
 
     if not ml_data.empty and {"MağazaID","UnvanID","ML Tahmini İş Yükü FTE"}.issubset(ml_data.columns):
         preds = ml_data[["MağazaID","UnvanID","ML Tahmini İş Yükü FTE"]].drop_duplicates(["MağazaID","UnvanID"], keep="last")
@@ -607,7 +608,9 @@ def _apply_model_selected_ai_norm(model: pd.DataFrame, ml_data: pd.DataFrame, mo
     candidate.loc[new_position_ok] = candidate.loc[new_position_ok].clip(upper=1)
 
     result["Seçilen Model FTE"] = selected_fte.round(3)
-    result["Model Seçim Durumu"] = np.where(model_ok, f"{best_name} | GroupKFold CV", "Model yayıma uygun değil")
+    validation_label = "GroupKFold + zamansal backtest" if temporal_ok else "GroupKFold tamam; zamansal yayın kapısı bekleniyor"
+    result["Model Seçim Durumu"] = np.where(model_ok, f"{best_name} | {validation_label}", validation_label)
+    result["Model Yaşam Evresi"] = str(getattr(lifecycle, "stage", "BELİRLENEMEDİ"))
     result["AI Yayın Durumu"] = np.where(row_publish, "YAYINLANDI", "YAYINLANMADI — yönetim normu korundu")
     result["AI Önerilen Norm"] = np.where(row_publish, candidate, management.round().astype(int)).astype(int)
     result["AI-Mevcut Fark"] = result["AI Önerilen Norm"] - pd.to_numeric(result["Aktif Mevcut"], errors="coerce").fillna(0).round().astype(int)
@@ -615,7 +618,7 @@ def _apply_model_selected_ai_norm(model: pd.DataFrame, ml_data: pd.DataFrame, mo
     result["AI Karar Gerekçesi"] = np.where(
         row_publish,
         "Ciro/fiş/online/operasyon metrikleri + seçilen en iyi model + iş yükü FTE + güven ağırlığı",
-        "Standart süre doğrulaması, gerçek veri, güven veya model başarımı yayın eşiğini geçmedi; Fact_Norm korundu",
+        "Standart süre, gerçek veri, zamansal backtest veya model başarımı yayın eşiğini geçmedi; Fact_Norm korundu",
     )
     return result
 
@@ -730,6 +733,11 @@ def _format_analytics_workbook(path: Path) -> None:
 def run() -> dict:
     _output().mkdir(parents=True, exist_ok=True)
     sheets = pd.read_excel(_input(), sheet_name=None)
+    # Günlük veri biriktikçe aynı kod yolu başlangıç, öğrenme, ön doğrulama
+    # ve üretim evreleri arasında otomatik geçiş yapar. İki günlük demo veri
+    # modeli bozmaz; yalnız üretim yayın kapısını kapalı tutar.
+    temporal_detail, temporal_summary = temporal_workload_backtest(sheets)
+    lifecycle = assess_model_maturity(sheets, backtest_summary=temporal_summary)
     model = _workload_model(sheets)
     # GLOBAL VERİ KAPISI: standart sürelerin çoğu saha etüdüyle doğrulanmadan
     # model karşılaştırması çalışabilir, fakat kadro önerisi yayımlanamaz.
@@ -744,8 +752,22 @@ def run() -> dict:
     model["Global Veri Kapısı"] = np.where(verified_share >= 0.70, "AÇIK", "KAPALI")
     operation = _operation_features(sheets)
     tests, chi_summary = _statistics(model)
-    comparison, ml_data, model_card = _machine_learning(model, operation)
-    model = _apply_model_selected_ai_norm(model, ml_data, model_card)
+    activity_dates=pd.to_datetime(sheets.get("Gunluk_Aktivite_Hacmi",pd.DataFrame()).get("Tarih",pd.Series(dtype=object)),errors="coerce").dropna()
+    latest_data_at=activity_dates.max() if not activity_dates.empty else None
+    last_trained_at=pd.Timestamp.fromtimestamp(_trained_model_file().stat().st_mtime) if _trained_model_file().is_file() else None
+    must_retrain=retraining_due(last_trained_at,latest_data_at,cadence_days=lifecycle.retrain_cadence_days)
+    comparison, ml_data, model_card = _machine_learning(model, operation, retrain=must_retrain)
+    independent_target, classification_reason = independent_classification_target(sheets)
+    # Mevcut sınıflandırma etiketi AI-Mevcut Fark'tan türediği için girdiler
+    # tarafından doğrudan yeniden kurulabiliyordu. Bağımsız, sonradan
+    # gerçekleşmiş hedef gelene kadar yüksek F1/accuracy yayımlanmaz.
+    model_card["classification"] = {
+        "status": "READY" if not independent_target.empty else "SKIPPED",
+        "reason": classification_reason,
+        "positive_class": "Sonradan gerçekleşen/onaylanan kadro ihtiyacı",
+    }
+    model_card["lifecycle"] = lifecycle.to_dict()
+    model = _apply_model_selected_ai_norm(model, ml_data, model_card, lifecycle=lifecycle)
     result = _explanations(model, ml_data, model_card)
 
     regression_rows = []
@@ -810,6 +832,10 @@ def run() -> dict:
         pd.DataFrame(regression_rows).to_excel(writer, sheet_name="Regresyon", index=False)
         comparison.to_excel(writer, sheet_name="Model_Karsilastirma", index=False)
         metrics.to_excel(writer, sheet_name="Siniflandirma_Metrikleri", index=False)
+        lifecycle.to_frame().to_excel(writer, sheet_name="Model_Yasam_Dongusu", index=False)
+        temporal_summary.to_excel(writer, sheet_name="Zamansal_Backtest_Ozet", index=False)
+        if not temporal_detail.empty:
+            temporal_detail.to_excel(writer, sheet_name="Zamansal_Backtest_Detay", index=False)
         result.to_excel(writer, sheet_name="AI_Norm_ve_Aksiyon", index=False)
         operation.to_excel(writer, sheet_name="Operasyon_Metrikleri", index=False)
     _format_analytics_workbook(_ai_file())
@@ -821,6 +847,9 @@ def run() -> dict:
         "best_model": model_card.get("best_model"),
         "model_comparison": comparison.replace({np.nan: None}).to_dict("records"),
         "classification": class_metrics,
+        "model_lifecycle": lifecycle.to_dict(),
+        "training_mode": model_card.get("training_mode"),
+        "temporal_backtest": temporal_summary.replace({np.nan: None}).to_dict("records"),
         "chi_square": chi_summary,
         "official_kpi_source": "Fact_Mevcut + Fact_Norm",
         "ai_decision_source": "İş yükü dakikası + kapasite + pik + minimum kadro + operasyon modeli",

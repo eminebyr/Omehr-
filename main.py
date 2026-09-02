@@ -106,7 +106,16 @@ def main():
             pass
         print('[4/6] Derin model karşılaştırması ve mağaza-dışı doğrulama...',flush=True)
         try:
-            audit['model_benchmark']=run_model_benchmark()
+            _training_mode=(audit.get('ai_operations') or {}).get('training_mode') if isinstance(audit.get('ai_operations'),dict) else None
+            _benchmark_file=_output()/"V19_1_Derin_Model_Karsilastirmasi.xlsx"
+            if _training_mode == 'CACHED_MODEL_DAILY_SCORING' and _benchmark_file.is_file():
+                audit['model_benchmark']={
+                    'status':'CACHED',
+                    'reason':'Haftalık yeniden eğitim vadesi gelmedi; mevcut doğrulanmış benchmark korundu.',
+                    'file':str(_benchmark_file),
+                }
+            else:
+                audit['model_benchmark']=run_model_benchmark()
         except Exception as _mb_exc:
             # ÜRETİM GÜVENLİĞİ: bu adım, bir önceki
             # (isteğe bağlı) AI işlem motoru adımının ürettiği
