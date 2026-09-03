@@ -44,7 +44,7 @@ type TitleRow = {
   calculated_at: string | null
 }
 
-type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[] }
+type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[]; kpis?: Record<string, number> }
 type ModuleRow = { module_key: string; payload: ModulePayload; calculated_at: string | null }
 
 type SalesTargetRow = {
@@ -73,6 +73,7 @@ type PageKey =
   | 'Operasyon Görselleri'
   | 'Verimlilik Görselleri'
   | 'Satış Kök Neden Analizi'
+  | 'Gerçek Personel İhtiyacı'
   | 'Raporlar'
   | 'Şubelere Toplu Mail'
   | 'Bildirimler'
@@ -88,6 +89,7 @@ const pages: PageKey[] = [
   'Transfer Merkezi', 'Onaylar',
   'AI Operasyon & Verimlilik', 'Operasyon Görselleri', 'Verimlilik Görselleri',
   'Satış Kök Neden Analizi',
+  'Gerçek Personel İhtiyacı',
   'Raporlar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama',
   'Ana Veri Yönetimi', 'Tüm Sayfalar (Veritabanı)', 'Ayarlar',
 ]
@@ -107,6 +109,7 @@ const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
   'Operasyon Görselleri': { subtitle: 'Operasyon metriklerinin görsel özeti', source: 'omehr_daily_operations + omehr_hourly_density' },
   'Verimlilik Görselleri': { subtitle: 'Mağaza ve dönem verimlilik analizi', source: 'omehr_monthly_store_metrics + omehr_period_metrics' },
   'Satış Kök Neden Analizi': { subtitle: 'Satış sapmasını fiş, sepet, reel büyüme ve iş gücü kanıtlarıyla açıkla', source: 'Norm + satış + operasyon + verimlilik + omehr_sales_targets' },
+  'Gerçek Personel İhtiyacı': { subtitle: 'Norm açığını gerçek işe alım ve alternatif çözümlere ayır', source: 'Railway karar motoru + omehr_module_snapshots' },
   'Raporlar': { subtitle: 'Yönetici ve bölge rapor merkezi', source: 'omehr_report_jobs + ileride Storage' },
   'Şubelere Toplu Mail': { subtitle: 'Yetkili toplu iletişim merkezi', source: 'omehr_mail_jobs + omehr_recipient_directory' },
   'Bildirimler': { subtitle: 'Kullanıcı ve operasyon bildirimleri', source: 'omehr_notifications' },
@@ -166,6 +169,18 @@ function ModuleTable({ payload }: { payload?: ModulePayload }) {
     <div className="table-wrap"><table><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{filtered.slice(0, 500).map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{displayValue(row[column])}</td>)}</tr>)}</tbody></table></div>
     {filtered.length > 500 && <div className="table-limit">İlk 500 kayıt gösteriliyor. Arama ile sonucu daraltabilirsiniz.</div>}
   </section>
+}
+
+function RealStaffingNeed({ payload }: { payload?: ModulePayload }) {
+  const kpis = payload?.kpis ?? {}
+  const keys = ['Norm Eksiği', 'Transferle Kapatılabilir', 'Geçici Operasyonel Açık', 'Norm Revizyonu Gerektiren', 'Gerçek İşe Alım İhtiyacı']
+  return <>
+    <section className="grid real-need-grid">
+      {keys.map((key) => <div className="card" key={key}><div className="metric-label">{key}</div><div className="metric-value">{kpis[key] ?? '—'}</div></div>)}
+    </section>
+    <div className="accountability-note">Yetersiz tarihçede kesin işe alım veya norm revizyonu kararı yayımlanmaz. Bu ekran resmî normu değiştirmeyen karar desteğidir.</div>
+    <ModuleTable payload={payload} />
+  </>
 }
 
 function SalesTargetForm({ access, stores, latestPeriod, onSaved }: {
@@ -456,6 +471,7 @@ export default function HomePage() {
     if (activePage === 'Operasyon Görselleri') return <><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
     if (activePage === 'Verimlilik Görselleri') return <><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
     if (activePage === 'Satış Kök Neden Analizi') return renderSalesAccountability()
+    if (activePage === 'Gerçek Personel İhtiyacı') return <RealStaffingNeed payload={modules.real_staffing_need} />
     if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
     if (activePage === 'Tüm Sayfalar (Veritabanı)') return <>{Object.entries(modules).map(([key, payload]) => <ModuleTable key={key} payload={payload} />)}</>
     const operational = ['Transfer Merkezi', 'Onaylar', 'Şubelere Toplu Mail', 'Bildirimler', 'AI Geri Bildirim', 'Veri Toplama', 'Ana Veri Yönetimi', 'Ayarlar'].includes(activePage)

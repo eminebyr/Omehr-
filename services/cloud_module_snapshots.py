@@ -12,6 +12,8 @@ from typing import Any
 
 import pandas as pd
 
+from services.real_staffing_need import build_real_staffing_need
+
 
 def _records(frame: pd.DataFrame | None, *, limit: int = 1500) -> list[dict[str, Any]]:
     if frame is None or frame.empty:
@@ -106,6 +108,8 @@ def build_module_snapshots(
     }
     detail = detail.rename(columns={k: v for k, v in detail_aliases.items() if k in detail.columns and v not in detail.columns})
 
+    need_rows, need_kpis = build_real_staffing_need(store_title_detail, sheets=sheets)
+
     return {
         "personnel": _snapshot("Personel Kartları", _records(personnel), description="Aktif ve geçmiş personel görünümü"),
         "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla"),
@@ -126,5 +130,13 @@ def build_module_snapshots(
         "overtime": _snapshot("Fazla Mesai", _records(_sheet(sheets, "Fazla Mesai"))),
         "absence": _snapshot("Devamsızlık", _records(_sheet(sheets, "Devamsızlık"))),
         "store_performance": _snapshot("Mağaza Performansı", _records(_sheet(sheets, "Performans"))),
+        "real_staffing_need": {
+            **_snapshot(
+                "Gerçek Personel İhtiyacı",
+                _records(need_rows),
+                description="Norm açığını transfer, geçici açık, norm incelemesi ve gerçek işe alım ihtiyacına ayıran açıklanabilir karar desteği",
+            ),
+            "kpis": need_kpis,
+        },
         "reports": _snapshot("Rapor Merkezi", report_rows),
     }
