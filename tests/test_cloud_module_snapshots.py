@@ -36,3 +36,19 @@ def test_module_snapshots_are_json_safe_and_exclude_personal_address(tmp_path):
     assert "Ev Adresi" not in personnel
     assert modules["store_title"]["rows"][0]["Eksik"] == 1
     json.dumps(modules, ensure_ascii=False)
+
+
+def test_transfer_snapshot_accepts_engine_frame_that_already_has_scenario_column(tmp_path):
+    modules = build_module_snapshots(
+        sheets={},
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={"Minimum Mesafe": pd.DataFrame([{
+            "Senaryo": "Minimum Mesafe",
+            "Kaynak Mağaza": "A",
+            "Hedef Mağaza": "B",
+        }])},
+        output_dir=tmp_path,
+    )
+
+    assert modules["transfer"]["rows"][0]["Senaryo"] == "Minimum Mesafe"
