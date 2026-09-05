@@ -27,3 +27,23 @@ def test_sales_root_cause_sources_are_exported(tmp_path: Path) -> None:
     assert result["store_performance"]["rows"][0]["Yönetici Puanı"] == 80
     assert result["online_orders"]["rows"][0]["Günlük Sipariş"] == 12
     assert result["goods_receipt"]["rows"][0]["Günlük Mal Kabul"] == 4
+
+
+def test_sales_target_and_inflation_sources_are_exported(tmp_path: Path) -> None:
+    result = build_module_snapshots(
+        sheets={
+            "Satış Hedefi": pd.DataFrame([
+                {"Ay": "2026-09", "MagazaID": "M1", "Hedef Ciro": 120_000},
+            ]),
+            "Enflasyon": pd.DataFrame([
+                {"Dönem": "2026-09", "Enflasyon %": 2.5},
+            ]),
+        },
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    assert result["sales_targets"]["rows"][0]["Hedef Ciro"] == 120_000
+    assert result["inflation"]["rows"][0]["Enflasyon %"] == 2.5

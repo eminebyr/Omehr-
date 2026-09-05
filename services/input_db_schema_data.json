@@ -840,6 +840,24 @@
       "OMEHR V19 GERÇEK INPUT DOSYASI - RENK REHBERİ"
     ]
   },
+  "Satış Hedefi": {
+    "header_row": 1,
+    "optional": true,
+    "headers": [
+      "Ay",
+      "MagazaID",
+      "Mağaza",
+      "Hedef Ciro"
+    ]
+  },
+  "Enflasyon": {
+    "header_row": 1,
+    "optional": true,
+    "headers": [
+      "Dönem",
+      "Enflasyon %"
+    ]
+  },
   "00_TUM_SAYFALAR_REHBERI": {
     "header_row": 1,
     "headers": [

@@ -69,6 +69,7 @@ def load_schema() -> dict[str, dict]:
         sonuc[sheet_adi] = {
             "tablo": tablo,
             "header_row": bilgi["header_row"],
+            "optional": bool(bilgi.get("optional", False)),
             "kolonlar": kolonlar,
         }
     return sonuc

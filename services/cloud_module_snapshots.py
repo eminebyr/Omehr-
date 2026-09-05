@@ -130,6 +130,8 @@ def build_module_snapshots(
         "overtime": _snapshot("Fazla Mesai", _records(_sheet(sheets, "Fazla Mesai"))),
         "absence": _snapshot("Devamsızlık", _records(_sheet(sheets, "Devamsızlık"))),
         "store_performance": _snapshot("Mağaza Performansı", _records(_sheet(sheets, "Performans"))),
+        "sales_targets": _snapshot("Satış Hedefleri", _records(_sheet(sheets, "Satış Hedefi", "Satis Hedefi"))),
+        "inflation": _snapshot("Enflasyon", _records(_sheet(sheets, "Enflasyon"))),
         "real_staffing_need": {
             **_snapshot(
                 "Gerçek Personel İhtiyacı",

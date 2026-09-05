@@ -40,7 +40,13 @@ def migrate_excel_to_db(excel_path: str, kullanici: str = "GOC_ARACI", tenant_id
         mevcut_sayfalar = set(xls.sheet_names)
         for sheet_adi, bilgi in sema.items():
             if sheet_adi not in mevcut_sayfalar:
-                sonuclar[sheet_adi] = {"durum": "EXCEL'DE YOK", "satir": 0}
+                if bilgi.get("optional", False):
+                    # Yeni sürümün isteğe bağlı veri sayfaları eski 64 sayfalık
+                    # çalışma dosyalarını geçersiz kılmaz. Tablo şeması hazırdır;
+                    # sayfa eklendiği ilk yüklemede normal biçimde aktarılır.
+                    sonuclar[sheet_adi] = {"durum": "OK", "satir": 0, "istege_bagli": True}
+                else:
+                    sonuclar[sheet_adi] = {"durum": "EXCEL'DE YOK", "satir": 0}
                 continue
             header_row = bilgi["header_row"]
             if header_row == 2:
