@@ -51,8 +51,48 @@ def _excel_sheet(path: Path, *names: str) -> pd.DataFrame:
     return pd.DataFrame()
 
 
-def _snapshot(title: str, rows: list[dict], *, description: str = "") -> dict:
-    return {"title": title, "description": description, "rows": rows}
+def _snapshot(
+    title: str,
+    rows: list[dict],
+    *,
+    description: str = "",
+    source: str = "",
+    empty_message: str = "Kaynak veri henüz oluşmadı.",
+    status: str | None = None,
+) -> dict:
+    resolved_status = status or ("READY" if rows else "SOURCE_MISSING")
+    return {
+        "title": title,
+        "description": description,
+        "rows": rows,
+        "status": resolved_status,
+        "status_message": "" if rows and resolved_status == "READY" else empty_message,
+        "source": source,
+    }
+
+
+def _forecast_frames(sheets: dict[str, pd.DataFrame], output_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """Hafif tahmin motorunu güncel sheet sözlüğünden her çalıştırmada üretir."""
+    path = output_dir / "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
+    detail = pd.DataFrame()
+    summary = pd.DataFrame()
+    try:
+        from services.workforce_forecast import run as run_workforce_forecast
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        outcome = run_workforce_forecast(sheets, output_dir)
+        if outcome.get("status") == "SUCCESS":
+            detail = _excel_sheet(path, "Mağaza_Unvan_Tahmini")
+            summary = _excel_sheet(path, "Yönetici Özeti")
+        if not detail.empty or not summary.empty:
+            return detail, summary, ""
+        reason = str(outcome.get("reason") or "Tahmin motoru veri üretemedi")
+        missing = outcome.get("missing") or []
+        if missing:
+            reason += ": " + ", ".join(map(str, missing))
+        return detail, summary, reason
+    except Exception as exc:
+        return detail, summary, f"Tahmin motoru çalıştırılamadı: {type(exc).__name__}"
 
 
 def build_module_snapshots(
@@ -86,9 +126,29 @@ def build_module_snapshots(
                 data["Senaryo"] = str(scenario_name)
                 transfer_rows.extend(_records(data, limit=500))
 
-    forecast_path = output_dir / "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
     ai_path = output_dir / "V19_AI_Norm_Sonuclari.xlsx"
-    analytics_path = output_dir / "OMEHR_Gelismis_Analitik.xlsx"
+    analytics_path = output_dir / "V19_Istatistik_ML_Operasyon_Analizi.xlsx"
+
+    forecast_detail, forecast_summary, forecast_message = _forecast_frames(sheets, output_dir)
+    ai_frame = _excel_sheet(ai_path, "AI_Norm_Sonuclari")
+    ai_status = "READY"
+    ai_message = ""
+    if ai_frame.empty and not store_title_detail.empty:
+        try:
+            from src.ai_norm import ai_norm_table
+
+            ai_frame = ai_norm_table(sheets, store_title_detail, scenarios)
+            if (
+                "Veri Durumu" in ai_frame.columns
+                and ai_frame["Veri Durumu"].astype(str).str.contains("AI kaydı yok", case=False).all()
+            ):
+                ai_status = "REFERENCE_ONLY"
+                ai_message = "AI eğitim çıktısı henüz yok; güncel resmî norm güvenli referans olarak gösteriliyor."
+        except Exception as exc:
+            ai_status = "ENGINE_ERROR"
+            ai_message = f"AI norm görünümü üretilemedi: {type(exc).__name__}"
+
+    model_frame = _excel_sheet(analytics_path, "Model_Karsilastirma")
 
     report_rows = []
     if output_dir.is_dir():
@@ -111,15 +171,15 @@ def build_module_snapshots(
     need_rows, need_kpis = build_real_staffing_need(store_title_detail, sheets=sheets)
 
     return {
-        "personnel": _snapshot("Personel Kartları", _records(personnel), description="Aktif ve geçmiş personel görünümü"),
-        "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla"),
-        "performance": _snapshot("Personel Performansı", _records(_sheet(sheets, "Personel_Performans_Endeksi"))),
-        "forecast": _snapshot("İş Gücü Tahmini", _records(_excel_sheet(forecast_path, "Mağaza_Unvan_Tahmini"))),
-        "forecast_summary": _snapshot("Tahmin Yönetici Özeti", _records(_excel_sheet(forecast_path, "Yönetici Özeti"))),
+        "personnel": _snapshot("Personel Kartları", _records(personnel), description="Aktif ve geçmiş personel görünümü", source="Fact_Mevcut", empty_message="Fact_Mevcut içinde gösterilebilir personel kaydı bulunamadı."),
+        "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla", source="Fact_Norm + Fact_Mevcut", empty_message="Mağaza–ünvan norm/mevcut detayı üretilemedi."),
+        "performance": _snapshot("Personel Performansı", _records(_sheet(sheets, "Personel_Performans_Endeksi")), source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
+        "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
+        "forecast_summary": _snapshot("Tahmin Yönetici Özeti", _records(forecast_summary), source="İş gücü tahmin motoru", empty_message=forecast_message or "Tahmin yönetici özeti henüz oluşmadı."),
         "transfer": _snapshot("Transfer Optimizasyonu", transfer_rows),
-        "ai_norm": _snapshot("AI Norm ve Operasyon Önerileri", _records(_excel_sheet(ai_path, "AI_Norm_Sonuclari"))),
-        "model_comparison": _snapshot("Model Karşılaştırması", _records(_excel_sheet(analytics_path, "Model_Karsilastirma"))),
-        "operations": _snapshot("Operasyon Görselleri", _records(_sheet(sheets, "Aylık Operasyon KPI", "Aylik Operasyon KPI"))),
+        "ai_norm": _snapshot("AI Norm ve Operasyon Önerileri", _records(ai_frame), source="AI norm motoru", empty_message=ai_message or "AI norm motoru henüz sonuç üretmedi.", status=ai_status if not ai_frame.empty or ai_status == "ENGINE_ERROR" else None),
+        "model_comparison": _snapshot("Model Karşılaştırması", _records(model_frame), source="V19_Istatistik_ML_Operasyon_Analizi.xlsx / Model_Karsilastirma", empty_message="Model karşılaştırma raporu henüz üretilmedi veya eğitim için yeterli tarihsel veri yok."),
+        "operations": _snapshot("Operasyon Görselleri", _records(_sheet(sheets, "Aylık Operasyon KPI", "Aylik Operasyon KPI")), source="Aylık Operasyon KPI", empty_message="Aylık Operasyon KPI sayfasında veri bulunamadı."),
         "daily_operations": _snapshot("Günlük Operasyon", _records(_sheet(sheets, "Günlük Operasyon", "Gunluk Operasyon"))),
         "hourly_density": _snapshot("Saatlik Yoğunluk", _records(_sheet(sheets, "Saatlik Yoğunluk", "Saatlik Yogunluk"))),
         "register_usage": _snapshot("Kasa Kullanımı", _records(_sheet(sheets, "Kasa Kullanımı", "Kasa Kullanimi"))),
@@ -130,8 +190,8 @@ def build_module_snapshots(
         "overtime": _snapshot("Fazla Mesai", _records(_sheet(sheets, "Fazla Mesai"))),
         "absence": _snapshot("Devamsızlık", _records(_sheet(sheets, "Devamsızlık"))),
         "store_performance": _snapshot("Mağaza Performansı", _records(_sheet(sheets, "Performans"))),
-        "sales_targets": _snapshot("Satış Hedefleri", _records(_sheet(sheets, "Satış Hedefi", "Satis Hedefi"))),
-        "inflation": _snapshot("Enflasyon", _records(_sheet(sheets, "Enflasyon"))),
+        "sales_targets": _snapshot("Satış Hedefleri", _records(_sheet(sheets, "Satış Hedefi", "Satis Hedefi")), source="Satış Hedefi", empty_message="Satış Hedefi sayfası henüz doldurulmadı."),
+        "inflation": _snapshot("Enflasyon", _records(_sheet(sheets, "Enflasyon")), source="Enflasyon", empty_message="Enflasyon sayfası henüz doldurulmadı."),
         "real_staffing_need": {
             **_snapshot(
                 "Gerçek Personel İhtiyacı",

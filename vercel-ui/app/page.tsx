@@ -44,7 +44,7 @@ type TitleRow = {
   calculated_at: string | null
 }
 
-type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[]; kpis?: Record<string, number> }
+type ModulePayload = { title?: string; description?: string; rows?: Record<string, unknown>[]; kpis?: Record<string, number>; status?: string; status_message?: string; source?: string }
 type ModuleRow = { module_key: string; payload: ModulePayload; calculated_at: string | null }
 
 type SalesTargetRow = {
@@ -162,8 +162,9 @@ function ModuleTable({ payload }: { payload?: ModulePayload }) {
     filtered.slice(0, 100).forEach((row) => Object.keys(row).forEach((key) => { if (!names.includes(key)) names.push(key) }))
     return names
   }, [filtered])
-  if (!rows.length) return <div className="empty">Bu modül için Railway çıktısı henüz oluşmadı. İlgili motor veya rapor çalıştırıldığında burada görünecek.</div>
+  if (!rows.length) return <div className="empty">{payload?.status_message || 'Bu modül için henüz yayımlanmış veri bulunmuyor.'}</div>
   return <section className="section module-data">
+    {payload?.status && payload.status !== 'READY' && payload.status_message && <div className="accountability-note">{payload.status_message}</div>}
     <div className="section-title"><div><h2>{payload?.title || 'Canlı sonuçlar'}</h2>{payload?.description && <p>{payload.description}</p>}</div><div className="status-pill">{filtered.length} / {rows.length} kayıt</div></div>
     <input className="table-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Bu tabloda ara…" />
     <div className="table-wrap"><table><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{filtered.slice(0, 500).map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{displayValue(row[column])}</td>)}</tr>)}</tbody></table></div>
@@ -378,7 +379,14 @@ export default function HomePage() {
         })))
       }
       if (run?.modules && typeof run.modules === 'object') {
-        setModules(run.modules as Record<string, ModulePayload>)
+        const incoming = run.modules as Record<string, ModulePayload>
+        setModules((current) => {
+          const next = { ...current }
+          for (const [key, payload] of Object.entries(incoming)) {
+            if ((payload.rows?.length ?? 0) > 0 || Object.keys(payload.kpis ?? {}).length > 0) next[key] = payload
+          }
+          return next
+        })
       }
       setEngineMessage('Motor tamamlandı; güncel Railway sonuçları ekrana yüklendi.')
     } catch (runError) {

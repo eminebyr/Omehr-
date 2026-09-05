@@ -194,6 +194,7 @@ def sync_dashboard_summaries(summary: dict) -> dict[str, bool]:
             "calculated_at": calculated_at,
         }
         for key, value in (summary.get("modules") or {}).items()
+        if isinstance(value, dict) and (value.get("rows") or value.get("kpis"))
     ]
     return {
         "stores": bool(stores) and _post_rows("omehr_store_summary", stores, upsert=True),
