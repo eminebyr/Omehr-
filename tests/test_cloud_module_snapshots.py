@@ -95,3 +95,23 @@ def test_regular_data_with_one_unnamed_column_is_not_promoted(tmp_path):
     )
 
     assert modules["overtime"]["rows"][0]["Mağaza"] == "Balçova"
+
+
+def test_repeated_performance_note_is_shown_once_as_description(tmp_path):
+    note = "Enflasyon oranı baz alınarak reel büyüme ölçülmüştür."
+    performance = pd.DataFrame([
+        {"İsim Soyisim": "Birinci Personel", "Performans Endeksi (0-100)": 80, "Not": note},
+        {"İsim Soyisim": "İkinci Personel", "Performans Endeksi (0-100)": 70, "Not": note},
+    ])
+
+    modules = build_module_snapshots(
+        sheets={"Personel_Performans_Endeksi": performance},
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    payload = modules["performance"]
+    assert payload["description"] == note
+    assert all("Not" not in row for row in payload["rows"])
