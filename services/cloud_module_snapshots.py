@@ -210,10 +210,19 @@ def build_module_snapshots(
 
     need_rows, need_kpis = build_real_staffing_need(store_title_detail, sheets=sheets)
 
+    performance_frame = _sheet(sheets, "Personel_Performans_Endeksi").copy()
+    performance_note = ""
+    if "Not" in performance_frame.columns:
+        notes = performance_frame["Not"].dropna().astype(str).str.strip()
+        notes = notes[notes.ne("")]
+        if not notes.empty:
+            performance_note = notes.iloc[0]
+        performance_frame = performance_frame.drop(columns=["Not"])
+
     return {
         "personnel": _snapshot("Personel Kartları", _records(personnel), description="Aktif ve geçmiş personel görünümü", source="Fact_Mevcut", empty_message="Fact_Mevcut içinde gösterilebilir personel kaydı bulunamadı."),
         "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla", source="Fact_Norm + Fact_Mevcut", empty_message="Mağaza–ünvan norm/mevcut detayı üretilemedi."),
-        "performance": _snapshot("Personel Performansı", _records(_sheet(sheets, "Personel_Performans_Endeksi")), source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
+        "performance": _snapshot("Personel Performansı", _records(performance_frame), description=performance_note, source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
         "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
         "forecast_summary": _snapshot("Tahmin Yönetici Özeti", _records(forecast_summary), source="İş gücü tahmin motoru", empty_message=forecast_message or "Tahmin yönetici özeti henüz oluşmadı."),
         "transfer": _snapshot("Transfer Optimizasyonu", transfer_rows),
