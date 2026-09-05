@@ -569,7 +569,7 @@ export default function HomePage() {
   return (
     <main className="shell">
       <header className="topbar">
-        <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">OMEHR</div><div><div className="brand-title">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div></div>
+        <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div>
         <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span>{['ADMIN', 'HR_DIRECTOR', 'IK_DIREKTORU'].includes((access?.role_code ?? '').toLocaleUpperCase('tr-TR')) && <button className="ghost engine-button" onClick={runEngine} disabled={engineRunning}>{engineRunning ? 'Motor çalışıyor…' : 'Verileri güncelle'}</button>}<button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
       </header>
 
