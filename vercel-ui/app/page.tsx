@@ -334,12 +334,15 @@ export default function HomePage() {
   }
 
   async function runEngine() {
-    if (!session) return
+    if (!session || !access?.tenant_id) return
     setEngineRunning(true); setEngineMessage('Railway norm motoru çalıştırılıyor…'); setError('')
     try {
       const response = await fetch('/api/engine/run', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'X-OMEHR-Tenant-ID': access.tenant_id,
+        },
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Motor çalıştırılamadı.')
@@ -535,7 +538,7 @@ export default function HomePage() {
       <div className="app-frame">
         <aside className={`sidebar ${navOpen ? 'open' : ''}`}>
           <div className="sidebar-label">YÖNETİM MENÜSÜ</div>
-          <nav>{pages.map((page) => <button key={page} className={`nav-item ${activePage === page ? 'active' : ''}`} onClick={() => { setActivePage(page); setNavOpen(false) }}>{page}</button>)}</nav>
+          <nav>{pages.map((page) => <button key={page} className={`nav-item ${activePage === page ? 'active' : ''}`} onClick={() => { setActivePage(page); setNavOpen(false); setError(''); setEngineMessage('') }}>{page}</button>)}</nav>
           <div className="sidebar-foot"><span className="live-dot" /> Supabase bağlantısı aktif</div>
         </aside>
 

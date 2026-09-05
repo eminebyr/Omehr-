@@ -21,6 +21,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Oturum geçersiz veya süresi dolmuş.' }, { status: 401 })
   }
 
+  const tenantId = request.headers.get('x-omehr-tenant-id')?.trim() || ''
+  if (!tenantId) {
+    return NextResponse.json({ error: 'Aktif firma/kiracı bilgisi bulunamadı.' }, { status: 400 })
+  }
+
   const scopedClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -29,10 +34,17 @@ export async function POST(request: NextRequest) {
     .from('omehr_user_access')
     .select('role_code')
     .eq('auth_user_id', data.user.id)
+    .eq('tenant_id', tenantId)
     .eq('active', true)
     .maybeSingle()
-  const role = String(access?.role_code ?? '').toLocaleUpperCase('tr-TR')
+  const role = String(access?.role_code ?? '').trim().toLocaleUpperCase('tr-TR')
   if (accessError || !['ADMIN', 'HR_DIRECTOR', 'IK_DIREKTORU'].includes(role)) {
+    console.warn('OMEHR engine authorization rejected', {
+      userId: data.user.id,
+      tenantId,
+      role,
+      accessError: accessError?.code || null,
+    })
     return NextResponse.json({ error: 'Motoru çalıştırma yetkiniz bulunmuyor.' }, { status: 403 })
   }
 
