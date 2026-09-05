@@ -62,7 +62,7 @@ def test_migration_copies_every_sheet_with_matching_row_counts(db_root):
     root, sonuc = db_root
     basarisiz = [k for k, v in sonuc.items() if v["durum"] != "OK"]
     assert not basarisiz, f"Göç edilemeyen sayfalar: {basarisiz}"
-    assert len(sonuc) == 64
+    assert len(sonuc) == 66
 
 
 def test_read_sheet_matches_excel_column_order_and_row_count(db_root):
@@ -143,10 +143,10 @@ def test_excel_read_shim_only_intercepts_the_input_file(db_root):
     assert _girdi_dosyasi_mi("output/OMEHR_Yonetici_Raporu.xlsx") is False
 
 
-def test_all_62_sheets_have_a_generic_editable_schema(db_root):
+def test_all_input_sheets_have_a_generic_editable_schema(db_root):
     from services.input_db_schema import load_schema
     sema = load_schema()
-    assert len(sema) == 64
+    assert len(sema) == 66
     for sheet_adi, bilgi in sema.items():
         assert bilgi["tablo"].startswith("in_")
         assert len(bilgi["kolonlar"]) > 0

@@ -48,7 +48,17 @@ def _title(row: pd.Series | dict) -> str:
 def _latest_by_store(frame: pd.DataFrame) -> dict[str, pd.Series]:
     if frame.empty:
         return {}
-    return {_store_key(row): row for _, row in frame.iterrows() if _store_key(row)}
+    view = frame.copy()
+    period_column = next(
+        (name for name in ("Tarih", "Ay", "Dönem", "Donem", "Gün", "Gun") if name in view.columns),
+        None,
+    )
+    if period_column:
+        parsed = pd.to_datetime(view[period_column], errors="coerce")
+        view = view.assign(_period_sort=parsed).sort_values(
+            "_period_sort", kind="stable", na_position="first"
+        )
+    return {_store_key(row): row for _, row in view.iterrows() if _store_key(row)}
 
 
 def _metric(row: pd.Series | None, *names: str) -> float | None:
@@ -97,6 +107,7 @@ def build_real_staffing_need(
     absence = _latest_by_store(_sheet(sheets, "Devamsızlık"))
     workload = _latest_by_store(_sheet(sheets, "İş Yükü Endeksi", "Is Yuku Endeksi"))
     operations = _latest_by_store(_sheet(sheets, "Aylık Operasyon KPI", "Aylik Operasyon KPI"))
+    sales_targets = _latest_by_store(_sheet(sheets, "Satış Hedefi", "Satis Hedefi"))
 
     available: dict[str, int] = defaultdict(int)
     for _, row in detail.iterrows():
@@ -123,6 +134,11 @@ def build_real_staffing_need(
         if workload_index is None:
             workload_index = _metric(operations.get(store), "İş Yükü Endeksi")
         target_rate = _metric(operations.get(store), "Hedef Gerçekleşme %", "Satış Hedef Gerçekleşme %")
+        if target_rate is None:
+            revenue = _metric(operations.get(store), "Aylık Ciro", "Ciro")
+            sales_target = _metric(sales_targets.get(store), "Hedef Ciro", "Satış Hedefi")
+            if revenue is not None and sales_target not in (None, 0):
+                target_rate = revenue / sales_target * 100
 
         temporary = min(remaining, max(0, int(round(lost_fte or 0)))) if enough_history else 0
         remaining -= temporary

@@ -289,8 +289,25 @@ export default function HomePage() {
           .eq('tenant_id', tenantId)
           .order('period', { ascending: false }),
       ])
-      if (kpiRes.error) setError(kpiRes.error.message); else setKpi(kpiRes.data)
-      if (!storeRes.error) setStores(storeRes.data ?? [])
+      const storeRows = (storeRes.data ?? []) as StoreRow[]
+      if (!storeRes.error) setStores(storeRows)
+      if (kpiRes.data) {
+        setKpi(kpiRes.data)
+      } else if (!storeRes.error && storeRows.length) {
+        const totals = storeRows.reduce((sum, row) => ({
+          active: sum.active + Number(row.active_current ?? 0),
+          norm: sum.norm + Number(row.total_norm ?? 0),
+          deficit: sum.deficit + Number(row.norm_deficit ?? 0),
+          surplus: sum.surplus + Number(row.norm_surplus ?? 0),
+        }), { active: 0, norm: 0, deficit: 0, surplus: 0 })
+        setKpi({
+          active_current: totals.active, total_norm: totals.norm,
+          norm_deficit: totals.deficit, norm_surplus: totals.surplus,
+          net_need: totals.surplus - totals.deficit,
+          engine_version: 'Yetki kapsamı',
+          calculated_at: storeRows[0]?.calculated_at ?? null,
+        })
+      }
       if (!titleRes.error) setTitles(titleRes.data ?? [])
       if (!moduleRes.error) {
         const mapped = Object.fromEntries(((moduleRes.data ?? []) as ModuleRow[]).map((row) => [row.module_key, row.payload]))
@@ -411,7 +428,11 @@ export default function HomePage() {
 
   const renderSalesAccountability = () => {
     const operationRows = modules.operations?.rows ?? []
-    const inflationPct = 32.11
+    const inflationRows = modules.inflation?.rows ?? []
+    const inflationValue = inflationRows.length
+      ? asNumber(inflationRows[inflationRows.length - 1]['Enflasyon %'])
+      : 32.11
+    const inflationPct = inflationValue > 0 ? inflationValue : 32.11
     const analysis = buildSalesEvidence({
       operations: operationRows,
       overtime: modules.overtime?.rows ?? [],
@@ -424,11 +445,29 @@ export default function HomePage() {
       inflationPct,
     })
     const latestPeriod = analysis.latestPeriod || salesTargets[0]?.period || ''
-    const targetByStore = new Map(salesTargets.filter((row) => row.period === latestPeriod).map((row) => [row.store_id, row]))
+    const targetByStore = new Map<string, SalesTargetRow>()
+    for (const raw of modules.sales_targets?.rows ?? []) {
+      const period = String(raw.Ay ?? raw['Dönem'] ?? raw.Donem ?? '').slice(0, 7)
+      if (period !== latestPeriod) continue
+      const storeId = String(raw.MagazaID ?? raw['MağazaID'] ?? raw['Mağaza'] ?? raw.Magaza ?? '').trim()
+      const storeName = String(raw['Mağaza'] ?? raw.Magaza ?? storeId).trim()
+      const salesTarget = asNumber(raw['Hedef Ciro'] ?? raw['Satış Hedefi'])
+      if (!storeId || salesTarget <= 0) continue
+      const row: SalesTargetRow = {
+        period, store_id: storeId, store_name: storeName, sales_target: salesTarget,
+        explanation: null, action_plan: null, owner_name: null, updated_at: '',
+      }
+      targetByStore.set(storeId, row)
+      if (storeName) targetByStore.set(storeName, row)
+    }
+    for (const row of salesTargets.filter((item) => item.period === latestPeriod)) {
+      targetByStore.set(row.store_id, row)
+      if (row.store_name) targetByStore.set(row.store_name, row)
+    }
     const evaluated = stores.map((store) => {
       const storeKey = String(store.store_id ?? store.store_name ?? '').trim()
       const evidence = analysis.byStore.get(storeKey) ?? [...analysis.byStore.values()].find((item) => item.storeName === store.store_name)
-      const target = targetByStore.get(storeKey)
+      const target = targetByStore.get(storeKey) ?? (store.store_name ? targetByStore.get(store.store_name) : undefined)
       const normRate = (store.total_norm ?? 0) > 0 ? ((store.active_current ?? 0) / (store.total_norm ?? 1)) * 100 : null
       const salesRate = target && target.sales_target > 0 && evidence?.revenue !== null && evidence?.revenue !== undefined ? (evidence.revenue / target.sales_target) * 100 : null
       return { store, storeKey, evidence, target, normRate, salesRate, diagnosis: diagnoseSales({ evidence, normRate, salesRate }) }
@@ -482,7 +521,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">O</div><div><div className="brand-title">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div></div>
-        <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span><button className="ghost engine-button" onClick={runEngine} disabled={engineRunning}>{engineRunning ? 'Motor çalışıyor…' : 'Verileri güncelle'}</button><button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
+        <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span>{['ADMIN', 'HR_DIRECTOR', 'IK_DIREKTORU'].includes((access?.role_code ?? '').toLocaleUpperCase('tr-TR')) && <button className="ghost engine-button" onClick={runEngine} disabled={engineRunning}>{engineRunning ? 'Motor çalışıyor…' : 'Verileri güncelle'}</button>}<button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
       </header>
 
       <div className="app-frame">

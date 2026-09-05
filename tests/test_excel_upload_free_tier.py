@@ -26,7 +26,7 @@ def test_full_chain_upload_migrate_read_produces_correct_kpis(tmp_path, monkeypa
         kullanici="test", tenant_id=tenant_code(),
     )
     basarili = sum(1 for v in sonuc.values() if v.get("durum") == "OK")
-    assert basarili == 64, f"REGRESYON: yalnız {basarili}/64 sayfa aktarıldı."
+    assert basarili == 66, f"REGRESYON: yalnız {basarili}/66 sayfa aktarıldı."
 
     from services.input_data_access import read_all_sheets
     from src.state_engine import state

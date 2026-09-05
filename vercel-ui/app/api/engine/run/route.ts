@@ -21,6 +21,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Oturum geçersiz veya süresi dolmuş.' }, { status: 401 })
   }
 
+  const scopedClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  })
+  const { data: access, error: accessError } = await scopedClient
+    .from('omehr_user_access')
+    .select('role_code')
+    .eq('auth_user_id', data.user.id)
+    .eq('active', true)
+    .maybeSingle()
+  const role = String(access?.role_code ?? '').toLocaleUpperCase('tr-TR')
+  if (accessError || !['ADMIN', 'HR_DIRECTOR', 'IK_DIREKTORU'].includes(role)) {
+    return NextResponse.json({ error: 'Motoru çalıştırma yetkiniz bulunmuyor.' }, { status: 403 })
+  }
+
   const engineUrl = process.env.OMEHR_ENGINE_API_URL?.trim()
   const engineSecret = process.env.OMEHR_ENGINE_API_SECRET?.trim()
   if (!engineUrl || !engineSecret) {

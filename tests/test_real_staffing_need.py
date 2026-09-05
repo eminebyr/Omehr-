@@ -64,3 +64,43 @@ def test_classification_parts_never_exceed_the_norm_gap():
         + bal["Kararsız Veri Açığı"]
     )
     assert parts == bal["Norm Eksiği"]
+
+
+def test_latest_operational_row_is_selected_by_period_not_excel_order():
+    sheets = {
+        "Günlük Operasyon": pd.DataFrame([
+            {"Tarih": f"2026-09-{day:02d}", "Mağaza": "BALÇOVA"}
+            for day in range(1, 31)
+        ]),
+        "Fazla Mesai": pd.DataFrame([
+            {"Ay": "2026-09", "Mağaza": "BALÇOVA", "Fazla Mesai Saat": 45},
+            {"Ay": "2026-08", "Mağaza": "BALÇOVA", "Fazla Mesai Saat": 0},
+        ]),
+    }
+
+    rows, _ = build_real_staffing_need(_detail(), sheets=sheets)
+
+    bal = rows.loc[rows["Mağaza"].eq("BALÇOVA")].iloc[0]
+    assert bal["Gerçek İşe Alım İhtiyacı"] == 1
+    assert "45" in bal["Neden"]
+
+
+def test_sales_pressure_is_derived_from_separate_target_sheet():
+    sheets = {
+        "Aylık Operasyon KPI": pd.DataFrame([
+            {"Ay": "2026-07", "Mağaza": "BALÇOVA", "Aylık Ciro": 80_000},
+            {"Ay": "2026-08", "Mağaza": "BALÇOVA", "Aylık Ciro": 105_000},
+            {"Ay": "2026-09", "Mağaza": "BALÇOVA", "Aylık Ciro": 110_000},
+        ]),
+        "Satış Hedefi": pd.DataFrame([
+            {"Ay": "2026-07", "Mağaza": "BALÇOVA", "Hedef Ciro": 100_000},
+            {"Ay": "2026-08", "Mağaza": "BALÇOVA", "Hedef Ciro": 100_000},
+            {"Ay": "2026-09", "Mağaza": "BALÇOVA", "Hedef Ciro": 100_000},
+        ]),
+    }
+
+    rows, _ = build_real_staffing_need(_detail(), sheets=sheets)
+
+    bal = rows.loc[rows["Mağaza"].eq("BALÇOVA")].iloc[0]
+    assert bal["Gerçek İşe Alım İhtiyacı"] == 1
+    assert "Satış hedef gerçekleşmesi %110" in bal["Neden"]

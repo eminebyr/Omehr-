@@ -44,7 +44,7 @@ def test_full_self_service_onboarding_chain_end_to_end(tmp_path, monkeypatch):
 
     sonuc = import_initial_data("TAMZINCIR", "input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
     basarili = sum(1 for v in sonuc.values() if v.get("durum") == "OK")
-    assert basarili == 64
+    assert basarili == 66
 
     from services.input_data_access import read_all_sheets
     from src.state_engine import state

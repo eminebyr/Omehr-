@@ -10,10 +10,13 @@ __pycache__/
 input/
 ORNEK_TEST_VERISI/
 output/
+output_ext/
 data/
 logs/
 backups/
 backup/
+tenants/*/input/
+*.db
 
 # DÜZELTME: 'reference/' TAMAMEN hariç tutulmuştu — ama reference/
 # NORM_KAPSAM_BAZI.json main.py'nin ÇALIŞMASI için ZORUNLU bir dosyadır
