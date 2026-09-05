@@ -52,3 +52,46 @@ def test_transfer_snapshot_accepts_engine_frame_that_already_has_scenario_column
     )
 
     assert modules["transfer"]["rows"][0]["Senaryo"] == "Minimum Mesafe"
+
+
+def test_embedded_report_header_replaces_unnamed_columns(tmp_path):
+    performance = pd.DataFrame(
+        [
+            ["İsim Soyisim", "MağazaID", "Mağaza", "Unvan", "Devamlılık Puanı", "Sınıf"],
+            ["Demo Personel", "M1", "Balçova", "Kasiyer", 92, "A"],
+        ],
+        columns=[
+            "PERSONEL PERFORMANS ENDEKSİ (0-100)",
+            "Unnamed: 1", "Unnamed: 2", "Unnamed: 3", "Unnamed: 4", "Unnamed: 5",
+        ],
+    )
+
+    modules = build_module_snapshots(
+        sheets={"Personel_Performans_Endeksi": performance},
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    rows = modules["performance"]["rows"]
+    assert len(rows) == 1
+    assert rows[0]["İsim Soyisim"] == "Demo Personel"
+    assert rows[0]["Devamlılık Puanı"] == 92
+    assert not any(column.startswith("Unnamed:") for column in rows[0])
+
+
+def test_regular_data_with_one_unnamed_column_is_not_promoted(tmp_path):
+    overtime = pd.DataFrame([
+        {"Mağaza": "Balçova", "Saat": 2, "Unnamed: 2": "not"},
+    ])
+
+    modules = build_module_snapshots(
+        sheets={"Fazla Mesai": overtime},
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    assert modules["overtime"]["rows"][0]["Mağaza"] == "Balçova"

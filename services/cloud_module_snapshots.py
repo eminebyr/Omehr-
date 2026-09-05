@@ -15,10 +15,50 @@ import pandas as pd
 from services.real_staffing_need import build_real_staffing_need
 
 
+def _normalize_embedded_headers(frame: pd.DataFrame | None) -> pd.DataFrame:
+    """Promote a report's embedded header row when pandas produced Unnamed columns."""
+    if frame is None or frame.empty:
+        return pd.DataFrame() if frame is None else frame
+
+    columns = [str(column).strip() for column in frame.columns]
+    unnamed = sum(column.casefold().startswith("unnamed:") for column in columns)
+    if unnamed < max(2, len(columns) // 2):
+        return frame
+
+    first_row = frame.iloc[0]
+    labels = [
+        "" if pd.isna(value) else str(value).strip()
+        for value in first_row.tolist()
+    ]
+    meaningful = [label for label in labels if label and label.casefold() != "nan"]
+    header_terms = ("isim", "personel", "mağaza", "magaza", "unvan", "puan", "tarih", "norm", "sınıf", "sinif")
+    if len(meaningful) < 2 or not any(
+        any(term in label.casefold() for term in header_terms) for label in meaningful
+    ):
+        return frame
+
+    view = frame.iloc[1:].copy().reset_index(drop=True)
+    promoted: list[str] = []
+    counts: dict[str, int] = {}
+    for index, label in enumerate(labels):
+        base = label if label and label.casefold() != "nan" else columns[index]
+        if base.casefold().startswith("unnamed:"):
+            base = f"Kolon {index + 1}"
+        counts[base] = counts.get(base, 0) + 1
+        promoted.append(base if counts[base] == 1 else f"{base} ({counts[base]})")
+    view.columns = promoted
+
+    removable = [
+        column for column in view.columns
+        if column.startswith("Kolon ") and view[column].isna().all()
+    ]
+    return view.drop(columns=removable)
+
+
 def _records(frame: pd.DataFrame | None, *, limit: int = 1500) -> list[dict[str, Any]]:
     if frame is None or frame.empty:
         return []
-    view = frame.head(limit).copy()
+    view = _normalize_embedded_headers(frame).head(limit).copy()
     for column in view.columns:
         if pd.api.types.is_datetime64_any_dtype(view[column]):
             view[column] = view[column].dt.strftime("%Y-%m-%d")
