@@ -366,6 +366,30 @@ export default function HomePage() {
     return 'Dengede'
   }, [kpi])
 
+  // DÜZELTME (React hata #310 — "Rendered fewer hooks than expected"):
+  // bu useMemo önceden aşağıda, `if (!session) return ...` gibi ERKEN
+  // ÇIKIŞLARDAN SONRA duruyordu. Giriş yapılmamışken component o erken
+  // çıkışta durup bu hook'u HİÇ çağırmıyordu; giriş yapılınca artık
+  // çağırıyordu — aynı component'in render'lar arasında farklı sayıda
+  // hook çağırması React'in Hooks kurallarını ihlal ediyor ve tarayıcıda
+  // "Application error: a client-side exception" ile sonuçlanıyordu.
+  // Çözüm: tüm hook'lar (useState/useMemo) HER ZAMAN, erken çıkışlardan
+  // ÖNCE, koşulsuz çağrılmalı — tam olarak burada, diğerleriyle birlikte.
+  const filteredStores = useMemo(() => {
+    return stores.filter((row) => {
+      const checks: Array<[string, string]> = [
+        [storeFilters.region ?? '', row.region_name ?? ''],
+        [storeFilters.store ?? '', row.store_name ?? row.store_id ?? ''],
+        [storeFilters.active ?? '', String(row.active_current ?? '')],
+        [storeFilters.norm ?? '', String(row.total_norm ?? '')],
+        [storeFilters.deficit ?? '', String(row.norm_deficit ?? '')],
+        [storeFilters.surplus ?? '', String(row.norm_surplus ?? '')],
+        [storeFilters.date ?? '', fmtDate(row.calculated_at)],
+      ]
+      return checks.every(([needle, value]) => !needle.trim() || value.toLocaleLowerCase('tr-TR').includes(needle.trim().toLocaleLowerCase('tr-TR')))
+    })
+  }, [stores, storeFilters])
+
   async function signIn(event: FormEvent) {
     event.preventDefault(); setError('')
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -461,21 +485,6 @@ export default function HomePage() {
       <div className="card"><div className="metric-label">Net İhtiyaç</div><div className="metric-value warn">{kpi ? netLabel : '—'}</div></div>
     </section>
   )
-
-  const filteredStores = useMemo(() => {
-    return stores.filter((row) => {
-      const checks: Array<[string, string]> = [
-        [storeFilters.region ?? '', row.region_name ?? ''],
-        [storeFilters.store ?? '', row.store_name ?? row.store_id ?? ''],
-        [storeFilters.active ?? '', String(row.active_current ?? '')],
-        [storeFilters.norm ?? '', String(row.total_norm ?? '')],
-        [storeFilters.deficit ?? '', String(row.norm_deficit ?? '')],
-        [storeFilters.surplus ?? '', String(row.norm_surplus ?? '')],
-        [storeFilters.date ?? '', fmtDate(row.calculated_at)],
-      ]
-      return checks.every(([needle, value]) => !needle.trim() || value.toLocaleLowerCase('tr-TR').includes(needle.trim().toLocaleLowerCase('tr-TR')))
-    })
-  }, [stores, storeFilters])
 
   const updateStoreFilter = (key: string, value: string) => setStoreFilters((current) => ({ ...current, [key]: value }))
 
