@@ -181,28 +181,35 @@ export function GaugeChart({
   const safeMax = max > 0 ? max : 100
   const clamped = Math.max(0, Math.min(value, safeMax))
   const cx = 150
-  const cy = 130
-  const r = 100
+  const cy = 120
+  const outerR = 108
+  const innerR = 82
   const valueAngle = (clamped / safeMax) * 180
   const thresholdAngle = thresholdValue != null ? (Math.min(thresholdValue, safeMax) / safeMax) * 180 : null
 
   return (
     <div className="gauge-wrap">
-      <svg viewBox="0 0 300 160" className="gauge-svg">
+      <svg viewBox="0 0 300 150" className="gauge-svg">
+        {/* Dış halka: renkli zemin dilimleri (Plotly'nin "steps" karşılığı) — DÜZELTME:
+            önceki sürümde bunlar değer çubuğuyla AYNI yarıçapta çiziliyor ve çok koyu
+            renkler kullanılıyordu, koyu panel zeminiyle karışıp neredeyse görünmez
+            oluyordu. Artık ayrı (dış) halka + belirgin renk tonları kullanılıyor. */}
         {steps.map((step, i) => (
           <path
             key={i}
-            d={describeArc(cx, cy, r, (step.from / safeMax) * 180, (step.to / safeMax) * 180)}
-            stroke={step.color} strokeWidth={18} fill="none"
+            d={describeArc(cx, cy, outerR, (step.from / safeMax) * 180, (step.to / safeMax) * 180)}
+            stroke={step.color} strokeWidth={16} fill="none"
           />
         ))}
-        <path d={describeArc(cx, cy, r, 0, valueAngle)} stroke={barColor} strokeWidth={10} fill="none" strokeLinecap="round" />
+        {/* İç halka: gerçek değer çubuğu — dış halkadan ayrı, karışmıyor */}
+        <path d={describeArc(cx, cy, innerR, 0, 180)} stroke="var(--panel-2)" strokeWidth={14} fill="none" />
+        <path d={describeArc(cx, cy, innerR, 0, valueAngle)} stroke={barColor} strokeWidth={14} fill="none" strokeLinecap="round" />
         {thresholdAngle != null && (() => {
-          const p1 = polarToCartesian(cx, cy, r - 12, thresholdAngle)
-          const p2 = polarToCartesian(cx, cy, r + 12, thresholdAngle)
+          const p1 = polarToCartesian(cx, cy, innerR - 14, thresholdAngle)
+          const p2 = polarToCartesian(cx, cy, outerR + 14, thresholdAngle)
           return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="var(--danger)" strokeWidth={3} />
         })()}
-        <text x={cx} y={cy - 6} textAnchor="middle" fontSize={26} fontWeight={800} fill="var(--text)">
+        <text x={cx} y={cy - 8} textAnchor="middle" fontSize={28} fontWeight={800} fill="var(--text)">
           {clamped.toFixed(1)}%
         </text>
       </svg>
@@ -221,9 +228,9 @@ export function BrutVeDagilimGosterge({
   const dagilimKarsilanan = Math.max(0, totalNorm - deficit)
   const dagilimOran = totalNorm ? (dagilimKarsilanan / totalNorm) * 100 : 0
   const steps: GaugeStep[] = [
-    { from: 0, to: 90, color: '#3a2430' },
-    { from: 90, to: 100, color: '#3a3624' },
-    { from: 100, to: 110, color: '#243a2c' },
+    { from: 0, to: 90, color: '#c0546b' },
+    { from: 90, to: 100, color: '#c9a34a' },
+    { from: 100, to: 110, color: '#4f9e6e' },
   ]
   return (
     <div className="grid-2">
@@ -237,8 +244,8 @@ export function NormKarsilamaOraniGosterge({ active, totalNorm }: { active: numb
   const coverage = totalNorm ? (active / totalNorm) * 100 : 0
   const max = Math.max(110, Math.ceil(coverage / 10) * 10)
   const steps: GaugeStep[] = [
-    { from: 0, to: 100, color: '#1c2c42' },
-    { from: 100, to: max, color: '#3a2430' },
+    { from: 0, to: 100, color: '#3f6fb0' },
+    { from: 100, to: max, color: '#c0546b' },
   ]
   return <GaugeChart title="Norm Karşılama Oranı" value={coverage} max={max} steps={steps} barColor="#4472C4" thresholdValue={100} />
 }
