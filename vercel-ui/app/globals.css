@@ -160,3 +160,11 @@ tr:last-child td { border-bottom:none; }
 .heatmap-table tbody th { background:var(--panel-2); color:var(--text); text-align:left; font-weight:600; position:sticky; left:0; }
 .heatmap-corner { background:var(--panel-2); }
 .heatmap-table td { color:var(--text); }
+.gauge-wrap { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:14px; text-align:center; }
+.gauge-svg { width:100%; height:auto; max-width:300px; }
+.gauge-caption { margin-top:4px; color:var(--text); font-size:13px; }
+.gauge-caption span { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+.chart-wrap { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:20px; }
+.chart-wrap h3 { margin:0 0 14px; font-size:15px; color:var(--text); }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+@media (max-width:640px) { .grid-2 { grid-template-columns:1fr; } }
