@@ -24,7 +24,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .brand-mark { min-width:86px; height:40px; padding:0 12px; border-radius:12px; background:linear-gradient(135deg,var(--navy),var(--teal)); display:grid; place-items:center; font-weight:900; font-size:14px; letter-spacing:.01em; white-space:nowrap; box-shadow:0 10px 28px rgba(22,166,173,.18); }
 .brand-logo { height:44px; width:auto; display:block; }
 .brand-title { font-weight:900; letter-spacing:.08em; }
-.brand-sub { color:var(--muted); font-size:12px; margin-top:2px; }
+.brand-sub { color:var(--muted); font-size:13px; }
 .userbox { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px; }
 .menu-button { display:none; border:1px solid var(--line); color:var(--text); background:var(--panel); border-radius:10px; width:38px; height:38px; cursor:pointer; }
 
