@@ -410,6 +410,74 @@ export default function HomePage() {
 
   const toggleStoreExpanded = (key: string) => setExpandedStores((current) => ({ ...current, [key]: !current[key] }))
 
+  const [titleDetailFilters, setTitleDetailFilters] = useState<Record<string, string>>({})
+  const updateTitleDetailFilter = (key: string, value: string) => setTitleDetailFilters((current) => ({ ...current, [key]: value }))
+
+  const titleDetailRows = useMemo(() => {
+    const nameKey = (store: string, dept: string) => `${store.toLocaleLowerCase('tr-TR')}|${dept.toLocaleLowerCase('tr-TR')}`
+    const grouped = new Map<string, { names: string[]; realTitles: string[] }>()
+    for (const raw of modules.personnel?.rows ?? []) {
+      const store = String(raw['Mağaza'] ?? '').trim()
+      const dept = String(raw['Departman'] ?? '').trim()
+      if (!store || !dept) continue
+      const key = nameKey(store, dept)
+      if (!grouped.has(key)) grouped.set(key, { names: [], realTitles: [] })
+      const entry = grouped.get(key)!
+      const name = String(raw['İsim Soyisim'] ?? '').trim()
+      const realTitle = String(raw['Unvan'] ?? '').trim()
+      if (name && !entry.names.includes(name)) entry.names.push(name)
+      if (realTitle && !entry.realTitles.includes(realTitle)) entry.realTitles.push(realTitle)
+    }
+    const rows = (modules.store_title?.rows ?? []).map((raw) => {
+      const store = String(raw['Mağaza'] ?? '').trim()
+      const unvan = String(raw['Unvan'] ?? '').trim()
+      const match = grouped.get(nameKey(store, unvan))
+      return {
+        region: String(raw['Bölge Sorumlusu'] ?? '—').trim() || '—',
+        store: store || '—',
+        title: unvan || '—',
+        realTitles: match?.realTitles.join(', ') || '—',
+        names: match?.names.join(', ') || '—',
+        active: raw['Mevcut'] ?? raw['Aktif Mevcut'] ?? '—',
+        norm: raw['Norm'] ?? raw['Norm Kadro'] ?? '—',
+        deficit: raw['Eksik'] ?? raw['Norm Eksiği'] ?? '—',
+        surplus: raw['Fazla'] ?? raw['Norm Fazlası'] ?? '—',
+        netDiff: raw['Net Fark'] ?? '—',
+      }
+    })
+    return rows.filter((row) => {
+      const checks: Array<[string, string]> = [
+        [titleDetailFilters.region ?? '', row.region],
+        [titleDetailFilters.store ?? '', row.store],
+        [titleDetailFilters.title ?? '', row.title],
+        [titleDetailFilters.realTitles ?? '', row.realTitles],
+        [titleDetailFilters.names ?? '', row.names],
+      ]
+      return checks.every(([needle, value]) => !needle.trim() || value.toLocaleLowerCase('tr-TR').includes(needle.trim().toLocaleLowerCase('tr-TR')))
+    })
+  }, [modules.store_title, modules.personnel, titleDetailFilters])
+
+  const renderTitleDetailTable = () => (
+    <section className="section">
+      <div className="section-title"><h2>Mağaza – unvan – personel detayı</h2><div className="status-pill">{titleDetailRows.length} kayıt</div></div>
+      <div className="table-wrap">{titleDetailRows.length ? <table><thead>
+        <tr><th>Bölge Sorumlusu</th><th>Mağaza</th><th>Unvan</th><th>Gerçek Unvanlar</th><th>Personel Adı Soyadı</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Net Fark</th></tr>
+        <tr className="column-filter-row">
+          <th><input className="column-filter" value={titleDetailFilters.region ?? ''} onChange={(e) => updateTitleDetailFilter('region', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={titleDetailFilters.store ?? ''} onChange={(e) => updateTitleDetailFilter('store', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={titleDetailFilters.title ?? ''} onChange={(e) => updateTitleDetailFilter('title', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={titleDetailFilters.realTitles ?? ''} onChange={(e) => updateTitleDetailFilter('realTitles', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={titleDetailFilters.names ?? ''} onChange={(e) => updateTitleDetailFilter('names', e.target.value)} placeholder="Filtrele…" /></th>
+          <th></th><th></th><th></th><th></th><th></th>
+        </tr>
+      </thead><tbody>{titleDetailRows.map((row, index) => <tr key={`${row.store}-${row.title}-${index}`}>
+        <td>{row.region}</td><td>{row.store}</td><td>{row.title}</td><td>{row.realTitles}</td><td>{row.names}</td>
+        <td>{displayValue(row.active)}</td><td>{displayValue(row.norm)}</td><td>{displayValue(row.deficit)}</td><td>{displayValue(row.surplus)}</td><td>{displayValue(row.netDiff)}</td>
+      </tr>)}</tbody></table> : <div className="empty">Mağaza–ünvan–personel detayı bulunamadı.</div>}</div>
+    </section>
+  )
+
+
   async function signIn(event: FormEvent) {
     event.preventDefault(); setError('')
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -624,7 +692,7 @@ export default function HomePage() {
   const renderPage = () => {
     if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
-    if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
+    if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
     if (activePage === 'Personel Performansı') return <><ModuleVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
     if (activePage === 'İş Gücü Tahmini') return <><ModuleVisuals payload={modules.forecast} /><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
