@@ -19,7 +19,10 @@
 // zaten yaptığı Supabase sorgularını tekrarlamamak içindir.
 
 import { useMemo } from 'react'
-import { Treemap, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+  Treemap, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
+  ScatterChart, Scatter, ZAxis,
+} from 'recharts'
 
 type StoreRow = {
   store_id: string | null
@@ -143,6 +146,202 @@ export function NormEksigiIsiHaritasi({ rows }: { rows: StoreTitleRow[] }) {
 
 export function NormFazlasiIsiHaritasi({ rows }: { rows: StoreTitleRow[] }) {
   return <HeatmapGrid title="Norm Fazlası Isı Haritası" rows={rows} valueKey="Fazla" colorScale={surplusColor} />
+}
+
+// --- Gauge (Plotly go.Indicator karşılığı) -------------------------------
+// recharts'ta hazır bir "gauge" bileşeni yok; Plotly'nin renkli dilimli
+// (steps) + eşik çizgili (threshold) yarım-daire göstergesini birebir
+// üretmek için düz SVG ile çiziliyor — ekstra bağımlılık gerekmiyor.
+
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const angleRad = ((angleDeg - 180) * Math.PI) / 180
+  return { x: cx + r * Math.cos(angleRad), y: cy + r * Math.sin(angleRad) }
+}
+
+function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(cx, cy, r, endAngle)
+  const end = polarToCartesian(cx, cy, r, startAngle)
+  const largeArc = endAngle - startAngle <= 180 ? '0' : '1'
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`
+}
+
+type GaugeStep = { from: number; to: number; color: string }
+
+export function GaugeChart({
+  title, subtitle, value, max, steps, barColor, thresholdValue,
+}: {
+  title: string
+  subtitle?: string
+  value: number
+  max: number
+  steps: GaugeStep[]
+  barColor: string
+  thresholdValue?: number
+}) {
+  const safeMax = max > 0 ? max : 100
+  const clamped = Math.max(0, Math.min(value, safeMax))
+  const cx = 150
+  const cy = 130
+  const r = 100
+  const valueAngle = (clamped / safeMax) * 180
+  const thresholdAngle = thresholdValue != null ? (Math.min(thresholdValue, safeMax) / safeMax) * 180 : null
+
+  return (
+    <div className="gauge-wrap">
+      <svg viewBox="0 0 300 160" className="gauge-svg">
+        {steps.map((step, i) => (
+          <path
+            key={i}
+            d={describeArc(cx, cy, r, (step.from / safeMax) * 180, (step.to / safeMax) * 180)}
+            stroke={step.color} strokeWidth={18} fill="none"
+          />
+        ))}
+        <path d={describeArc(cx, cy, r, 0, valueAngle)} stroke={barColor} strokeWidth={10} fill="none" strokeLinecap="round" />
+        {thresholdAngle != null && (() => {
+          const p1 = polarToCartesian(cx, cy, r - 12, thresholdAngle)
+          const p2 = polarToCartesian(cx, cy, r + 12, thresholdAngle)
+          return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="var(--danger)" strokeWidth={3} />
+        })()}
+        <text x={cx} y={cy - 6} textAnchor="middle" fontSize={26} fontWeight={800} fill="var(--text)">
+          {clamped.toFixed(1)}%
+        </text>
+      </svg>
+      <div className="gauge-caption">
+        <strong>{title}</strong>
+        {subtitle && <span>{subtitle}</span>}
+      </div>
+    </div>
+  )
+}
+
+export function BrutVeDagilimGosterge({
+  active, totalNorm, deficit,
+}: { active: number; totalNorm: number; deficit: number }) {
+  const brutOran = totalNorm ? (active / totalNorm) * 100 : 0
+  const dagilimKarsilanan = Math.max(0, totalNorm - deficit)
+  const dagilimOran = totalNorm ? (dagilimKarsilanan / totalNorm) * 100 : 0
+  const steps: GaugeStep[] = [
+    { from: 0, to: 90, color: '#3a2430' },
+    { from: 90, to: 100, color: '#3a3624' },
+    { from: 100, to: 110, color: '#243a2c' },
+  ]
+  return (
+    <div className="grid-2">
+      <GaugeChart title="Brüt Karşılama" subtitle={`${active} / ${totalNorm}`} value={brutOran} max={110} steps={steps} barColor="#4472C4" thresholdValue={100} />
+      <GaugeChart title="Dağılım Bazlı Karşılama" subtitle={`${dagilimKarsilanan} / ${totalNorm}`} value={dagilimOran} max={110} steps={steps} barColor="#70AD47" thresholdValue={100} />
+    </div>
+  )
+}
+
+export function NormKarsilamaOraniGosterge({ active, totalNorm }: { active: number; totalNorm: number }) {
+  const coverage = totalNorm ? (active / totalNorm) * 100 : 0
+  const max = Math.max(110, Math.ceil(coverage / 10) * 10)
+  const steps: GaugeStep[] = [
+    { from: 0, to: 100, color: '#1c2c42' },
+    { from: 100, to: max, color: '#3a2430' },
+  ]
+  return <GaugeChart title="Norm Karşılama Oranı" value={coverage} max={max} steps={steps} barColor="#4472C4" thresholdValue={100} />
+}
+
+// --- Bar & Scatter (recharts) ---------------------------------------------
+
+function regionTotals(stores: StoreRow[]) {
+  const map = new Map<string, { region: string; Eksik: number; Fazla: number }>()
+  for (const s of stores) {
+    const region = (s.region_name ?? '').trim() || 'Bilinmiyor'
+    const entry = map.get(region) ?? { region, Eksik: 0, Fazla: 0 }
+    entry.Eksik += toNumber(s.norm_deficit)
+    entry.Fazla += toNumber(s.norm_surplus)
+    map.set(region, entry)
+  }
+  return [...map.values()]
+}
+
+export function BolgeBazliEksikFazlaGrafigi({ stores }: { stores: StoreRow[] }) {
+  const data = useMemo(() => regionTotals(stores), [stores])
+  if (data.length === 0) return <div className="chart-wrap"><div className="empty">Veri yok.</div></div>
+  return (
+    <div className="chart-wrap">
+      <h3>Bölge Bazlı Norm Eksiği / Fazlası</h3>
+      <ResponsiveContainer width="100%" height={360}>
+        <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 60 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+          <XAxis dataKey="region" angle={-30} textAnchor="end" interval={0} height={80} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+          <Legend />
+          <Bar dataKey="Eksik" fill="var(--danger)" />
+          <Bar dataKey="Fazla" fill="var(--success)" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function UnvanBazliEnYuksekAciklarGrafigi({ titles }: { titles: { title_name: string; norm_deficit: number | null }[] }) {
+  const data = useMemo(() => {
+    return [...titles]
+      .map((t) => ({ Unvan: t.title_name, Eksik: toNumber(t.norm_deficit) }))
+      .filter((row) => row.Eksik > 0)
+      .sort((a, b) => b.Eksik - a.Eksik)
+      .slice(0, 20)
+  }, [titles])
+  if (data.length === 0) return <div className="chart-wrap"><div className="empty">Veri yok.</div></div>
+  return (
+    <div className="chart-wrap">
+      <h3>Unvan Bazlı En Yüksek Açıklar</h3>
+      <ResponsiveContainer width="100%" height={Math.max(320, data.length * 28)}>
+        <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+          <XAxis type="number" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <YAxis type="category" dataKey="Unvan" width={160} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+          <Bar dataKey="Eksik" fill="var(--gold)" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function MevcutNormSacilimGrafigi({ stores }: { stores: StoreRow[] }) {
+  const data = useMemo(() => stores.map((s) => ({
+    Norm: toNumber(s.total_norm),
+    Mevcut: toNumber(s.active_current),
+    Eksik: toNumber(s.norm_deficit),
+    Magaza: s.store_name ?? '—',
+    Bolge: s.region_name ?? '—',
+  })), [stores])
+  if (data.length === 0) return <div className="chart-wrap"><div className="empty">Veri yok.</div></div>
+  return (
+    <div className="chart-wrap">
+      <h3>Mevcut - Norm Saçılımı</h3>
+      <ResponsiveContainer width="100%" height={380}>
+        <ScatterChart margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+          <XAxis type="number" dataKey="Norm" name="Norm" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <YAxis type="number" dataKey="Mevcut" name="Mevcut" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+          <ZAxis type="number" dataKey="Eksik" range={[40, 400]} name="Eksik" />
+          <Tooltip
+            cursor={{ strokeDasharray: '3 3' }}
+            contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', color: 'var(--text)' }}
+            formatter={(value, name) => [`${value}`, name]}
+            labelFormatter={() => ''}
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null
+              const p = payload[0].payload as { Magaza: string; Bolge: string; Norm: number; Mevcut: number; Eksik: number }
+              return (
+                <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', padding: 8, borderRadius: 8 }}>
+                  <div><strong>{p.Magaza}</strong> ({p.Bolge})</div>
+                  <div>Norm: {p.Norm} · Mevcut: {p.Mevcut} · Eksik: {p.Eksik}</div>
+                </div>
+              )
+            }}
+          />
+          <Scatter data={data} fill="var(--teal)" />
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  )
 }
 
 type TreemapLeaf = { name: string; size: number }
