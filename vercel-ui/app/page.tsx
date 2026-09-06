@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { buildSalesEvidence, diagnoseSales } from '@/lib/sales-root-cause'
+import { NormEksigiIsiHaritasi, NormFazlasiIsiHaritasi, MagazaRiskAgacHaritasi } from '@/components/GenelOzetGorseller'
 
 type KpiRow = {
   active_current: number | null
@@ -147,44 +148,6 @@ function money(value: number) {
 
 function percent(value: number | null) {
   return value === null ? '—' : `%${new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 }).format(value)}`
-}
-
-function ModuleVisuals({ payload }: { payload?: ModulePayload }) {
-  const rows = payload?.rows ?? []
-  const charts = useMemo(() => {
-    if (!rows.length) return []
-    const keys = Array.from(new Set(rows.slice(0, 100).flatMap((row) => Object.keys(row))))
-    const labelKey = ['Mağaza', 'Magaza', 'İsim Soyisim', 'Personel', 'Unvan', 'Dönem', 'Donem', 'Ay', 'Saat']
-      .find((key) => keys.includes(key)) ?? keys.find((key) => rows.some((row) => typeof row[key] === 'string'))
-    if (!labelKey) return []
-    const numericKeys = keys.filter((key) => {
-      if (key === labelKey || /(^|\s)(id|kod|yıl|yil)($|\s)/i.test(key)) return false
-      const values = rows.slice(0, 100).map((row) => row[key]).filter((value) => value !== null && value !== undefined && value !== '')
-      return values.length > 0 && values.filter((value) => Number.isFinite(Number(String(value).replace(',', '.')))).length / values.length >= .75
-    }).slice(0, 3)
-    return numericKeys.map((key) => {
-      const items = rows.map((row) => ({
-        label: displayValue(row[labelKey]),
-        value: asNumber(row[key]),
-      })).filter((item) => item.label !== '—' && Number.isFinite(item.value))
-        .sort((a, b) => b.value - a.value).slice(0, 10)
-      const max = Math.max(...items.map((item) => Math.abs(item.value)), 1)
-      return { key, items, max }
-    }).filter((chart) => chart.items.length)
-  }, [rows])
-
-  if (!charts.length) return null
-  return <section className="visual-section">
-    <div className="section-title"><div><h2>{payload?.title || 'Canlı sonuçlar'} — Görsel Özet</h2><p>Güncel Railway sonuçlarından otomatik oluşturulur.</p></div></div>
-    <div className="chart-grid">{charts.map((chart) => <article className="chart-card" key={chart.key}>
-      <h3>{chart.key}</h3>
-      <div className="bar-chart">{chart.items.map((item, index) => <div className="bar-row" key={`${item.label}-${index}`}>
-        <span title={item.label}>{item.label}</span>
-        <div className="bar-track"><i style={{ width: `${Math.max(3, Math.abs(item.value) / chart.max * 100)}%` }} /></div>
-        <strong>{new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 }).format(item.value)}</strong>
-      </div>)}</div>
-    </article>)}</div>
-  </section>
 }
 
 function ModuleTable({ payload }: { payload?: ModulePayload }) {
@@ -547,17 +510,17 @@ export default function HomePage() {
   }
 
   const renderPage = () => {
-    if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}</>
+    if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /></>
     if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}<ModuleTable payload={modules.forecast_summary} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
-    if (activePage === 'Personel Performansı') return <><ModuleVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
-    if (activePage === 'İş Gücü Tahmini') return <><ModuleVisuals payload={modules.forecast} /><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
+    if (activePage === 'Personel Performansı') return <ModuleTable payload={modules.performance} />
+    if (activePage === 'İş Gücü Tahmini') return <><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
     if (activePage === 'Transfer Optimizasyonu') return <ModuleTable payload={modules.transfer} />
-    if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleVisuals payload={modules.ai_norm} /><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
-    if (activePage === 'Operasyon Görselleri') return <><ModuleVisuals payload={modules.operations} /><ModuleVisuals payload={modules.hourly_density} /><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
-    if (activePage === 'Verimlilik Görselleri') return <><ModuleVisuals payload={modules.productivity} /><ModuleVisuals payload={modules.overtime} /><ModuleVisuals payload={modules.absence} /><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
+    if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
+    if (activePage === 'Operasyon Görselleri') return <><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
+    if (activePage === 'Verimlilik Görselleri') return <><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
     if (activePage === 'Satış Kök Neden Analizi') return renderSalesAccountability()
     if (activePage === 'Gerçek Personel İhtiyacı') return <RealStaffingNeed payload={modules.real_staffing_need} />
     if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
@@ -569,7 +532,7 @@ export default function HomePage() {
   return (
     <main className="shell">
       <header className="topbar">
-        <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div>
+        <div className="brand"><button className="menu-button" onClick={() => setNavOpen(!navOpen)}>☰</button><div className="brand-mark">O</div><div><div className="brand-title">OMEHR</div><div className="brand-sub">İş Gücü Optimizasyon Platformu</div></div></div>
         <div className="userbox"><span>{access?.display_name || session.user.email}</span><span>•</span><span>{access?.role_code || 'Yetkili Kullanıcı'}</span>{['ADMIN', 'HR_DIRECTOR', 'IK_DIREKTORU'].includes((access?.role_code ?? '').toLocaleUpperCase('tr-TR')) && <button className="ghost engine-button" onClick={runEngine} disabled={engineRunning}>{engineRunning ? 'Motor çalışıyor…' : 'Verileri güncelle'}</button>}<button className="ghost" onClick={() => supabase.auth.signOut()}>Çıkış</button></div>
       </header>
 
