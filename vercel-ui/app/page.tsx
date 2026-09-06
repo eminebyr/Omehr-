@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { buildSalesEvidence, diagnoseSales } from '@/lib/sales-root-cause'
-import { NormEksigiIsiHaritasi, NormFazlasiIsiHaritasi, MagazaRiskAgacHaritasi } from '@/components/GenelOzetGorseller'
+import { NormEksigiIsiHaritasi, NormFazlasiIsiHaritasi, MagazaRiskAgacHaritasi, BrutVeDagilimGosterge, NormKarsilamaOraniGosterge, BolgeBazliEksikFazlaGrafigi, UnvanBazliEnYuksekAciklarGrafigi, MevcutNormSacilimGrafigi } from '@/components/GenelOzetGorseller'
 
 type KpiRow = {
   active_current: number | null
@@ -510,7 +510,7 @@ export default function HomePage() {
   }
 
   const renderPage = () => {
-    if (activePage === 'Genel Özet') return <>{renderKpis()}{renderStoreTable()}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /></>
+    if (activePage === 'Genel Özet') return <>{renderKpis()}{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}{renderStoreTable()}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
     if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}<ModuleTable payload={modules.forecast_summary} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
