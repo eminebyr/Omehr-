@@ -61,7 +61,6 @@ type SalesTargetRow = {
 
 type PageKey =
   | 'Genel Özet'
-  | 'CEO Özeti'
   | 'Bölge & Mağaza'
   | 'Personel Kartları'
   | 'Unvan Analizi'
@@ -85,7 +84,7 @@ type PageKey =
   | 'Ayarlar'
 
 const pages: PageKey[] = [
-  'Genel Özet', 'CEO Özeti', 'Bölge & Mağaza', 'Personel Kartları', 'Unvan Analizi',
+  'Genel Özet', 'Bölge & Mağaza', 'Personel Kartları', 'Unvan Analizi',
   'Personel Performansı', 'İş Gücü Tahmini', 'Transfer Optimizasyonu',
   'Transfer Merkezi', 'Onaylar',
   'AI Operasyon & Verimlilik', 'Operasyon Görselleri', 'Verimlilik Görselleri',
@@ -97,7 +96,6 @@ const pages: PageKey[] = [
 
 const pageMeta: Record<PageKey, { subtitle: string; source: string }> = {
   'Genel Özet': { subtitle: 'Şirket geneli canlı norm ve iş gücü görünümü', source: 'omehr_kpi_snapshot + omehr_store_summary' },
-  'CEO Özeti': { subtitle: 'Üst yönetim için sadeleştirilmiş karar ekranı', source: 'omehr_kpi_snapshot + omehr_engine_runs' },
   'Bölge & Mağaza': { subtitle: 'Bölge ve mağaza bazında mevcut, norm, eksik ve fazla', source: 'omehr_store_summary' },
   'Personel Kartları': { subtitle: 'Yetki kapsamında personel görünümü', source: 'omehr_personnel_*' },
   'Unvan Analizi': { subtitle: 'Unvan bazlı norm ve mevcut dengesi', source: 'omehr_title_summary' },
@@ -188,14 +186,15 @@ function ModuleVisuals({ payload }: { payload?: ModulePayload }) {
   </section>
 }
 
-function ModuleTable({ payload }: { payload?: ModulePayload }) {
+function ModuleTable({ payload, hideSearch }: { payload?: ModulePayload; hideSearch?: boolean }) {
   const [query, setQuery] = useState('')
   const rows = payload?.rows ?? []
   const filtered = useMemo(() => {
+    if (hideSearch) return rows
     const needle = query.trim().toLocaleLowerCase('tr-TR')
     if (!needle) return rows
     return rows.filter((row) => Object.values(row).some((value) => displayValue(value).toLocaleLowerCase('tr-TR').includes(needle)))
-  }, [query, rows])
+  }, [query, rows, hideSearch])
   const columns = useMemo(() => {
     const names: string[] = []
     filtered.slice(0, 100).forEach((row) => Object.keys(row).forEach((key) => { if (!names.includes(key)) names.push(key) }))
@@ -205,7 +204,7 @@ function ModuleTable({ payload }: { payload?: ModulePayload }) {
   return <section className="section module-data">
     {payload?.status && payload.status !== 'READY' && payload.status_message && <div className="accountability-note">{payload.status_message}</div>}
     <div className="section-title"><div><h2>{payload?.title || 'Canlı sonuçlar'}</h2>{payload?.description && <p>{payload.description}</p>}</div><div className="status-pill">{filtered.length} / {rows.length} kayıt</div></div>
-    <input className="table-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Bu tabloda ara…" />
+    {!hideSearch && <input className="table-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Bu tabloda ara…" />}
     <div className="table-wrap"><table><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{filtered.slice(0, 500).map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{displayValue(row[column])}</td>)}</tr>)}</tbody></table></div>
     {filtered.length > 500 && <div className="table-limit">İlk 500 kayıt gösteriliyor. Arama ile sonucu daraltabilirsiniz.</div>}
   </section>
@@ -284,6 +283,7 @@ export default function HomePage() {
   const [navOpen, setNavOpen] = useState(false)
   const [engineRunning, setEngineRunning] = useState(false)
   const [engineMessage, setEngineMessage] = useState('')
+  const [storeFilters, setStoreFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!supabaseConfigured) { setLoading(false); return }
@@ -462,10 +462,38 @@ export default function HomePage() {
     </section>
   )
 
+  const filteredStores = useMemo(() => {
+    return stores.filter((row) => {
+      const checks: Array<[string, string]> = [
+        [storeFilters.region ?? '', row.region_name ?? ''],
+        [storeFilters.store ?? '', row.store_name ?? row.store_id ?? ''],
+        [storeFilters.active ?? '', String(row.active_current ?? '')],
+        [storeFilters.norm ?? '', String(row.total_norm ?? '')],
+        [storeFilters.deficit ?? '', String(row.norm_deficit ?? '')],
+        [storeFilters.surplus ?? '', String(row.norm_surplus ?? '')],
+        [storeFilters.date ?? '', fmtDate(row.calculated_at)],
+      ]
+      return checks.every(([needle, value]) => !needle.trim() || value.toLocaleLowerCase('tr-TR').includes(needle.trim().toLocaleLowerCase('tr-TR')))
+    })
+  }, [stores, storeFilters])
+
+  const updateStoreFilter = (key: string, value: string) => setStoreFilters((current) => ({ ...current, [key]: value }))
+
   const renderStoreTable = () => (
     <section className="section">
-      <div className="section-title"><h2>Mağaza bazlı norm görünümü</h2><div className="status-pill">{stores.length} kayıt</div></div>
-      <div className="table-wrap">{loading ? <div className="empty">Veriler yükleniyor…</div> : stores.length ? <table><thead><tr><th>Bölge</th><th>Mağaza</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Son Hesaplama</th></tr></thead><tbody>{stores.map((row, index) => <tr key={`${row.store_id || row.store_name}-${index}`}><td>{row.region_name || '—'}</td><td>{row.store_name || row.store_id || '—'}</td><td>{row.active_current ?? '—'}</td><td>{row.total_norm ?? '—'}</td><td>{row.norm_deficit ?? '—'}</td><td>{row.norm_surplus ?? '—'}</td><td>{fmtDate(row.calculated_at)}</td></tr>)}</tbody></table> : <div className="empty">Henüz mağaza özeti bulunamadı. Railway motoru güncel sonuçları Supabase'e yazdığında bu alan otomatik dolacak.</div>}</div>
+      <div className="section-title"><h2>Mağaza bazlı norm görünümü</h2><div className="status-pill">{filteredStores.length} / {stores.length} kayıt</div></div>
+      <div className="table-wrap">{loading ? <div className="empty">Veriler yükleniyor…</div> : stores.length ? <table><thead>
+        <tr><th>Bölge</th><th>Mağaza</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Son Hesaplama</th></tr>
+        <tr className="column-filter-row">
+          <th><input className="column-filter" value={storeFilters.region ?? ''} onChange={(e) => updateStoreFilter('region', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.store ?? ''} onChange={(e) => updateStoreFilter('store', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.active ?? ''} onChange={(e) => updateStoreFilter('active', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.norm ?? ''} onChange={(e) => updateStoreFilter('norm', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.deficit ?? ''} onChange={(e) => updateStoreFilter('deficit', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.surplus ?? ''} onChange={(e) => updateStoreFilter('surplus', e.target.value)} placeholder="Filtrele…" /></th>
+          <th><input className="column-filter" value={storeFilters.date ?? ''} onChange={(e) => updateStoreFilter('date', e.target.value)} placeholder="Filtrele…" /></th>
+        </tr>
+      </thead><tbody>{filteredStores.map((row, index) => <tr key={`${row.store_id || row.store_name}-${index}`}><td>{row.region_name || '—'}</td><td>{row.store_name || row.store_id || '—'}</td><td>{row.active_current ?? '—'}</td><td>{row.total_norm ?? '—'}</td><td>{row.norm_deficit ?? '—'}</td><td>{row.norm_surplus ?? '—'}</td><td>{fmtDate(row.calculated_at)}</td></tr>)}</tbody></table> : <div className="empty">Henüz mağaza özeti bulunamadı. Railway motoru güncel sonuçları Supabase'e yazdığında bu alan otomatik dolacak.</div>}</div>
     </section>
   )
 
@@ -548,8 +576,7 @@ export default function HomePage() {
   }
 
   const renderPage = () => {
-    if (activePage === 'Genel Özet') return <>{renderKpis()}{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}{renderStoreTable()}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
-    if (activePage === 'CEO Özeti') return <><section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{renderKpis()}<ModuleTable payload={modules.forecast_summary} /></>
+    if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}{renderStoreTable()}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
