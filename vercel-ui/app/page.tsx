@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { Fragment, FormEvent, useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { buildSalesEvidence, diagnoseSales } from '@/lib/sales-root-cause'
@@ -284,6 +284,7 @@ export default function HomePage() {
   const [engineRunning, setEngineRunning] = useState(false)
   const [engineMessage, setEngineMessage] = useState('')
   const [storeFilters, setStoreFilters] = useState<Record<string, string>>({})
+  const [expandedStores, setExpandedStores] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!supabaseConfigured) { setLoading(false); return }
@@ -390,6 +391,25 @@ export default function HomePage() {
     })
   }, [stores, storeFilters])
 
+  const personnelByStore = useMemo(() => {
+    const map = new Map<string, { name: string; title: string; status: string }[]>()
+    for (const raw of modules.personnel?.rows ?? []) {
+      const storeName = String(raw['Mağaza'] ?? '').trim()
+      if (!storeName) continue
+      const key = storeName.toLocaleLowerCase('tr-TR')
+      const entry = {
+        name: String(raw['İsim Soyisim'] ?? '—').trim(),
+        title: String(raw['Unvan'] ?? '—').trim(),
+        status: String(raw['Durum'] ?? '').trim(),
+      }
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(entry)
+    }
+    return map
+  }, [modules.personnel])
+
+  const toggleStoreExpanded = (key: string) => setExpandedStores((current) => ({ ...current, [key]: !current[key] }))
+
   async function signIn(event: FormEvent) {
     event.preventDefault(); setError('')
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -492,8 +512,9 @@ export default function HomePage() {
     <section className="section">
       <div className="section-title"><h2>Mağaza bazlı norm görünümü</h2><div className="status-pill">{filteredStores.length} / {stores.length} kayıt</div></div>
       <div className="table-wrap">{loading ? <div className="empty">Veriler yükleniyor…</div> : stores.length ? <table><thead>
-        <tr><th>Bölge</th><th>Mağaza</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Son Hesaplama</th></tr>
+        <tr><th></th><th>Bölge</th><th>Mağaza</th><th>Mevcut</th><th>Norm</th><th>Eksik</th><th>Fazla</th><th>Son Hesaplama</th></tr>
         <tr className="column-filter-row">
+          <th></th>
           <th><input className="column-filter" value={storeFilters.region ?? ''} onChange={(e) => updateStoreFilter('region', e.target.value)} placeholder="Filtrele…" /></th>
           <th><input className="column-filter" value={storeFilters.store ?? ''} onChange={(e) => updateStoreFilter('store', e.target.value)} placeholder="Filtrele…" /></th>
           <th><input className="column-filter" value={storeFilters.active ?? ''} onChange={(e) => updateStoreFilter('active', e.target.value)} placeholder="Filtrele…" /></th>
@@ -502,7 +523,23 @@ export default function HomePage() {
           <th><input className="column-filter" value={storeFilters.surplus ?? ''} onChange={(e) => updateStoreFilter('surplus', e.target.value)} placeholder="Filtrele…" /></th>
           <th><input className="column-filter" value={storeFilters.date ?? ''} onChange={(e) => updateStoreFilter('date', e.target.value)} placeholder="Filtrele…" /></th>
         </tr>
-      </thead><tbody>{filteredStores.map((row, index) => <tr key={`${row.store_id || row.store_name}-${index}`}><td>{row.region_name || '—'}</td><td>{row.store_name || row.store_id || '—'}</td><td>{row.active_current ?? '—'}</td><td>{row.total_norm ?? '—'}</td><td>{row.norm_deficit ?? '—'}</td><td>{row.norm_surplus ?? '—'}</td><td>{fmtDate(row.calculated_at)}</td></tr>)}</tbody></table> : <div className="empty">Henüz mağaza özeti bulunamadı. Railway motoru güncel sonuçları Supabase'e yazdığında bu alan otomatik dolacak.</div>}</div>
+      </thead><tbody>{filteredStores.map((row, index) => {
+        const rowKey = `${row.store_id || row.store_name}-${index}`
+        const storeName = (row.store_name || row.store_id || '').trim()
+        const staff = personnelByStore.get(storeName.toLocaleLowerCase('tr-TR')) ?? []
+        const isOpen = !!expandedStores[rowKey]
+        return <Fragment key={rowKey}>
+          <tr>
+            <td>{staff.length ? <button type="button" className="row-expand-toggle" onClick={() => toggleStoreExpanded(rowKey)} aria-label={isOpen ? 'Personeli gizle' : 'Personeli göster'}>{isOpen ? '▾' : '▸'}</button> : null}</td>
+            <td>{row.region_name || '—'}</td><td>{row.store_name || row.store_id || '—'}</td><td>{row.active_current ?? '—'}</td><td>{row.total_norm ?? '—'}</td><td>{row.norm_deficit ?? '—'}</td><td>{row.norm_surplus ?? '—'}</td><td>{fmtDate(row.calculated_at)}</td>
+          </tr>
+          {isOpen && staff.length ? <tr key={`${rowKey}-personnel`} className="row-personnel-detail"><td></td><td colSpan={7}>
+            <table className="personnel-subtable"><thead><tr><th>Adı Soyadı</th><th>Unvan</th><th>Durum</th></tr></thead><tbody>
+              {staff.map((person, personIndex) => <tr key={`${rowKey}-p-${personIndex}`}><td>{person.name}</td><td>{person.title}</td><td>{person.status || '—'}</td></tr>)}
+            </tbody></table>
+          </td></tr> : null}
+        </Fragment>
+      })}</tbody></table> : <div className="empty">Henüz mağaza özeti bulunamadı. Railway motoru güncel sonuçları Supabase'e yazdığında bu alan otomatik dolacak.</div>}</div>
     </section>
   )
 
@@ -585,7 +622,7 @@ export default function HomePage() {
   }
 
   const renderPage = () => {
-    if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}{renderStoreTable()}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
+    if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}<ModuleTable payload={modules.store_title} /></>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />

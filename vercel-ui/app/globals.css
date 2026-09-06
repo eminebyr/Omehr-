@@ -116,6 +116,13 @@ tr:last-child td { border-bottom:none; }
 .good-text { color:var(--success); }
 .bad-text { color:var(--danger); }
 .root-cause-table { min-width:1700px; }
+.row-expand-toggle { background:none; border:none; color:var(--teal); cursor:pointer; font-size:13px; padding:2px 6px; line-height:1; }
+.row-expand-toggle:hover { color:var(--text); }
+.row-personnel-detail td { background:#0b1727; padding:12px 14px 16px 34px; }
+.personnel-subtable { width:100%; min-width:0; background:transparent; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.personnel-subtable th { background:#0f1d30; font-size:10px; }
+.personnel-subtable th, .personnel-subtable td { padding:9px 12px; }
+.personnel-subtable td { font-size:12.5px; color:#d3dde8; }
 .cause-badge { display:inline-block; max-width:260px; padding:6px 9px; border-radius:9px; font-weight:800; font-size:12px; line-height:1.35; }
 .cause-badge.good { color:#bdebd0; background:rgba(34,116,76,.28); border:1px solid rgba(103,197,139,.35); }
 .cause-badge.watch { color:#f2dcae; background:rgba(137,99,31,.25); border:1px solid rgba(213,169,92,.35); }
