@@ -159,9 +159,16 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
-  const start = polarToCartesian(cx, cy, r, endAngle)
-  const end = polarToCartesian(cx, cy, r, startAngle)
-  const largeArc = endAngle - startAngle <= 180 ? '0' : '1'
+  // DÜZELTME: önceki sürüm start/end noktalarını TAKAS ediyordu ve largeArc
+  // bayrağını (endAngle-startAngle<=180 ? 0 : 1) kullanıyordu — bu ikisinin
+  // birlikte yanlış yönde (ters/kesişen) bir yay çizmesine yol açıyordu,
+  // "yarım daire gösterge" yerine kırık bir şekil ortaya çıkıyordu. Gerçek
+  // bir tarayıcıda render edip görsel olarak doğrulanan doğru kombinasyon:
+  // takas YOK (start=startAngle noktası, end=endAngle noktası), sweep=1
+  // sabit, largeArc yalnızca (endAngle-startAngle)>180 iken 1.
+  const start = polarToCartesian(cx, cy, r, startAngle)
+  const end = polarToCartesian(cx, cy, r, endAngle)
+  const largeArc = endAngle - startAngle > 180 ? '1' : '0'
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`
 }
 
