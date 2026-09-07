@@ -169,8 +169,7 @@ def build_module_snapshots(
                 personnel_source.loc[missing_region, "Bölge Sorumlusu"] = mapped_region[missing_region]
             else:
                 personnel_source["Bölge Sorumlusu"] = mapped_region
-            break
-
+ 
     personnel_columns = [
         c for c in (
             "PersonelID", "Sicil No", "İsim Soyisim", "MağazaID", "Mağaza",
@@ -179,6 +178,17 @@ def build_module_snapshots(
         ) if c in personnel_source.columns
     ]
     personnel = personnel_source[personnel_columns].copy() if personnel_columns else pd.DataFrame()
+
+    turnover_columns = [
+        c for c in (
+            "MağazaID", "Mağaza", "Bölge Sorumlusu", "İşe Giriş", "İşten Çıkış",
+        ) if c in personnel_source.columns
+    ]
+    turnover_personnel = (
+        personnel_source[turnover_columns].copy()
+        if turnover_columns
+        else pd.DataFrame()
+    )
 
     transfer_rows: list[dict] = []
     if isinstance(scenarios, dict):
@@ -248,7 +258,8 @@ def build_module_snapshots(
         performance_frame = performance_frame.drop(columns=["Not"])
 
     return {
-        "personnel": _snapshot("Personel Kartları", _records(personnel, limit=None), description="Aktif ve geçmiş personel görünümü", source="Fact_Mevcut", empty_message="Fact_Mevcut içinde gösterilebilir personel kaydı bulunamadı."),
+        "personnel": _snapshot("Personel Kartları", _records(personnel), description="Aktif ve geçmiş personel görünümü", source="Fact_Mevcut", empty_message="Fact_Mevcut içinde gösterilebilir personel kaydı bulunamadı."),
+        "turnover_personnel": _snapshot("Turnover Veri Kaynağı", _records(turnover_personnel, limit=None), description="Turnover grafikleri için kişisel alan içermeyen tam tarihçe", source="Fact_Mevcut + Dim_Magaza", empty_message="Turnover hesabı için personel tarihçesi bulunamadı."),
         "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla", source="Fact_Norm + Fact_Mevcut", empty_message="Mağaza–ünvan norm/mevcut detayı üretilemedi."),
         "performance": _snapshot("Personel Performansı", _records(performance_frame), description=performance_note, source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
         "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
