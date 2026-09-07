@@ -157,3 +157,49 @@ def test_turnover_snapshot_uses_full_history_and_excludes_personal_fields(tmp_pa
     assert turnover_rows[0]["İşten Çıkış"] == "15.02.2026"
     assert "İsim Soyisim" not in turnover_rows[0]
     assert len(modules["personnel"]["rows"]) == 1
+
+
+def test_turnover_active_headcount_uses_all_fact_mevcut_roles_for_canonical_store(tmp_path):
+    active_staff = pd.DataFrame([
+        {
+            "PersonelID": f"aktif-{index}",
+            "İsim Soyisim": f"Aktif Personel {index}",
+            "MağazaID": "T1",
+            "Mağaza": "TORBALI 1",
+            "Unvan": "Kasiyer" if index < 3 else "Reyon",
+            "İşe Giriş": "01.01.2025",
+            "İşten Çıkış": None,
+        }
+        for index in range(6)
+    ])
+    exited_staff = pd.DataFrame([
+        {
+            "PersonelID": f"ayrilan-{index}",
+            "İsim Soyisim": f"Ayrılan Personel {index}",
+            "MağazaID": "T1",
+            "Mağaza": None,
+            "Unvan": "Kasap",
+            "İşe Giriş": "01.01.2025",
+            "İşten Çıkış": "01.08.2026",
+        }
+        for index in range(5)
+    ])
+    history = pd.concat([active_staff, exited_staff], ignore_index=True)
+    store_dimension = pd.DataFrame([{
+        "MağazaID": "T1",
+        "Mağaza": "TORBALI 1",
+        "Bölge Sorumlusu": "AYŞE AVCU",
+    }])
+
+    modules = build_module_snapshots(
+        sheets={"Fact_Mevcut": history, "Dim_Magaza": store_dimension},
+        staff=active_staff,
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    turnover_rows = modules["turnover_personnel"]["rows"]
+    torbali_rows = [row for row in turnover_rows if row["Mağaza"] == "TORBALI 1"]
+    assert len(torbali_rows) == 11
+    assert sum(row["İşten Çıkış"] is None for row in torbali_rows) == 6
