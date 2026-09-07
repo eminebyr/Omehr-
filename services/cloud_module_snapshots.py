@@ -160,6 +160,10 @@ def build_module_snapshots(
     turnover_source.columns = [str(column).strip() for column in turnover_source.columns]
 
     store_dimension = _sheet(sheets, "Dim_Magaza", "Dim Magaza")
+    title_dimension = _sheet(sheets, "Dim_Unvan", "Dim Unvan")
+    if not title_dimension.empty:
+        title_dimension = title_dimension.copy()
+        title_dimension.columns = [str(column).strip() for column in title_dimension.columns]
 
     def _enrich_store_dimension(frame: pd.DataFrame) -> pd.DataFrame:
         if frame.empty or store_dimension.empty:
@@ -213,6 +217,44 @@ def build_module_snapshots(
 
     personnel_source = _enrich_store_dimension(personnel_source)
     turnover_source = _enrich_store_dimension(turnover_source)
+
+    # Ayrılan personelin Excel formül hücresi boş olsa bile gerçek unvan,
+    # resmi UnvanID → Dim_Unvan eşlemesinden yeniden üretilir.
+    existing_title_column = next(
+        (
+            column for column in (
+                "UnvanID", "Gerçek Unvan", "Gerçek Ünvan", "Gercek Unvan", "Unvan", "Ünvan",
+            )
+            if column in turnover_source.columns
+        ),
+        None,
+    )
+    existing_titles = (
+        turnover_source[existing_title_column].copy()
+        if existing_title_column
+        else pd.Series(index=turnover_source.index, dtype=object)
+    )
+    if (
+        not turnover_source.empty
+        and not title_dimension.empty
+        and "UnvanID" in turnover_source.columns
+        and "UnvanID" in title_dimension.columns
+        and "Unvan" in title_dimension.columns
+    ):
+        title_map = (
+            title_dimension[["UnvanID", "Unvan"]]
+            .dropna(subset=["UnvanID"])
+            .drop_duplicates(subset=["UnvanID"], keep="last")
+            .assign(_key=lambda value: value["UnvanID"].astype(str).str.strip())
+            .set_index("_key")["Unvan"]
+            .to_dict()
+        )
+        mapped_titles = turnover_source["UnvanID"].astype(str).str.strip().map(title_map)
+        matched_titles = mapped_titles.notna() & mapped_titles.astype(str).str.strip().ne("")
+        existing_titles.loc[matched_titles] = mapped_titles[matched_titles]
+    turnover_source["Gerçek Unvan"] = existing_titles
+
+    
 
     personnel_columns = [
         c for c in (
