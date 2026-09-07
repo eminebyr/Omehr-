@@ -129,6 +129,7 @@ def test_turnover_snapshot_uses_full_history_and_excludes_personal_fields(tmp_pa
             "Çıkış Kodu": "03",
             "Çıkış Nedeni": "İstifa",
             "Kıdem (Gün)": 45,
+            "Gerçek Unvan": "Kasiyer",
         }
         for index in range(1501)
     ])
@@ -154,6 +155,7 @@ def test_turnover_snapshot_uses_full_history_and_excludes_personal_fields(tmp_pa
     assert turnover_rows[0]["Bölge Sorumlusu"] == "Ege Bölge Müdürü"
     assert turnover_rows[0]["Çıkış Nedeni"] == "İstifa"
     assert turnover_rows[0]["Kıdem (Gün)"] == 45
+    assert turnover_rows[0]["Gerçek Unvan"] == "Kasiyer"
     assert turnover_rows[0]["İşten Çıkış"] == "15.02.2026"
     assert "İsim Soyisim" not in turnover_rows[0]
     assert len(modules["personnel"]["rows"]) == 1
