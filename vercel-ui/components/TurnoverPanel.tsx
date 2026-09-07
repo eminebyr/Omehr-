@@ -23,6 +23,7 @@ const STORE_KEYS = ['Mağaza', 'Magaza', 'Mağaza Adı', 'Magaza Adi']
 const REGION_KEYS = ['Bölge Sorumlusu', 'Bolge Sorumlusu', 'Bölge Müdürü', 'Bolge Muduru']
 const EXIT_REASON_KEYS = ['Çıkış Nedeni', 'Cikis Nedeni', 'Çıkış Kodu', 'Cikis Kodu']
 const TENURE_DAY_KEYS = ['Kıdem (Gün)', 'Kidem (Gun)', 'Kıdem Gün', 'Kidem Gun']
+const TITLE_KEYS = ['Gerçek Unvan', 'Gerçek Ünvan', 'Gercek Unvan', 'Unvan', 'Ünvan']
 
 function firstValue(row: PersonnelRow, keys: string[]) {
   for (const key of keys) {
@@ -92,6 +93,7 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       exit: parseDate(firstValue(row, EXIT_KEYS)),
       exitReason: String(firstValue(row, EXIT_REASON_KEYS) ?? 'Belirtilmemiş').trim() || 'Belirtilmemiş',
       tenureDays: parseOptionalNumber(firstValue(row, TENURE_DAY_KEYS)),
+      title: String(firstValue(row, TITLE_KEYS) ?? 'Belirtilmemiş').trim() || 'Belirtilmemiş',
     })).filter((row) => row.store)
 
     const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store' | 'region'> => {
@@ -138,16 +140,31 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
         : row.tenureDays
       return tenureDays === null || tenureDays < 0
     }).length
-    const reasonCounts = new Map<string, number>()
+    const reasonCounts = new Map<string, {
+      reason: string
+      region: string
+      store: string
+      title: string
+      count: number
+    }>()
     for (const row of normalized) {
       if (!within(row.exit, start, end)) continue
-      reasonCounts.set(row.exitReason, (reasonCounts.get(row.exitReason) ?? 0) + 1)
+      const key = JSON.stringify([row.exitReason, row.region, row.store, row.title])
+      const current = reasonCounts.get(key)
+      if (current) current.count += 1
+      else reasonCounts.set(key, {
+        reason: row.exitReason,
+        region: row.region,
+        store: row.store,
+        title: row.title,
+        count: 1,
+      })
     }
-    const exitReasons = [...reasonCounts.entries()]
-      .map(([reason, count]) => ({
-        reason,
-        count,
-        share: totals.exits > 0 ? count / totals.exits * 100 : 0,
+    const exitReasons = [...reasonCounts.values()]
+      .map((row) => ({
+        ...row,
+        label: `${row.reason} · ${row.region} · ${row.store} · ${row.title}`,
+        share: totals.exits > 0 ? row.count / totals.exits * 100 : 0,
       }))
       .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason, 'tr'))
 
@@ -271,11 +288,11 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
 
         <div className="chart-card section">
           <h3>Çıkış Nedenlerine Göre Analiz</h3>
-          {result.exitReasons.length ? <ResponsiveContainer width="100%" height={Math.max(320, result.exitReasons.length * 42)}>
+          {result.exitReasons.length ? <ResponsiveContainer width="100%" height={Math.max(360, result.exitReasons.length * 44)}>
             <BarChart data={result.exitReasons} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)' }} />
-              <YAxis type="category" dataKey="reason" width={190} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+              <YAxis type="category" dataKey="label" width={310} tick={{ fill: 'var(--muted)', fontSize: 10 }} />
               <Tooltip formatter={(value) => [formatNumber(Number(value)), 'Ayrılan']} />
               <Bar dataKey="count" fill="var(--gold)" radius={[0, 6, 6, 0]} />
             </BarChart>
@@ -284,9 +301,10 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
 
         {result.exitReasons.length > 0 && <div className="table-wrap section">
           <table>
-            <thead><tr><th>Çıkış Nedeni</th><th>Ayrılan</th><th>Toplam Çıkış Payı</th></tr></thead>
-            <tbody>{result.exitReasons.map((row) => <tr key={row.reason}>
-              <td>{row.reason}</td><td>{row.count}</td><td>%{formatNumber(row.share, 1)}</td>
+            <thead><tr><th>Çıkış Nedeni</th><th>Bölge Sorumlusu</th><th>Mağaza</th><th>Gerçek Unvan</th><th>Ayrılan</th><th>Toplam Çıkış Payı</th></tr></thead>
+            <tbody>{result.exitReasons.map((row) => <tr key={row.label}>
+              <td>{row.reason}</td><td>{row.region}</td><td>{row.store}</td><td>{row.title}</td>
+              <td>{row.count}</td><td>%{formatNumber(row.share, 1)}</td>
             </tr>)}</tbody>
           </table>
         </div>}
