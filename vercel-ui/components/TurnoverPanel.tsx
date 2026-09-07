@@ -91,7 +91,8 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       const averageHeadcount = (startHeadcount + active) / 2
       const earlyExits = items.filter((row) => {
         if (!within(row.exit, start, end) || !row.entry || !row.exit) return false
-        return (row.exit.getTime() - row.entry.getTime()) / 86_400_000 <= 90
+        const tenureDays = (row.exit.getTime() - row.entry.getTime()) / 86_400_000
+        return tenureDays >= 0 && tenureDays <= 90
       }).length
       return {
         entries,
