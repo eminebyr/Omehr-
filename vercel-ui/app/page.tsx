@@ -143,6 +143,14 @@ function asNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function asOptionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  const normalized = String(value).replace(/\./g, '').replace(',', '.')
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 function money(value: number) {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value)
 }
@@ -741,9 +749,7 @@ export default function HomePage() {
     const inflationRaw = inflationRows.length
       ? inflationRows[inflationRows.length - 1]['Enflasyon %']
       : null
-    const inflationPct = inflationRaw === null || inflationRaw === undefined || inflationRaw === ''
-      ? null
-      : asNumber(inflationRaw)
+    const inflationPct = asOptionalNumber(inflationRaw)
     const analysis = buildSalesEvidence({
       operations: operationRows,
       overtime: modules.overtime?.rows ?? [],
@@ -787,7 +793,8 @@ export default function HomePage() {
     const unsupportedPersonnel = evaluated.filter((row) => row.diagnosis.personnelClaim === 'unsupported' && row.salesRate !== null && row.salesRate < 100).length
     const missing = evaluated.filter((row) => row.diagnosis.severity === 'missing').length
     return <>
-      {inflationPct === null && <div className="accountability-note">Enflasyon verisi bulunmadığı için reel büyüme hesaplanmadı; sabit veya varsayılan oran kullanılmadı.</div>}\n      <section className="accountability-intro">
+      {inflationPct === null && <div className="accountability-note">Enflasyon verisi bulunmadığı için reel büyüme hesaplanmadı; sabit veya varsayılan oran kullanılmadı.</div>}
+      <section className="accountability-intro">
         <div><span>Hedef altında</span><strong>{belowTarget} mağaza</strong><small>Satış kök neden açıklaması gereken mağazalar</small></div>
         <div><span>Personel iddiası kanıtsız</span><strong>{unsupportedPersonnel} mağaza</strong><small>Norm veya satış verisi iddiayı desteklemiyor</small></div>
         <div><span>Veri açığı</span><strong>{missing} mağaza</strong><small>Hedef/gerçekleşen eşleşmesi tamamlanmalı</small></div>
@@ -810,7 +817,7 @@ export default function HomePage() {
 
   const renderPage = () => {
     if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
-    if (activePage === 'Turnover') return <TurnoverPanel rows={modules.personnel?.rows ?? []} />
+    if (activePage === 'Turnover') return <TurnoverPanel rows={modules.turnover_personnel?.rows ?? []} />
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
