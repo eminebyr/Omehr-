@@ -21,6 +21,7 @@ const ENTRY_KEYS = ['İşe Giriş', 'Ise Giris', 'İşe Giriş Tarihi', 'Ise Gir
 const EXIT_KEYS = ['İşten Çıkış', 'Isten Cikis', 'İşten Çıkış Tarihi', 'Isten Cikis Tarihi']
 const STORE_KEYS = ['Mağaza', 'Magaza', 'Mağaza Adı', 'Magaza Adi']
 const REGION_KEYS = ['Bölge Sorumlusu', 'Bolge Sorumlusu', 'Bölge Müdürü', 'Bolge Muduru']
+const EXIT_REASON_KEYS = ['Çıkış Nedeni', 'Cikis Nedeni', 'Çıkış Kodu', 'Cikis Kodu']
 
 function firstValue(row: PersonnelRow, keys: string[]) {
   for (const key of keys) {
@@ -81,6 +82,7 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       region: String(firstValue(row, REGION_KEYS) ?? 'Bilinmiyor').trim() || 'Bilinmiyor',
       entry: parseDate(firstValue(row, ENTRY_KEYS)),
       exit: parseDate(firstValue(row, EXIT_KEYS)),
+      exitReason: String(firstValue(row, EXIT_REASON_KEYS) ?? 'Belirtilmemiş').trim() || 'Belirtilmemiş',
     })).filter((row) => row.store)
 
     const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store' | 'region'> => {
@@ -118,11 +120,25 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
     })).sort((a, b) => b.exits - a.exits || b.turnover - a.turnover)
 
     const totals = calculate(normalized)
+    const reasonCounts = new Map<string, number>()
+    for (const row of normalized) {
+      if (!within(row.exit, start, end)) continue
+      reasonCounts.set(row.exitReason, (reasonCounts.get(row.exitReason) ?? 0) + 1)
+    }
+    const exitReasons = [...reasonCounts.entries()]
+      .map(([reason, count]) => ({
+        reason,
+        count,
+        share: totals.exits > 0 ? count / totals.exits * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason, 'tr'))
+
     return {
       ...totals,
       earlyShare: totals.exits > 0 ? totals.earlyExits / totals.exits * 100 : 0,
       stores,
       regions,
+      exitReasons,
     }
   }, [rows, startValue, endValue])
 
@@ -229,6 +245,28 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
             </tr>)}</tbody>
           </table>
         </div>
+
+        <div className="chart-card section">
+          <h3>Çıkış Nedenlerine Göre Analiz</h3>
+          {result.exitReasons.length ? <ResponsiveContainer width="100%" height={Math.max(320, result.exitReasons.length * 42)}>
+            <BarChart data={result.exitReasons} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)' }} />
+              <YAxis type="category" dataKey="reason" width={190} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+              <Tooltip formatter={(value) => [formatNumber(Number(value)), 'Ayrılan']} />
+              <Bar dataKey="count" fill="var(--gold)" radius={[0, 6, 6, 0]} />
+            </BarChart>
+          </ResponsiveContainer> : <div className="empty">Seçilen dönemde çıkış nedeni analizi için kayıt bulunmuyor.</div>}
+        </div>
+
+        {result.exitReasons.length > 0 && <div className="table-wrap section">
+          <table>
+            <thead><tr><th>Çıkış Nedeni</th><th>Ayrılan</th><th>Toplam Çıkış Payı</th></tr></thead>
+            <tbody>{result.exitReasons.map((row) => <tr key={row.reason}>
+              <td>{row.reason}</td><td>{row.count}</td><td>%{formatNumber(row.share, 1)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
       </>}
     </>}
   </section>
