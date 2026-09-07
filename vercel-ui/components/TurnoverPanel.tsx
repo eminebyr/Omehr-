@@ -22,6 +22,7 @@ const EXIT_KEYS = ['İşten Çıkış', 'Isten Cikis', 'İşten Çıkış Tarihi
 const STORE_KEYS = ['Mağaza', 'Magaza', 'Mağaza Adı', 'Magaza Adi']
 const REGION_KEYS = ['Bölge Sorumlusu', 'Bolge Sorumlusu', 'Bölge Müdürü', 'Bolge Muduru']
 const EXIT_REASON_KEYS = ['Çıkış Nedeni', 'Cikis Nedeni', 'Çıkış Kodu', 'Cikis Kodu']
+const TENURE_DAY_KEYS = ['Kıdem (Gün)', 'Kidem (Gun)', 'Kıdem Gün', 'Kidem Gun']
 
 function firstValue(row: PersonnelRow, keys: string[]) {
   for (const key of keys) {
@@ -44,6 +45,13 @@ function parseDate(value: unknown): Date | null {
     ? new Date(Number(tr[3]), Number(tr[2]) - 1, Number(tr[1]))
     : new Date(text)
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+function parseOptionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || String(value).trim() === '') return null
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  const parsed = Number(String(value).trim().replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 function isoInput(date: Date) {
@@ -83,18 +91,21 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       entry: parseDate(firstValue(row, ENTRY_KEYS)),
       exit: parseDate(firstValue(row, EXIT_KEYS)),
       exitReason: String(firstValue(row, EXIT_REASON_KEYS) ?? 'Belirtilmemiş').trim() || 'Belirtilmemiş',
+      tenureDays: parseOptionalNumber(firstValue(row, TENURE_DAY_KEYS)),
     })).filter((row) => row.store)
 
     const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store' | 'region'> => {
       const entries = items.filter((row) => within(row.entry, start, end)).length
       const exits = items.filter((row) => within(row.exit, start, end)).length
-      const active = items.filter((row) => row.entry && row.entry <= end && (!row.exit || row.exit > end)).length
+      const active = items.filter((row) => (!row.entry || row.entry <= end) && (!row.exit || row.exit > end)).length
       const startHeadcount = Math.max(0, active - entries + exits)
       const averageHeadcount = (startHeadcount + active) / 2
       const earlyExits = items.filter((row) => {
-        if (!within(row.exit, start, end) || !row.entry || !row.exit) return false
-        const tenureDays = (row.exit.getTime() - row.entry.getTime()) / 86_400_000
-        return tenureDays >= 0 && tenureDays <= 90
+        if (!within(row.exit, start, end) || !row.exit) return false
+        const tenureDays = row.entry
+          ? (row.exit.getTime() - row.entry.getTime()) / 86_400_000
+          : row.tenureDays
+        return tenureDays !== null && tenureDays >= 0 && tenureDays <= 90
       }).length
       return {
         entries,
@@ -120,6 +131,13 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
     })).sort((a, b) => b.exits - a.exits || b.turnover - a.turnover)
 
     const totals = calculate(normalized)
+    const unclassifiedEarlyExits = normalized.filter((row) => {
+      if (!within(row.exit, start, end) || !row.exit) return false
+      const tenureDays = row.entry
+        ? (row.exit.getTime() - row.entry.getTime()) / 86_400_000
+        : row.tenureDays
+      return tenureDays === null || tenureDays < 0
+    }).length
     const reasonCounts = new Map<string, number>()
     for (const row of normalized) {
       if (!within(row.exit, start, end)) continue
@@ -136,6 +154,7 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
     return {
       ...totals,
       earlyShare: totals.exits > 0 ? totals.earlyExits / totals.exits * 100 : 0,
+      unclassifiedEarlyExits,
       stores,
       regions,
       exitReasons,
@@ -185,8 +204,12 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
           <div><span>Dönemsel Turnover</span><strong>%{formatNumber(result.turnover, 1)}</strong><small>Çıkış / ortalama çalışan sayısı</small></div>
           <div><span>İlk 90 Gün Ayrılış Payı</span><strong>%{formatNumber(result.earlyShare, 1)}</strong><small>{result.earlyExits} erken ayrılış</small></div>
           <div><span>Giriş / Çıkış</span><strong>{result.entries} / {result.exits}</strong><small>Seçilen tarih aralığı</small></div>
-          <div><span>Dönem Sonu Aktif</span><strong>{result.active}</strong><small>Seçilen dönem sonundaki tahmini mevcut</small></div>
+          <div><span>Dönem Sonu Aktif</span><strong>{result.active}</strong><small>O tarihte henüz çıkışı gerçekleşmemiş personel</small></div>
         </div>
+
+        {result.unclassifiedEarlyExits > 0 && <div className="accountability-note">
+          {result.unclassifiedEarlyExits} çıkış kaydında işe giriş tarihi veya kıdem günü bulunmadığı için ilk 90 gün sınıflaması yapılamadı.
+        </div>}
 
         {selected && <div className="executive-grid section">
           <div className="executive-card"><span>{selected.store} · Giriş / Çıkış</span><strong>{selected.entries} / {selected.exits}</strong><small>Seçilen tarih aralığı</small></div>
@@ -237,7 +260,7 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
 
         <div className="table-wrap section">
           <table>
-            <thead><tr><th>Mağaza</th><th>Giriş</th><th>Çıkış</th><th>Aktif</th><th>Turnover %</th><th>İlk 90 Gün Çıkış</th></tr></thead>
+            <thead><tr><th>Mağaza</th><th>Giriş</th><th>Çıkış</th><th>Dönem Sonu Aktif</th><th>Turnover %</th><th>İlk 90 Gün Çıkış</th></tr></thead>
             <tbody>{result.stores.map((row) => <tr key={row.store}>
               <td>{row.store}</td><td>{row.entries}</td><td>{row.exits}</td><td>{row.active}</td>
               <td><strong className={row.turnover >= 10 ? 'bad-text' : ''}>%{formatNumber(row.turnover, 1)}</strong></td>
