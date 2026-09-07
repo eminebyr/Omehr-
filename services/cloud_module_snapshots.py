@@ -269,7 +269,7 @@ def build_module_snapshots(
         c for c in (
             "MağazaID", "Mağaza", "Bölge Sorumlusu", "İşe Giriş", "İşten Çıkış",
             "Çıkış Kodu", "CikisNedeniID", "Çıkış Nedeni", "Kıdem (Gün)", "Kidem (Gun)",
-            "Gerçek Unvan", "Gerçek Ünvan", "Gercek Unvan", "Unvan", "Ünvan",
+            "UnvanID", "Gerçek Unvan", "Gerçek Ünvan", "Gercek Unvan", "Unvan", "Ünvan",
         ) if c in turnover_source.columns
     ]
     turnover_personnel = (
