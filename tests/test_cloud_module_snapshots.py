@@ -117,8 +117,8 @@ def test_repeated_performance_note_is_shown_once_as_description(tmp_path):
     assert all("Not" not in row for row in payload["rows"])
 
 
-def test_turnover_snapshot_is_complete_minimal_and_falls_back_to_store_name(tmp_path):
-    staff = pd.DataFrame([
+def test_turnover_snapshot_uses_full_history_and_excludes_personal_fields(tmp_path):
+    history = pd.DataFrame([
         {
             "PersonelID": index,
             "İsim Soyisim": f"Personel {index}",
@@ -126,9 +126,14 @@ def test_turnover_snapshot_is_complete_minimal_and_falls_back_to_store_name(tmp_
             "Mağaza": "Balçova",
             "İşe Giriş": "01.01.2026",
             "İşten Çıkış": "15.02.2026",
+            "Çıkış Kodu": "03",
+            "Çıkış Nedeni": "İstifa",
         }
         for index in range(1501)
     ])
+    active_staff = history.iloc[:1].copy()
+    active_staff["İşten Çıkış"] = None
+    active_staff["Çıkış Nedeni"] = None
     store_dimension = pd.DataFrame([{
         "MağazaID": "M1",
         "Mağaza": "Balçova",
@@ -136,8 +141,8 @@ def test_turnover_snapshot_is_complete_minimal_and_falls_back_to_store_name(tmp_
     }])
 
     modules = build_module_snapshots(
-        sheets={"Dim_Magaza": store_dimension},
-        staff=staff,
+        sheets={"Fact_Mevcut": history, "Dim_Magaza": store_dimension},
+        staff=active_staff,
         store_title_detail=pd.DataFrame(),
         scenarios={},
         output_dir=tmp_path,
@@ -146,5 +151,7 @@ def test_turnover_snapshot_is_complete_minimal_and_falls_back_to_store_name(tmp_
     turnover_rows = modules["turnover_personnel"]["rows"]
     assert len(turnover_rows) == 1501
     assert turnover_rows[0]["Bölge Sorumlusu"] == "Ege Bölge Müdürü"
+    assert turnover_rows[0]["Çıkış Nedeni"] == "İstifa"
+    assert turnover_rows[0]["İşten Çıkış"] == "15.02.2026"
     assert "İsim Soyisim" not in turnover_rows[0]
-    assert len(modules["personnel"]["rows"]) == 1500
+    assert len(modules["personnel"]["rows"]) == 1
