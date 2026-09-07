@@ -145,31 +145,46 @@ def build_module_snapshots(
     output_dir: Path,
 ) -> dict[str, dict]:
     """Vercel'deki her bilgi ekranı için kaynak snapshot'ı oluşturur."""
-    # Turnover görselleri bölgeyi personel kaydından veya Dim_Magaza
-    # eşlemesinden alır. Böylece Railway her motor çalışmasında Vercel'e
-    # mağaza ve bölge kırılımını birlikte yayımlar.
+    # Personel Kartları yalnız aktif motor görünümünü kullanır; turnover ise
+    # ayrılan kayıtları da içeren ham Fact_Mevcut geçmişinden hesaplanır.
     personnel_source = staff.copy()
+    raw_staff = sheets.get("Fact_Mevcut")
+    turnover_source = (
+        raw_staff.copy()
+        if isinstance(raw_staff, pd.DataFrame)
+        else staff.copy()
+    )
+    turnover_source.columns = [str(column).strip() for column in turnover_source.columns]
+
     store_dimension = _sheet(sheets, "Dim_Magaza", "Dim Magaza")
-    if not personnel_source.empty and not store_dimension.empty and "Bölge Sorumlusu" in store_dimension.columns:
+
+    def _enrich_region(frame: pd.DataFrame) -> pd.DataFrame:
+        if frame.empty or store_dimension.empty or "Bölge Sorumlusu" not in store_dimension.columns:
+            return frame
+        enriched = frame.copy()
         for join_key in ("MağazaID", "Mağaza"):
-            if join_key not in personnel_source.columns or join_key not in store_dimension.columns:
+            if join_key not in enriched.columns or join_key not in store_dimension.columns:
                 continue
             region_map = (
                 store_dimension[[join_key, "Bölge Sorumlusu"]]
                 .dropna(subset=[join_key])
                 .drop_duplicates(subset=[join_key], keep="last")
-                .assign(_key=lambda frame: frame[join_key].astype(str).str.strip())
+                .assign(_key=lambda value: value[join_key].astype(str).str.strip())
                 .set_index("_key")["Bölge Sorumlusu"]
                 .to_dict()
             )
-            mapped_region = personnel_source[join_key].astype(str).str.strip().map(region_map)
-            if "Bölge Sorumlusu" in personnel_source.columns:
-                current_region = personnel_source["Bölge Sorumlusu"]
+            mapped_region = enriched[join_key].astype(str).str.strip().map(region_map)
+            if "Bölge Sorumlusu" in enriched.columns:
+                current_region = enriched["Bölge Sorumlusu"]
                 missing_region = current_region.isna() | current_region.astype(str).str.strip().eq("")
-                personnel_source.loc[missing_region, "Bölge Sorumlusu"] = mapped_region[missing_region]
+                enriched.loc[missing_region, "Bölge Sorumlusu"] = mapped_region[missing_region]
             else:
-                personnel_source["Bölge Sorumlusu"] = mapped_region
- 
+                enriched["Bölge Sorumlusu"] = mapped_region
+        return enriched
+
+    personnel_source = _enrich_region(personnel_source)
+    turnover_source = _enrich_region(turnover_source)
+
     personnel_columns = [
         c for c in (
             "PersonelID", "Sicil No", "İsim Soyisim", "MağazaID", "Mağaza",
@@ -182,10 +197,11 @@ def build_module_snapshots(
     turnover_columns = [
         c for c in (
             "MağazaID", "Mağaza", "Bölge Sorumlusu", "İşe Giriş", "İşten Çıkış",
-        ) if c in personnel_source.columns
+            "Çıkış Kodu", "CikisNedeniID", "Çıkış Nedeni",
+        ) if c in turnover_source.columns
     ]
     turnover_personnel = (
-        personnel_source[turnover_columns].copy()
+        turnover_source[turnover_columns].copy()
         if turnover_columns
         else pd.DataFrame()
     )
