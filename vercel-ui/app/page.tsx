@@ -186,6 +186,120 @@ function ModuleVisuals({ payload }: { payload?: ModulePayload }) {
   </section>
 }
 
+const SINIF_ETIKETLERI: Record<string, { label: string; color: string }> = {
+  'Üstün Performans': { label: 'Güçlü mağaza sinyali', color: '#70AD47' },
+  'Başarılı': { label: 'Olumlu mağaza sinyali', color: '#4472C4' },
+  'Gelişim Gerekli': { label: 'İnceleme gerekli', color: '#FFC000' },
+  'Yakın Takip Gerekli': { label: 'Kişi bazlı veri doğrulaması gerekli', color: '#C00000' },
+}
+const SINIF_ORDER = ['Güçlü mağaza sinyali', 'Olumlu mağaza sinyali', 'İnceleme gerekli', 'Kişi bazlı veri doğrulaması gerekli', 'Veri yetersiz']
+const SINIF_COLOR: Record<string, string> = {
+  'Güçlü mağaza sinyali': '#70AD47', 'Olumlu mağaza sinyali': '#4472C4',
+  'İnceleme gerekli': '#FFC000', 'Kişi bazlı veri doğrulaması gerekli': '#C00000', 'Veri yetersiz': '#A5A5A5',
+}
+
+function stripEmoji(value: string) {
+  return value.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+}
+
+function PersonelPerformansVisuals({ payload }: { payload?: ModulePayload }) {
+  const rows = payload?.rows ?? []
+
+  const sinifCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const row of rows) {
+      const raw = stripEmoji(String(row['Sınıf'] ?? row['Proxy Sınıf'] ?? '').trim())
+      const mapped = SINIF_ETIKETLERI[raw]?.label ?? (raw ? 'Veri yetersiz' : 'Veri yetersiz')
+      counts.set(mapped, (counts.get(mapped) ?? 0) + 1)
+    }
+    return SINIF_ORDER.map((label) => ({ label, count: counts.get(label) ?? 0, color: SINIF_COLOR[label] })).filter((item) => item.count > 0)
+  }, [rows])
+  const sinifTotal = sinifCounts.reduce((sum, item) => sum + item.count, 0)
+
+  const topStores = useMemo(() => {
+    const sums = new Map<string, { total: number; count: number }>()
+    for (const row of rows) {
+      const store = String(row['Mağaza'] ?? '').trim()
+      if (!store) continue
+      const value = asNumber(row['Performans Endeksi (0-100)'])
+      const entry = sums.get(store) ?? { total: 0, count: 0 }
+      entry.total += value; entry.count += 1
+      sums.set(store, entry)
+    }
+    return Array.from(sums.entries()).map(([store, { total, count }]) => ({ store, avg: count ? total / count : 0 }))
+      .sort((a, b) => b.avg - a.avg).slice(0, 15)
+  }, [rows])
+  const topStoresMax = Math.max(...topStores.map((s) => s.avg), 1)
+
+  const reelBuyume = useMemo(() => {
+    const seen = new Map<string, number>()
+    for (const row of rows) {
+      const store = String(row['Mağaza'] ?? '').trim()
+      if (!store || seen.has(store)) continue
+      const raw = row['Mağaza Reel Büyüme %']
+      if (raw === null || raw === undefined || raw === '') continue
+      seen.set(store, asNumber(raw))
+    }
+    return Array.from(seen.entries()).map(([store, value]) => ({ store, value })).sort((a, b) => b.value - a.value)
+  }, [rows])
+  const reelMax = Math.max(...reelBuyume.map((s) => Math.abs(s.value)), 1)
+
+  if (!rows.length) return null
+
+  let pieOffset = 0
+  const pieSegments = sinifCounts.map((item) => {
+    const fraction = sinifTotal ? item.count / sinifTotal : 0
+    const dash = `${fraction * 100} ${100 - fraction * 100}`
+    const seg = { ...item, dash, offset: pieOffset }
+    pieOffset -= fraction * 100
+    return seg
+  })
+
+  return <section className="visual-section">
+    <div className="section-title"><div><h2>Personel Performansı — Görsel Özet</h2><p>Güncel Railway sonuçlarından otomatik oluşturulur.</p></div></div>
+    <div className="grid" style={{ gridTemplateColumns: 'repeat(4,minmax(0,1fr))', marginBottom: 14 }}>
+      {sinifCounts.map((item) => <div className="card" key={item.label}>
+        <div className="metric-label" style={{ color: item.color }}>{item.label === 'Güçlü mağaza sinyali' ? 'Güçlü Sinyal' : item.label === 'Olumlu mağaza sinyali' ? 'Olumlu Sinyal' : item.label === 'İnceleme gerekli' ? 'İnceleme Gerekli' : item.label === 'Kişi bazlı veri doğrulaması gerekli' ? 'Veri Doğrulaması Gerekli' : item.label}</div>
+        <div className="metric-value">{item.count}</div>
+      </div>)}
+    </div>
+    <div className="chart-grid" style={{ gridTemplateColumns: '1fr 1.2fr' }}>
+      <article className="chart-card">
+        <h3>Proxy Risk/Sinyal Dağılımı</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <svg viewBox="0 0 42 42" style={{ width: 160, height: 160, flexShrink: 0 }}>
+            <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#1c2c42" strokeWidth="8" />
+            {pieSegments.map((seg) => <circle key={seg.label} cx="21" cy="21" r="15.9" fill="transparent" stroke={seg.color} strokeWidth="8"
+              strokeDasharray={seg.dash} strokeDashoffset={seg.offset} transform="rotate(-90 21 21)" />)}
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {pieSegments.map((seg) => <div key={seg.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--muted)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: seg.color, display: 'inline-block' }} />
+              {seg.label} — {sinifTotal ? Math.round((seg.count / sinifTotal) * 1000) / 10 : 0}%
+            </div>)}
+          </div>
+        </div>
+      </article>
+      <article className="chart-card">
+        <h3>En Yüksek Ortalama Performans — 15 Mağaza</h3>
+        <div className="bar-chart">{topStores.map((item) => <div className="bar-row" key={item.store}>
+          <span title={item.store}>{item.store}</span>
+          <div className="bar-track"><i style={{ width: `${Math.max(3, item.avg / topStoresMax * 100)}%`, background: 'var(--success)' }} /></div>
+          <strong>{new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 }).format(item.avg)}</strong>
+        </div>)}</div>
+      </article>
+    </div>
+    {reelBuyume.length > 0 && <article className="chart-card" style={{ marginTop: 14 }}>
+      <h3>Mağaza Reel Büyümesi (Enflasyon %32,11 Baz Alınarak) — Performans Katkı Kaynağı</h3>
+      <div className="bar-chart">{reelBuyume.map((item) => <div className="bar-row" key={item.store}>
+        <span title={item.store}>{item.store}</span>
+        <div className="bar-track"><i style={{ width: `${Math.max(3, Math.abs(item.value) / reelMax * 100)}%`, background: item.value >= 0 ? 'var(--success)' : 'var(--danger)' }} /></div>
+        <strong>{new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 }).format(item.value)}</strong>
+      </div>)}</div>
+    </article>}
+  </section>
+}
+
 function ModuleTable({ payload, hideSearch }: { payload?: ModulePayload; hideSearch?: boolean }) {
   const [query, setQuery] = useState('')
   const rows = payload?.rows ?? []
@@ -197,7 +311,7 @@ function ModuleTable({ payload, hideSearch }: { payload?: ModulePayload; hideSea
   }, [query, rows, hideSearch])
   const columns = useMemo(() => {
     const names: string[] = []
-    filtered.slice(0, 100).forEach((row) => Object.keys(row).forEach((key) => { if (!names.includes(key)) names.push(key) }))
+    filtered.slice(0, 100).forEach((row) => Object.keys(row).forEach((key) => { if (!names.includes(key) && key.trim().toLocaleLowerCase('tr-TR') !== 'not') names.push(key) }))
     return names
   }, [filtered])
   if (!rows.length) return <div className="empty">{payload?.status_message || 'Bu modül için henüz yayımlanmış veri bulunmuyor.'}</div>
@@ -694,7 +808,7 @@ export default function HomePage() {
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
-    if (activePage === 'Personel Performansı') return <><ModuleVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
+    if (activePage === 'Personel Performansı') return <><PersonelPerformansVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
     if (activePage === 'İş Gücü Tahmini') return <><ModuleVisuals payload={modules.forecast} /><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
     if (activePage === 'Transfer Optimizasyonu') return <ModuleTable payload={modules.transfer} />
     if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleVisuals payload={modules.ai_norm} /><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
