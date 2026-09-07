@@ -57,7 +57,7 @@ export function buildSalesEvidence(args: {
   performance: DataRow[]
   onlineOrders: DataRow[]
   goodsReceipt: DataRow[]
-  inflationPct: number
+  inflationPct: number | null
 }): { latestPeriod: string; previousPeriod: string; byStore: Map<string, SalesEvidence> } {
   const periods = [...new Set(args.operations.map(rowPeriod).filter(Boolean))].sort()
   const latestPeriod = periods.at(-1) ?? ''
@@ -84,7 +84,7 @@ export function buildSalesEvidence(args: {
       revenueChange,
       ticketChange: pctChange(tickets, numberValue(prior?.['Aylık Fiş'] ?? prior?.['Fiş Adedi'])),
       basketChange: pctChange(basket, numberValue(prior?.['Ort. Sepet'] ?? prior?.['Ortalama Sepet'])),
-      realGrowth: revenueChange === null ? null : (((1 + revenueChange / 100) / (1 + args.inflationPct / 100)) - 1) * 100,
+      realGrowth: revenueChange === null || args.inflationPct === null ? null : (((1 + revenueChange / 100) / (1 + args.inflationPct / 100)) - 1) * 100,
       overtimeHours: numberValue(overtime.get(storeId)?.['Fazla Mesai Saat']),
       absenceDays: numberValue(absence.get(storeId)?.['Devamsızlık Gün']),
       lostFte: numberValue(absence.get(storeId)?.['Fiili Kayıp FTE']),
