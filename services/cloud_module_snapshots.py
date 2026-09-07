@@ -158,10 +158,36 @@ def build_module_snapshots(
 
     store_dimension = _sheet(sheets, "Dim_Magaza", "Dim Magaza")
 
-    def _enrich_region(frame: pd.DataFrame) -> pd.DataFrame:
-        if frame.empty or store_dimension.empty or "Bölge Sorumlusu" not in store_dimension.columns:
+    def _enrich_store_dimension(frame: pd.DataFrame) -> pd.DataFrame:
+        if frame.empty or store_dimension.empty:
             return frame
         enriched = frame.copy()
+
+        # Ham Fact_Mevcut'ta Mağaza formülü boş veya eski kalabilir. MağazaID
+        # mevcutsa Dim_Magaza'daki kanonik adı kullan; böylece aktif ve ayrılan
+        # kayıtlar aynı mağaza grubunda birleşir.
+        if (
+            "MağazaID" in enriched.columns
+            and "MağazaID" in store_dimension.columns
+            and "Mağaza" in store_dimension.columns
+        ):
+            store_map = (
+                store_dimension[["MağazaID", "Mağaza"]]
+                .dropna(subset=["MağazaID"])
+                .drop_duplicates(subset=["MağazaID"], keep="last")
+                .assign(_key=lambda value: value["MağazaID"].astype(str).str.strip())
+                .set_index("_key")["Mağaza"]
+                .to_dict()
+            )
+            mapped_store = enriched["MağazaID"].astype(str).str.strip().map(store_map)
+            if "Mağaza" in enriched.columns:
+                matched = mapped_store.notna() & mapped_store.astype(str).str.strip().ne("")
+                enriched.loc[matched, "Mağaza"] = mapped_store[matched]
+            else:
+                enriched["Mağaza"] = mapped_store
+
+        if "Bölge Sorumlusu" not in store_dimension.columns:
+            return enriched
         for join_key in ("MağazaID", "Mağaza"):
             if join_key not in enriched.columns or join_key not in store_dimension.columns:
                 continue
@@ -182,8 +208,8 @@ def build_module_snapshots(
                 enriched["Bölge Sorumlusu"] = mapped_region
         return enriched
 
-    personnel_source = _enrich_region(personnel_source)
-    turnover_source = _enrich_region(turnover_source)
+    personnel_source = _enrich_store_dimension(personnel_source)
+    turnover_source = _enrich_store_dimension(turnover_source)
 
     personnel_columns = [
         c for c in (
