@@ -291,7 +291,7 @@ function PersonelPerformansVisuals({ payload }: { payload?: ModulePayload }) {
       </article>
     </div>
     {reelBuyume.length > 0 && <article className="chart-card" style={{ marginTop: 14 }}>
-      <h3>Mağaza Reel Büyümesi (Enflasyon %32,11 Baz Alınarak) — Performans Katkı Kaynağı</h3>
+      <h3>Mağaza Reel Büyümesi — Railway Tarafından Hesaplanan Performans Katkısı</h3>
       <div className="bar-chart">{reelBuyume.map((item) => <div className="bar-row" key={item.store}>
         <span title={item.store}>{item.store}</span>
         <div className="bar-track"><i style={{ width: `${Math.max(3, Math.abs(item.value) / reelMax * 100)}%`, background: item.value >= 0 ? 'var(--success)' : 'var(--danger)' }} /></div>
@@ -736,10 +736,12 @@ export default function HomePage() {
   const renderSalesAccountability = () => {
     const operationRows = modules.operations?.rows ?? []
     const inflationRows = modules.inflation?.rows ?? []
-    const inflationValue = inflationRows.length
-      ? asNumber(inflationRows[inflationRows.length - 1]['Enflasyon %'])
-      : 32.11
-    const inflationPct = inflationValue > 0 ? inflationValue : 32.11
+    const inflationRaw = inflationRows.length
+      ? inflationRows[inflationRows.length - 1]['Enflasyon %']
+      : null
+    const inflationPct = inflationRaw === null || inflationRaw === undefined || inflationRaw === ''
+      ? null
+      : asNumber(inflationRaw)
     const analysis = buildSalesEvidence({
       operations: operationRows,
       overtime: modules.overtime?.rows ?? [],
@@ -783,11 +785,11 @@ export default function HomePage() {
     const unsupportedPersonnel = evaluated.filter((row) => row.diagnosis.personnelClaim === 'unsupported' && row.salesRate !== null && row.salesRate < 100).length
     const missing = evaluated.filter((row) => row.diagnosis.severity === 'missing').length
     return <>
-      <section className="accountability-intro">
+      {inflationPct === null && <div className="accountability-note">Enflasyon verisi bulunmadığı için reel büyüme hesaplanmadı; sabit veya varsayılan oran kullanılmadı.</div>}\n      <section className="accountability-intro">
         <div><span>Hedef altında</span><strong>{belowTarget} mağaza</strong><small>Satış kök neden açıklaması gereken mağazalar</small></div>
         <div><span>Personel iddiası kanıtsız</span><strong>{unsupportedPersonnel} mağaza</strong><small>Norm veya satış verisi iddiayı desteklemiyor</small></div>
         <div><span>Veri açığı</span><strong>{missing} mağaza</strong><small>Hedef/gerçekleşen eşleşmesi tamamlanmalı</small></div>
-        <div><span>İncelenen dönem</span><strong>{latestPeriod || 'Veri bekleniyor'}</strong><small>Önceki dönem: {analysis.previousPeriod || '—'} · Enflasyon %{inflationPct}</small></div>
+        <div><span>İncelenen dönem</span><strong>{latestPeriod || 'Veri bekleniyor'}</strong><small>Önceki dönem: {analysis.previousPeriod || '—'} · Enflasyon {inflationPct === null ? 'verisi eksik' : `%${inflationPct}`}</small></div>
       </section>
       <section className="section">
         <div className="section-title"><div><h2>Satış kök neden matrisi</h2><p>“Personel eksikti” açıklaması; norm açığına ek olarak mesai, kayıp FTE veya yüksek iş yükü kanıtı gerektirir.</p></div><div className="status-pill">{stores.length} mağaza</div></div>
@@ -805,7 +807,7 @@ export default function HomePage() {
   }
 
   const renderPage = () => {
-    if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section>{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /><TurnoverPanel rows={modules.personnel?.rows ?? []} /></>
+    if (activePage === 'Genel Özet') return <>{renderKpis()}<section className="executive-grid"><div className="executive-card"><span>İş Gücü Dengesi</span><strong>{kpi ? netLabel : '—'}</strong><small>Şirket geneli net norm görünümü</small></div><div className="executive-card"><span>Son Motor</span><strong>{kpi?.engine_version || '—'}</strong><small>{fmtDate(kpi?.calculated_at ?? null)}</small></div><div className="executive-card"><span>Mağaza Kapsamı</span><strong>{stores.length || '—'}</strong><small>Supabase'de görünen mağaza özetleri</small></div></section><TurnoverPanel rows={modules.personnel?.rows ?? []} />{kpi && <BrutVeDagilimGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} deficit={kpi.norm_deficit ?? 0} />}<BolgeBazliEksikFazlaGrafigi stores={stores} />{kpi && <NormKarsilamaOraniGosterge active={kpi.active_current ?? 0} totalNorm={kpi.total_norm ?? 0} />}<NormEksigiIsiHaritasi rows={modules.store_title?.rows ?? []} /><NormFazlasiIsiHaritasi rows={modules.store_title?.rows ?? []} /><MagazaRiskAgacHaritasi stores={stores} /><UnvanBazliEnYuksekAciklarGrafigi titles={titles} /><MevcutNormSacilimGrafigi stores={stores} /></>
     if (activePage === 'Bölge & Mağaza') return renderStoreTable()
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
