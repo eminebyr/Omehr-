@@ -168,12 +168,25 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       }))
       .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason, 'tr'))
 
+    const generalReasonCounts = new Map<string, number>()
+    for (const row of exitReasons) {
+      generalReasonCounts.set(row.reason, (generalReasonCounts.get(row.reason) ?? 0) + row.count)
+    }
+    const generalExitReasons = [...generalReasonCounts.entries()]
+      .map(([reason, count]) => ({
+        reason,
+        count,
+        share: totals.exits > 0 ? count / totals.exits * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason, 'tr'))
+
     return {
       ...totals,
       earlyShare: totals.exits > 0 ? totals.earlyExits / totals.exits * 100 : 0,
       unclassifiedEarlyExits,
       stores,
       regions,
+      generalExitReasons,
       exitReasons,
     }
   }, [rows, startValue, endValue])
@@ -287,7 +300,29 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
         </div>
 
         <div className="chart-card section">
-          <h3>Çıkış Nedenlerine Göre Analiz</h3>
+          <h3>Genel Çıkış Nedenleri</h3>
+          {result.generalExitReasons.length ? <ResponsiveContainer width="100%" height={Math.max(320, result.generalExitReasons.length * 42)}>
+            <BarChart data={result.generalExitReasons} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)' }} />
+              <YAxis type="category" dataKey="reason" width={210} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+              <Tooltip formatter={(value) => [formatNumber(Number(value)), 'Ayrılan']} />
+              <Bar dataKey="count" fill="var(--gold)" radius={[0, 6, 6, 0]} />
+            </BarChart>
+          </ResponsiveContainer> : <div className="empty">Seçilen dönemde çıkış nedeni analizi için kayıt bulunmuyor.</div>}
+        </div>
+
+        {result.generalExitReasons.length > 0 && <div className="table-wrap section">
+          <table>
+            <thead><tr><th>Çıkış Nedeni</th><th>Ayrılan</th><th>Toplam Çıkış Payı</th></tr></thead>
+            <tbody>{result.generalExitReasons.map((row) => <tr key={row.reason}>
+              <td>{row.reason}</td><td>{row.count}</td><td>%{formatNumber(row.share, 1)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>}
+
+        <div className="chart-card section">
+          <h3>Çıkış Nedenleri · Bölge, Mağaza ve Gerçek Unvan Kırılımı</h3>
           {result.exitReasons.length ? <ResponsiveContainer width="100%" height={Math.max(360, result.exitReasons.length * 44)}>
             <BarChart data={result.exitReasons} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
