@@ -205,3 +205,31 @@ def test_turnover_active_headcount_uses_all_fact_mevcut_roles_for_canonical_stor
     torbali_rows = [row for row in turnover_rows if row["Mağaza"] == "TORBALI 1"]
     assert len(torbali_rows) == 11
     assert sum(row["İşten Çıkış"] is None for row in torbali_rows) == 6
+
+
+def test_turnover_resolves_exited_employee_real_title_from_dim_unvan(tmp_path):
+    history = pd.DataFrame([{
+        "PersonelID": "ayrilan-1",
+        "İsim Soyisim": "Ayrılan Personel",
+        "MağazaID": "T1",
+        "Mağaza": "TORBALI 1",
+        "UnvanID": "U17",
+        "Unvan": None,
+        "İşe Giriş": "01.01.2026",
+        "İşten Çıkış": "01.08.2026",
+        "Çıkış Nedeni": "Ücret yetersizliği",
+    }])
+    modules = build_module_snapshots(
+        sheets={
+            "Fact_Mevcut": history,
+            "Dim_Unvan": pd.DataFrame([{"UnvanID": "U17", "Unvan": "ELİT KASAP"}]),
+        },
+        staff=pd.DataFrame(),
+        store_title_detail=pd.DataFrame(),
+        scenarios={},
+        output_dir=tmp_path,
+    )
+
+    row = modules["turnover_personnel"]["rows"][0]
+    assert row["UnvanID"] == "U17"
+    assert row["Gerçek Unvan"] == "ELİT KASAP"
