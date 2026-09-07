@@ -58,7 +58,8 @@ def _normalize_embedded_headers(frame: pd.DataFrame | None) -> pd.DataFrame:
 def _records(frame: pd.DataFrame | None, *, limit: int | None = 1500) -> list[dict[str, Any]]:
     if frame is None or frame.empty:
         return []
-    normalized = _normalize_embedded_headers(frame)\n    view = normalized.copy() if limit is None else normalized.head(limit).copy()
+    normalized = _normalize_embedded_headers(frame)
+    view = normalized.copy() if limit is None else normalized.head(limit).copy()
     for column in view.columns:
         if pd.api.types.is_datetime64_any_dtype(view[column]):
             view[column] = view[column].dt.strftime("%Y-%m-%d")
