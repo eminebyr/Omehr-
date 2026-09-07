@@ -83,7 +83,7 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
     const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store'> => {
       const entries = items.filter((row) => within(row.entry, start, end)).length
       const exits = items.filter((row) => within(row.exit, start, end)).length
-      const active = items.filter((row) => !row.exit || row.exit > end).length
+      const active = items.filter((row) => row.entry && row.entry <= end && (!row.exit || row.exit > end)).length
       const startHeadcount = Math.max(0, active - entries + exits)
       const averageHeadcount = (startHeadcount + active) / 2
       const earlyExits = items.filter((row) => {
