@@ -144,13 +144,40 @@ def build_module_snapshots(
     output_dir: Path,
 ) -> dict[str, dict]:
     """Vercel'deki her bilgi ekranı için kaynak snapshot'ı oluşturur."""
+    # Turnover görselleri bölgeyi personel kaydından veya Dim_Magaza
+    # eşlemesinden alır. Böylece Railway her motor çalışmasında Vercel'e
+    # mağaza ve bölge kırılımını birlikte yayımlar.
+    personnel_source = staff.copy()
+    store_dimension = _sheet(sheets, "Dim_Magaza", "Dim Magaza")
+    if not personnel_source.empty and not store_dimension.empty and "Bölge Sorumlusu" in store_dimension.columns:
+        for join_key in ("MağazaID", "Mağaza"):
+            if join_key not in personnel_source.columns or join_key not in store_dimension.columns:
+                continue
+            region_map = (
+                store_dimension[[join_key, "Bölge Sorumlusu"]]
+                .dropna(subset=[join_key])
+                .drop_duplicates(subset=[join_key], keep="last")
+                .assign(_key=lambda frame: frame[join_key].astype(str).str.strip())
+                .set_index("_key")["Bölge Sorumlusu"]
+                .to_dict()
+            )
+            mapped_region = personnel_source[join_key].astype(str).str.strip().map(region_map)
+            if "Bölge Sorumlusu" in personnel_source.columns:
+                current_region = personnel_source["Bölge Sorumlusu"]
+                missing_region = current_region.isna() | current_region.astype(str).str.strip().eq("")
+                personnel_source.loc[missing_region, "Bölge Sorumlusu"] = mapped_region[missing_region]
+            else:
+                personnel_source["Bölge Sorumlusu"] = mapped_region
+            break
+
     personnel_columns = [
         c for c in (
-            "PersonelID", "Sicil No", "İsim Soyisim", "Mağaza", "Unvan",
-            "Departman", "İşe Giriş", "İşten Çıkış", "Durum", "Açıklama",
-        ) if c in staff.columns
+            "PersonelID", "Sicil No", "İsim Soyisim", "MağazaID", "Mağaza",
+            "Bölge Sorumlusu", "Unvan", "Departman", "İşe Giriş",
+            "İşten Çıkış", "Durum", "Açıklama",
+        ) if c in personnel_source.columns
     ]
-    personnel = staff[personnel_columns].copy() if personnel_columns else pd.DataFrame()
+    personnel = personnel_source[personnel_columns].copy() if personnel_columns else pd.DataFrame()
 
     transfer_rows: list[dict] = []
     if isinstance(scenarios, dict):
