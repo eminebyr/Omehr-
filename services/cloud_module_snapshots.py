@@ -67,7 +67,10 @@ def _records(frame: pd.DataFrame | None, *, limit: int | None = 1500) -> list[di
             view[column] = view[column].map(
                 lambda value: value.isoformat() if hasattr(value, "isoformat") else value
             )
-    view = view.where(pd.notnull(view), None)
+    # DataFrame sayısal/tarih sütunlarında None atamasını yeniden NaN/NaT'a
+    # çevirebilir. Object'e dönüştürerek API sözleşmesinde eksik değerlerin
+    # kesin JSON null olarak yayımlanmasını sağla.
+    view = view.astype(object).where(pd.notnull(view), None)
     return view.to_dict(orient="records")
 
 
