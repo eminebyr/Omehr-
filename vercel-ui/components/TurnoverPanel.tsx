@@ -9,6 +9,7 @@ type PersonnelRow = Record<string, unknown>
 
 type TurnoverRow = {
   store: string
+  region: string
   entries: number
   exits: number
   active: number
@@ -19,6 +20,7 @@ type TurnoverRow = {
 const ENTRY_KEYS = ['İşe Giriş', 'Ise Giris', 'İşe Giriş Tarihi', 'Ise Giris Tarihi']
 const EXIT_KEYS = ['İşten Çıkış', 'Isten Cikis', 'İşten Çıkış Tarihi', 'Isten Cikis Tarihi']
 const STORE_KEYS = ['Mağaza', 'Magaza', 'Mağaza Adı', 'Magaza Adi']
+const REGION_KEYS = ['Bölge Sorumlusu', 'Bolge Sorumlusu', 'Bölge Müdürü', 'Bolge Muduru']
 
 function firstValue(row: PersonnelRow, keys: string[]) {
   for (const key of keys) {
@@ -76,14 +78,15 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
 
     const normalized = rows.map((row) => ({
       store: String(firstValue(row, STORE_KEYS) ?? '').trim(),
+      region: String(firstValue(row, REGION_KEYS) ?? 'Bilinmiyor').trim() || 'Bilinmiyor',
       entry: parseDate(firstValue(row, ENTRY_KEYS)),
       exit: parseDate(firstValue(row, EXIT_KEYS)),
     })).filter((row) => row.store)
 
-    const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store'> => {
+    const calculate = (items: typeof normalized): Omit<TurnoverRow, 'store' | 'region'> => {
       const entries = items.filter((row) => within(row.entry, start, end)).length
       const exits = items.filter((row) => within(row.exit, start, end)).length
-      const active = items.filter((row) => !row.exit || row.exit > end).length
+      const active = items.filter((row) => row.entry && row.entry <= end && (!row.exit || row.exit > end)).length
       const startHeadcount = Math.max(0, active - entries + exits)
       const averageHeadcount = (startHeadcount + active) / 2
       const earlyExits = items.filter((row) => {
@@ -99,21 +102,33 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
       }
     }
 
-    const stores = [...new Set(normalized.map((row) => row.store))].map((store) => ({
-      store,
-      ...calculate(normalized.filter((row) => row.store === store)),
-    })).sort((a, b) => b.turnover - a.turnover || a.store.localeCompare(b.store, 'tr'))
+    const stores = [...new Set(normalized.map((row) => row.store))].map((store) => {
+      const storeRows = normalized.filter((row) => row.store === store)
+      return {
+        store,
+        region: storeRows.find((row) => row.region !== 'Bilinmiyor')?.region ?? storeRows[0]?.region ?? 'Bilinmiyor',
+        ...calculate(storeRows),
+      }
+    }).sort((a, b) => b.turnover - a.turnover || a.store.localeCompare(b.store, 'tr'))
+
+    const regions = [...new Set(normalized.map((row) => row.region))].map((region) => ({
+      region,
+      ...calculate(normalized.filter((row) => row.region === region)),
+    })).sort((a, b) => b.exits - a.exits || b.turnover - a.turnover)
 
     const totals = calculate(normalized)
     return {
       ...totals,
       earlyShare: totals.exits > 0 ? totals.earlyExits / totals.exits * 100 : 0,
       stores,
+      regions,
     }
   }, [rows, startValue, endValue])
 
   const selected = result?.stores.find((row) => row.store === selectedStore)
   const chartRows = result?.stores.filter((row) => row.exits > 0).slice(0, 15) ?? []
+  const storeExitRows = result?.stores.filter((row) => row.exits > 0).sort((a, b) => b.exits - a.exits).slice(0, 15) ?? []
+  const regionExitRows = result?.regions.filter((row) => row.exits > 0) ?? []
   const hasRequiredColumns = rows.some((row) =>
     firstValue(row, ENTRY_KEYS) !== null &&
     firstValue(row, STORE_KEYS) !== null
@@ -161,6 +176,34 @@ export function TurnoverPanel({ rows }: { rows: PersonnelRow[] }) {
           <div className="executive-card"><span>Turnover</span><strong>%{formatNumber(selected.turnover, 1)}</strong><small>Mağaza bazlı çalışan devri</small></div>
           <div className="executive-card"><span>İlk 90 Gün Çıkış</span><strong>{selected.earlyExits}</strong><small>Dönem sonu aktif: {selected.active}</small></div>
         </div>}
+
+        <div className="chart-grid section">
+          <article className="chart-card">
+            <h3>Bölge Müdürü Bazlı Ayrılan Personel</h3>
+            {regionExitRows.length ? <ResponsiveContainer width="100%" height={Math.max(300, regionExitRows.length * 48)}>
+              <BarChart data={regionExitRows} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)' }} />
+                <YAxis type="category" dataKey="region" width={145} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <Tooltip formatter={(value) => [formatNumber(Number(value)), 'Ayrılan']} />
+                <Bar dataKey="exits" fill="var(--gold)" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer> : <div className="empty">Seçilen dönemde bölge bazlı ayrılış kaydı bulunmuyor.</div>}
+          </article>
+
+          <article className="chart-card">
+            <h3>Mağaza Bazlı En Fazla Ayrılış</h3>
+            {storeExitRows.length ? <ResponsiveContainer width="100%" height={Math.max(360, storeExitRows.length * 32)}>
+              <BarChart data={storeExitRows} layout="vertical" margin={{ top: 10, right: 35, bottom: 10, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)' }} />
+                <YAxis type="category" dataKey="store" width={130} tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <Tooltip formatter={(value) => [formatNumber(Number(value)), 'Ayrılan']} />
+                <Bar dataKey="exits" fill="var(--teal)" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer> : <div className="empty">Seçilen dönemde mağaza bazlı ayrılış kaydı bulunmuyor.</div>}
+          </article>
+        </div>
 
         <div className="chart-card section">
           <h3>Turnover Oranı En Yüksek Mağazalar</h3>
