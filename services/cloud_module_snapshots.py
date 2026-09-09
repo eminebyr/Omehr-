@@ -296,6 +296,10 @@ def build_module_snapshots(
     analytics_path = output_dir / "V19_Istatistik_ML_Operasyon_Analizi.xlsx"
 
     forecast_detail, forecast_summary, forecast_message = _forecast_frames(sheets, output_dir)
+    forecast_path = output_dir / "OMEHR_Magaza_Unvan_Isgucu_Tahmini.xlsx"
+    forecast_validation = _excel_sheet(forecast_path, "Operasyon_Backtest_Ozet")
+    staffing_validation = _excel_sheet(forecast_path, "Kadro_Backtest_Ozet")
+    turnover_validation = _excel_sheet(forecast_path, "Turnover_Backtest_Ozet")
     ai_frame = _excel_sheet(ai_path, "AI_Norm_Sonuclari")
     ai_status = "READY"
     ai_message = ""
@@ -352,6 +356,9 @@ def build_module_snapshots(
         "performance": _snapshot("Personel Performansı", _records(performance_frame), description=performance_note, source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
         "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
         "forecast_summary": _snapshot("Tahmin Yönetici Özeti", _records(forecast_summary), source="İş gücü tahmin motoru", empty_message=forecast_message or "Tahmin yönetici özeti henüz oluşmadı."),
+        "forecast_validation": _snapshot("Tahmin Doğrulaması", _records(forecast_validation), source="İş gücü tahmin motoru / backtest", empty_message="Operasyon veya kadro backtest sonucu henüz oluşmadı."),
+        "staffing_validation": _snapshot("Mağaza–Unvan Kadro Doğrulaması", _records(staffing_validation), source="İş gücü tahmin motoru / Kadro_Backtest_Ozet", empty_message="Tarihsel kadro snapshot verisi henüz oluşmadı."),
+        "turnover_validation": _snapshot("Turnover Tahmin Doğrulaması", _records(turnover_validation), source="İş gücü tahmin motoru / Turnover_Backtest_Ozet", empty_message="Turnover oranı backtest sonucu henüz oluşmadı."),
         "transfer": _snapshot("Transfer Optimizasyonu", transfer_rows),
         "ai_norm": _snapshot("AI Norm ve Operasyon Önerileri", _records(ai_frame), source="AI norm motoru", empty_message=ai_message or "AI norm motoru henüz sonuç üretmedi.", status=ai_status if not ai_frame.empty or ai_status == "ENGINE_ERROR" else None),
         "model_comparison": _snapshot("Model Karşılaştırması", _records(model_frame), source="V19_Istatistik_ML_Operasyon_Analizi.xlsx / Model_Karsilastirma", empty_message="Model karşılaştırma raporu henüz üretilmedi veya eğitim için yeterli tarihsel veri yok."),
@@ -363,7 +370,9 @@ def build_module_snapshots(
         "goods_receipt": _snapshot("Mal Kabul", _records(_sheet(sheets, "Mal Kabul"))),
         "waste_returns": _snapshot("Fire ve İade", _records(_sheet(sheets, "Fire ve İade", "Fire ve Iade"))),
         "productivity": _snapshot("Verimlilik Görselleri", _records(_sheet(sheets, "İş Yükü Endeksi", "Is Yuku Endeksi"))),
+        "personnel_cost": _snapshot("Personel Maliyeti", _records(_sheet(sheets, "Personel Maliyeti"))),
         "overtime": _snapshot("Fazla Mesai", _records(_sheet(sheets, "Fazla Mesai"))),
+        "turnover_risk": _snapshot("Devir Riski", _records(_sheet(sheets, "Devir Riski"))),
         "absence": _snapshot("Devamsızlık", _records(_sheet(sheets, "Devamsızlık"))),
         "store_performance": _snapshot("Mağaza Performansı", _records(_sheet(sheets, "Performans"))),
         "sales_targets": _snapshot("Satış Hedefleri", _records(_sheet(sheets, "Satış Hedefi", "Satis Hedefi")), source="Satış Hedefi", empty_message="Satış Hedefi sayfası henüz doldurulmadı."),
