@@ -86,7 +86,6 @@ export function WorkforceForecastPanel({ detail, summary, validation, staffingVa
   const storeOptions = useMemo(() => [...new Set(horizonRows.map((row) => text(row, 'Mağaza', 'Magaza')).filter(Boolean))].sort(), [horizonRows])
   const titleOptions = useMemo(() => [...new Set(horizonRows.map((row) => text(row, 'Unvan', 'Ünvan')).filter(Boolean))].sort(), [horizonRows])
   const view = horizonRows.filter((row) => (!stores.length || stores.includes(text(row, 'Mağaza', 'Magaza'))) && (!titles.length || titles.includes(text(row, 'Unvan', 'Ünvan'))))
-  const summaryRow = (summary?.rows ?? []).find((row) => num(row['Tahmin Ufku Gün']) === horizon)
   const staffing = sumBy(view, ['Mağaza', 'Magaza'], 'Tahmini Açık/Fazla')
   const observed = view.filter((row) => ['Yüksek', 'Orta', 'Düşük'].includes(text(row, 'Turnover Veri Durumu')))
   const turnover = sumBy(observed, ['Mağaza', 'Magaza'], 'Turnover Riski FTE')
@@ -99,22 +98,28 @@ export function WorkforceForecastPanel({ detail, summary, validation, staffingVa
     <label>Unvan filtresi<select value="" onChange={(event) => event.target.value && toggle(event.target.value, titles, setTitles)}><option value="">Unvan seçin</option>{titleOptions.filter((item) => !titles.includes(item)).map((item) => <option key={item}>{item}</option>)}</select><span className="selected-chips">{titles.length ? titles.map((item) => <button key={item} onClick={() => toggle(item, titles, setTitles)} title="Filtreyi kaldır">{item} ×</button>) : <small>Tümü</small>}</span></label></div>
   </section>
   if (!horizonRows.length) return <>{filterPanel}<div className="engine-message">{horizon} günlük tahmin verisi henüz Railway motoru tarafından oluşturulmadı. Başka bir tahmin ufku seçebilirsiniz.</div></>
+  const scopedRequired = view.reduce((sum, row) => sum + num(row['Tahmini Gerekli Kadro']), 0)
+  const scopedActive = view.reduce((sum, row) => sum + num(row['Aktif Mevcut']), 0)
+  const scopedDeficit = view.reduce((sum, row) => sum + Math.max(0, num(row['Tahmini Açık/Fazla'])), 0)
+  const scopedSurplus = view.reduce((sum, row) => sum + Math.max(0, -num(row['Tahmini Açık/Fazla'])), 0)
+  const scopedConfidence = view.length ? view.reduce((sum, row) => sum + num(row['Tahmin Güveni %']), 0) / view.length : 0
+  const hasScopeFilter = stores.length > 0 || titles.length > 0
   return <>
     {filterPanel}
     <Kpis items={[
-      { label: 'Ham Tahmin Adayı', value: tr.format(num(summaryRow?.['Tahmini Gerekli Kadro'])) },
-      { label: 'Aktif Mevcut', value: tr.format(num(summaryRow?.['Aktif Mevcut'])) },
-      { label: 'Tahmini Açık', value: tr.format(num(summaryRow?.['Toplam Tahmini Açık'])) },
-      { label: 'Tahmini Fazla', value: tr.format(num(summaryRow?.['Toplam Tahmini Fazla'])) },
-      { label: 'Ortalama Güven', value: `%${tr.format(num(summaryRow?.['Ortalama Güven %']))}` },
+      { label: 'Tahmini Gerekli Kadro', value: tr.format(scopedRequired), note: hasScopeFilter ? 'Seçili filtreler' : 'Şirket geneli' },
+      { label: 'Aktif Mevcut', value: tr.format(scopedActive), note: hasScopeFilter ? 'Seçili filtreler' : 'Tüm tahmin satırları' },
+      { label: 'Tahmini Açık', value: tr.format(scopedDeficit), note: 'Norm inceleme adayları hariç' },
+      { label: 'Tahmini Fazla', value: tr.format(scopedSurplus), note: 'Norm inceleme adayları hariç' },
+      { label: 'Ortalama Güven', value: `%${tr.format(scopedConfidence)}`, note: scopedConfidence < 65 ? 'Düşük güven — karar öncesi doğrulayın' : undefined },
     ]} />
     <div className="chart-grid"><ChartCard title={`${horizon} Günlük Mağaza Bazında Tahmini Açık / Fazla`}><HorizontalBars data={staffing} color="#4472c4" /></ChartCard>
     <ChartCard title={`${horizon} Günlük Mağaza Bazında Turnover Riski (FTE)`}>{turnover.length ? <HorizontalBars data={turnover} color="#d64545" /> : <Empty label="Gözleme dayalı turnover riski" />}</ChartCard></div>
     <section className="section"><div className="section-title"><div><h2>Açıklanabilir tahmin ayrıntısı</h2><p>{view.length} mağaza–unvan tahmini; filtrelerle birlikte canlı değişir.</p></div></div><SimpleTable rows={view} /></section>
     <section className="section"><div className="section-title"><div><h2>Tahmin doğrulaması</h2><p>Operasyon, kadro ve turnover tahminlerinin Railway backtest sonuçları.</p></div></div>
-      <SimpleTable rows={(validation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} />
-      <h3 style={{ marginTop: 24 }}>Mağaza–unvan kadro doğruluğu</h3><SimpleTable rows={(staffingValidation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} />
-      <h3 style={{ marginTop: 24 }}>Turnover oranı tahmin doğruluğu</h3><SimpleTable rows={(turnoverValidation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} /></section>
+      <SimpleTable rows={(validation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} emptyMessage={validation?.status_message || 'Operasyon backtest verisi Railway tarafından henüz yayımlanmadı.'} />
+      <h3 style={{ marginTop: 24 }}>Mağaza–unvan kadro doğruluğu</h3><SimpleTable rows={(staffingValidation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} emptyMessage={staffingValidation?.status_message || 'Tarihsel kadro snapshot verisi Railway tarafından henüz yayımlanmadı.'} />
+      <h3 style={{ marginTop: 24 }}>Turnover oranı tahmin doğruluğu</h3><SimpleTable rows={(turnoverValidation?.rows ?? []).filter((row) => !row['Tahmin Ufku Gün'] || num(row['Tahmin Ufku Gün']) === horizon)} emptyMessage={turnoverValidation?.status_message || 'Turnover backtest verisi Railway tarafından henüz yayımlanmadı.'} /></section>
   </>
 }
 
@@ -205,8 +210,8 @@ function Trend({ data, dataKey, color }: { data: { period: string; value: number
   return <ResponsiveContainer width="100%" height="100%"><LineChart data={data}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis dataKey="period" tick={{ fill: '#a9bfd8' }} /><YAxis tick={{ fill: '#a9bfd8' }} /><Tooltip /><Legend /><Line dataKey={dataKey} stroke={color} strokeWidth={3} /></LineChart></ResponsiveContainer>
 }
 
-function SimpleTable({ rows }: { rows: Row[] }) {
-  if (!rows.length) return <div className="empty">Bu bölüm için henüz doğrulanabilir veri bulunmuyor.</div>
+function SimpleTable({ rows, emptyMessage }: { rows: Row[]; emptyMessage?: string }) {
+  if (!rows.length) return <div className="empty">{emptyMessage || 'Bu bölüm için henüz doğrulanabilir veri bulunmuyor.'}</div>
   const columns = [...new Set(rows.slice(0, 100).flatMap(Object.keys))]
   return <div className="table-wrap"><table><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{rows.slice(0, 500).map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{String(row[column] ?? '—')}</td>)}</tr>)}</tbody></table></div>
 }
