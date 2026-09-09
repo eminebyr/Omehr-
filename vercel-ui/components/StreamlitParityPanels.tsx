@@ -75,8 +75,8 @@ function HorizontalBars({ data, color = '#16b8c4', suffix = '' }: { data: { name
   </BarChart></ResponsiveContainer>
 }
 
-export function WorkforceForecastPanel({ detail, summary, validation, staffingValidation, turnoverValidation }: {
-  detail?: Payload; summary?: Payload; validation?: Payload; staffingValidation?: Payload; turnoverValidation?: Payload
+export function WorkforceForecastPanel({ detail, summary, validation, staffingValidation, turnoverValidation, actualActive }: {
+  detail?: Payload; summary?: Payload; validation?: Payload; staffingValidation?: Payload; turnoverValidation?: Payload; actualActive?: number | null
 }) {
   const rows = detail?.rows ?? []
   const [horizon, setHorizon] = useState(30)
@@ -108,7 +108,7 @@ export function WorkforceForecastPanel({ detail, summary, validation, staffingVa
     {filterPanel}
     <Kpis items={[
       { label: 'Tahmini Gerekli Kadro', value: tr.format(scopedRequired), note: hasScopeFilter ? 'Seçili filtreler' : 'Şirket geneli' },
-      { label: 'Aktif Mevcut', value: tr.format(scopedActive), note: hasScopeFilter ? 'Seçili filtreler' : 'Tüm tahmin satırları' },
+      { label: 'Aktif Mevcut', value: tr.format(hasScopeFilter ? scopedActive : (actualActive ?? scopedActive)), note: hasScopeFilter ? 'Seçili filtreler' : 'Genel Özet canlı mevcut' },
       { label: 'Tahmini Açık', value: tr.format(scopedDeficit), note: 'Norm inceleme adayları hariç' },
       { label: 'Tahmini Fazla', value: tr.format(scopedSurplus), note: 'Norm inceleme adayları hariç' },
       { label: 'Ortalama Güven', value: `%${tr.format(scopedConfidence)}`, note: scopedConfidence < 65 ? 'Düşük güven — karar öncesi doğrulayın' : undefined },
