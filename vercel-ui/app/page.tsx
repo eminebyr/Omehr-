@@ -823,7 +823,7 @@ export default function HomePage() {
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
     if (activePage === 'Personel Performansı') return <><PersonelPerformansVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
-    if (activePage === 'İş Gücü Tahmini') return <WorkforceForecastPanel detail={modules.forecast} summary={modules.forecast_summary} validation={modules.forecast_validation} staffingValidation={modules.staffing_validation} turnoverValidation={modules.turnover_validation} />
+    if (activePage === 'İş Gücü Tahmini') return <WorkforceForecastPanel detail={modules.forecast} summary={modules.forecast_summary} validation={modules.forecast_validation} staffingValidation={modules.staffing_validation} turnoverValidation={modules.turnover_validation} actualActive={kpi?.active_current} />
     if (activePage === 'Transfer Optimizasyonu') return <ModuleTable payload={modules.transfer} />
     if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleVisuals payload={modules.ai_norm} /><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
     if (activePage === 'Operasyon Görselleri') return <OperationsPanel monthly={modules.operations} daily={modules.daily_operations} hourly={modules.hourly_density} register={modules.register_usage} inflation={modules.inflation} />
