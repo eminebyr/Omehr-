@@ -451,7 +451,61 @@ def run(sheets: dict[str, pd.DataFrame], outdir: Path) -> dict[str, Any]:
     if "Unvan" not in result.columns:
         candidates=[c for c in result.columns if "UNVAN" in _norm(c) and "ID" not in _norm(c)]
         if candidates: result["Unvan"]=result[candidates].bfill(axis=1).iloc[:,0]
-    preferred = ["Tahmin Ufku Gün","MağazaID","Mağaza","UnvanID","Unvan","Aktif Mevcut","Yönetim Normu","Minimum Kadro",
+
+    # Aktivite/norm tablolarında adı bulunmayan fakat Fact_Mevcut'ta yer alan
+    # mağaza-unvan kombinasyonlarını boyut tablolarından adlandır. Aksi halde
+    # kimliği geçerli aktif çalışanlar aşağıdaki veri kalitesi filtresinde
+    # eleniyor ve yönetici özetindeki aktif mevcut eksik sayılıyordu.
+    def _fill_name_from_dimension(target: str, id_column: str, dimension_names: tuple[str, ...], id_tokens: tuple[str, ...], name_token: str) -> None:
+        dimension = _sheet(sheets, *dimension_names)
+        if dimension.empty or id_column not in result.columns:
+            return
+        dimension_id = _find_col(dimension, *id_tokens)
+        dimension_name = next(
+            (c for c in dimension.columns if name_token in _norm(c) and "ID" not in _norm(c)),
+            None,
+        )
+        if not dimension_id or not dimension_name:
+            return
+        mapping = (
+            dimension[[dimension_id, dimension_name]]
+            .dropna(subset=[dimension_id])
+            .drop_duplicates(subset=[dimension_id], keep="last")
+            .assign(_key=lambda frame: frame[dimension_id].astype(str).str.strip())
+            .set_index("_key")[dimension_name]
+            .to_dict()
+        )
+        mapped = result[id_column].astype(str).str.strip().map(mapping)
+        if target not in result.columns:
+            result[target] = mapped
+            return
+        missing = result[target].isna() | result[target].astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        result.loc[missing, target] = mapped.loc[missing]
+
+    _fill_name_from_dimension("Mağaza", "MağazaID", ("Dim_Magaza", "Dim Magaza"), ("magaza", "id"), "MAGAZA")
+    _fill_name_from_dimension("Unvan", "UnvanID", ("Dim_Unvan", "Dim Unvan"), ("unvan", "id"), "UNVAN")
+
+    # Resmî normu ve aktifi olmayan yalnız-aktivite satırları yeni kadro
+    # ihtiyacı değildir. Bunlar daha önce minimum kadro kuralı nedeniyle
+    # doğrudan açık üretip toplamı şişiriyordu. Norm dışı mevcut çalışanlar da
+    # norm tanımlanana kadar açık/fazla kararı üretmeden görünür kalır.
+    norm_defined = result["Yönetim Normu"] > 0
+    active_outside_norm = ~norm_defined & (result["Aktif Mevcut"] > 0)
+    activity_only = ~norm_defined & (result["Aktif Mevcut"] <= 0)
+    result["Tahmin Kapsamı"] = np.select(
+        [norm_defined, active_outside_norm],
+        ["Resmî norm kapsamı", "Norm dışı aktif mevcut"],
+        default="Norm inceleme adayı",
+    )
+    result.loc[active_outside_norm, "Tahmini Gerekli Kadro"] = result.loc[active_outside_norm, "Aktif Mevcut"].astype(int)
+    result.loc[active_outside_norm, "Tahmini Açık/Fazla"] = 0
+    result.loc[active_outside_norm, "Yönetim Normundan Fark"] = 0
+    result.loc[active_outside_norm, "Karar Durumu"] = "Norm tanımı gerekli"
+    result.loc[activity_only, "Tahmini Gerekli Kadro"] = 0
+    result.loc[activity_only, "Tahmini Açık/Fazla"] = 0
+    result.loc[activity_only, "Yönetim Normundan Fark"] = 0
+    result.loc[activity_only, "Karar Durumu"] = "Norm inceleme adayı - açık üretmez"
+    preferred = ["Tahmin Ufku Gün","MağazaID","Mağaza","UnvanID","Unvan","Tahmin Kapsamı","Aktif Mevcut","Yönetim Normu","Minimum Kadro",
                  "Günlük İş Yükü Dk","Net Üretken Dakika","Ham İş Yükü FTE","Operasyon Trend","Operasyon Çarpanı",
                  "Takvim/Sezon Çarpanı","FM Tampon FTE","Kayıp Kapasite FTE","Operasyon Tampon FTE","Beklenen Turnover Oranı (90G)","İlk 90 Gün Turnover Oranı","Turnover Risk Altındaki Kişi","Turnover Çıkış Gözlemi","Turnover Veri Durumu","Turnover Riski FTE (Senaryo)","Turnover Riski FTE",
                  "Tahmini İş Yükü FTE (Saf)","İş Yükü Ağırlığı","Tahmini İş Yükü FTE","Tahmini Gerekli Kadro (Ham)","Tahmini Gerekli Kadro","Yuvarlama Etkisi Kişi","Tahmini Açık/Fazla",
@@ -475,6 +529,8 @@ def run(sheets: dict[str, pd.DataFrame], outdir: Path) -> dict[str, Any]:
            "Toplam Tahmini Açık":("Tahmini Açık/Fazla",lambda s:int(s.clip(lower=0).sum())),
            "Toplam Tahmini Fazla":("Tahmini Açık/Fazla",lambda s:int((-s.clip(upper=0)).sum())),
            "Ortalama Güven %":("Tahmin Güveni %","mean")})
+    summary["Tahmin Kapsamındaki Aktif"] = result.loc[result["Tahmin Kapsamı"].eq("Resmî norm kapsamı")].groupby("Tahmin Ufku Gün")["Aktif Mevcut"].sum().reindex(summary["Tahmin Ufku Gün"]).to_numpy()
+    summary["Norm İnceleme Adayı"] = result.loc[result["Tahmin Kapsamı"].eq("Norm inceleme adayı")].groupby("Tahmin Ufku Gün").size().reindex(summary["Tahmin Ufku Gün"], fill_value=0).to_numpy()
     summary["Net Durum"] = summary["Toplam Tahmini Fazla"] - summary["Toplam Tahmini Açık"]
 
     assumptions = pd.DataFrame([{"Parametre":k,"Değer":v} for k,v in params.items()])
