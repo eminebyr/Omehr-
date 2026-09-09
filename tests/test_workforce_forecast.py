@@ -56,3 +56,26 @@ def test_forecast_keeps_all_active_staff_and_activity_only_rows_do_not_create_op
     assert view.loc[view['Unvan'].eq('YENİ ROL'), 'Tahmin Kapsamı'].item() == 'Norm inceleme adayı'
     assert view.loc[view['Unvan'].eq('YÖNETİCİ'), 'Tahmini Açık/Fazla'].item() == 0
     assert summary.loc[summary['Tahmin Ufku Gün'].eq(30), 'Aktif Mevcut'].item() == 3
+
+
+def test_forecast_keeps_active_staff_when_dimension_names_are_missing(tmp_path):
+    sheets = {
+        'Gunluk_Aktivite_Hacmi': pd.DataFrame({
+            'Tarih': ['2026-07-01'], 'MağazaID': ['M1'], 'UnvanID': ['U1'], 'İş Yükü (Dk)': [450],
+        }),
+        'Kapasite_Parametreleri': pd.DataFrame({'UnvanID': ['U1'], 'Net Üretken Dakika': [450]}),
+        'Fact_Norm': pd.DataFrame({'MağazaID': ['M1'], 'UnvanID': ['U1'], 'Norm Kadro': [1]}),
+        'Fact_Mevcut': pd.DataFrame({
+            'MağazaID': ['M1', 'M2'], 'Mağaza': ['TEST', 'DİĞER'],
+            'UnvanID': ['U1', 'U2'], 'Unvan': ['KASİYER', 'YÖNETİCİ'],
+            'Personel Adı Soyadı': ['BİR KİŞİ', 'İKİNCİ KİŞİ'], 'İşten Çıkış': [None, None],
+        }),
+    }
+
+    outcome = run(sheets, tmp_path)
+    detail = pd.read_excel(Path(outcome['file']), sheet_name='Mağaza_Unvan_Tahmini')
+    for horizon in (30, 60, 90):
+        view = detail[detail['Tahmin Ufku Gün'].eq(horizon)]
+        assert view['Aktif Mevcut'].sum() == 2
+        assert set(view.loc[view['Aktif Mevcut'].gt(0), 'Mağaza']) == {'TEST', 'DİĞER'}
+        assert set(view.loc[view['Aktif Mevcut'].gt(0), 'Unvan']) == {'KASİYER', 'YÖNETİCİ'}
