@@ -6,6 +6,7 @@ import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { buildSalesEvidence, diagnoseSales } from '@/lib/sales-root-cause'
 import { NormEksigiIsiHaritasi, NormFazlasiIsiHaritasi, MagazaRiskAgacHaritasi, BrutVeDagilimGosterge, NormKarsilamaOraniGosterge, BolgeBazliEksikFazlaGrafigi, UnvanBazliEnYuksekAciklarGrafigi, MevcutNormSacilimGrafigi } from '@/components/GenelOzetGorseller'
 import { TurnoverPanel } from '@/components/TurnoverPanel'
+import { OperationsPanel, ProductivityPanel, WorkforceForecastPanel } from '@/components/StreamlitParityPanels'
 
 type KpiRow = {
   active_current: number | null
@@ -822,11 +823,11 @@ export default function HomePage() {
     if (activePage === 'Unvan Analizi') return <>{renderTitleTable()}{renderTitleDetailTable()}</>
     if (activePage === 'Personel Kartları') return <ModuleTable payload={modules.personnel} />
     if (activePage === 'Personel Performansı') return <><PersonelPerformansVisuals payload={modules.performance} /><ModuleTable payload={modules.performance} /></>
-    if (activePage === 'İş Gücü Tahmini') return <><ModuleVisuals payload={modules.forecast} /><ModuleTable payload={modules.forecast_summary} /><ModuleTable payload={modules.forecast} /></>
+    if (activePage === 'İş Gücü Tahmini') return <WorkforceForecastPanel detail={modules.forecast} summary={modules.forecast_summary} validation={modules.forecast_validation} staffingValidation={modules.staffing_validation} turnoverValidation={modules.turnover_validation} />
     if (activePage === 'Transfer Optimizasyonu') return <ModuleTable payload={modules.transfer} />
     if (activePage === 'AI Operasyon & Verimlilik') return <><ModuleVisuals payload={modules.ai_norm} /><ModuleTable payload={modules.ai_norm} /><ModuleTable payload={modules.model_comparison} /></>
-    if (activePage === 'Operasyon Görselleri') return <><ModuleVisuals payload={modules.operations} /><ModuleVisuals payload={modules.hourly_density} /><ModuleTable payload={modules.operations} /><ModuleTable payload={modules.hourly_density} /></>
-    if (activePage === 'Verimlilik Görselleri') return <><ModuleVisuals payload={modules.productivity} /><ModuleVisuals payload={modules.overtime} /><ModuleVisuals payload={modules.absence} /><ModuleTable payload={modules.productivity} /><ModuleTable payload={modules.overtime} /><ModuleTable payload={modules.absence} /></>
+    if (activePage === 'Operasyon Görselleri') return <OperationsPanel monthly={modules.operations} daily={modules.daily_operations} hourly={modules.hourly_density} register={modules.register_usage} inflation={modules.inflation} />
+    if (activePage === 'Verimlilik Görselleri') return <ProductivityPanel workload={modules.productivity} personnelCost={modules.personnel_cost} overtime={modules.overtime} turnoverRisk={modules.turnover_risk} absence={modules.absence} />
     if (activePage === 'Satış Kök Neden Analizi') return renderSalesAccountability()
     if (activePage === 'Gerçek Personel İhtiyacı') return <RealStaffingNeed payload={modules.real_staffing_need} />
     if (activePage === 'Raporlar') return <ModuleTable payload={modules.reports} />
