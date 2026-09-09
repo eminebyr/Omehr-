@@ -354,7 +354,9 @@ def build_module_snapshots(
         "turnover_personnel": _snapshot("Turnover Veri Kaynağı", _records(turnover_personnel, limit=None), description="Turnover grafikleri için kişisel alan içermeyen tam tarihçe", source="Fact_Mevcut + Dim_Magaza", empty_message="Turnover hesabı için personel tarihçesi bulunamadı."),
         "store_title": _snapshot("Mağaza–Ünvan Detayı", _records(detail), description="Hangi mağazada hangi pozisyonda kaç kişi eksik/fazla", source="Fact_Norm + Fact_Mevcut", empty_message="Mağaza–ünvan norm/mevcut detayı üretilemedi."),
         "performance": _snapshot("Personel Performansı", _records(performance_frame), description=performance_note, source="Personel_Performans_Endeksi", empty_message="Personel_Performans_Endeksi sayfasında veri bulunamadı."),
-        "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
+        # Üç tahmin ufku birlikte 1.500 satırı aşabilir. Burada genel snapshot
+        # limitini uygulamak 60/90 günlük kayıtları sessizce kesiyordu.
+        "forecast": _snapshot("İş Gücü Tahmini", _records(forecast_detail, limit=None), source="İş gücü tahmin motoru", empty_message=forecast_message or "İş gücü tahmini henüz oluşmadı."),
         "forecast_summary": _snapshot("Tahmin Yönetici Özeti", _records(forecast_summary), source="İş gücü tahmin motoru", empty_message=forecast_message or "Tahmin yönetici özeti henüz oluşmadı."),
         "forecast_validation": _snapshot("Tahmin Doğrulaması", _records(forecast_validation), source="İş gücü tahmin motoru / backtest", empty_message="Operasyon veya kadro backtest sonucu henüz oluşmadı."),
         "staffing_validation": _snapshot("Mağaza–Unvan Kadro Doğrulaması", _records(staffing_validation), source="İş gücü tahmin motoru / Kadro_Backtest_Ozet", empty_message="Tarihsel kadro snapshot verisi henüz oluşmadı."),
