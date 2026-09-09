@@ -201,6 +201,8 @@ tr:last-child td { border-bottom:none; }
 .parity-filters label { display:flex; flex-direction:column; gap:7px; color:var(--muted); }
 .parity-filters select { background:#091728; border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px; }
 .parity-filters small { min-height:18px; color:#7fb6e9; }
+.selected-chips { display:flex; flex-wrap:wrap; gap:6px; min-height:26px; }
+.selected-chips button { border:1px solid #1e6680; background:rgba(17,139,148,.2); color:#bcebf0; border-radius:999px; padding:5px 9px; cursor:pointer; font-size:11px; }
 .heatmap { display:grid; grid-template-columns:140px repeat(24,minmax(52px,1fr)); gap:3px; overflow:auto; align-items:stretch; }
 .heatmap > b,.heatmap > strong,.heatmap > i { display:flex; align-items:center; justify-content:center; min-height:34px; padding:4px; font-size:10px; font-style:normal; border-radius:4px; }
 .heatmap > b { color:var(--muted); }
