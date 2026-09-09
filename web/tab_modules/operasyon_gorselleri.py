@@ -131,12 +131,14 @@ def render(ctx: PageContext) -> None:
         ilk_ay, son_ay = aylik["Ay"].min(), aylik["Ay"].max()
         c1, c2 = st.columns([1, 3])
         enflasyon_orani = c1.number_input(
-            "Yıllık enflasyon oranı (%) — TÜİK, Haziran 2026: %32,11",
+            "Karşılaştırılan dönemin kümülatif enflasyonu (%) — Ocak–Haziran 2026: %32,11",
             min_value=0.0, max_value=200.0, value=32.11, step=0.1, key="enflasyon_input",
         )
         ilk = aylik[aylik["Ay"] == ilk_ay].set_index("Mağaza")["Aylık Ciro"]
         son = aylik[aylik["Ay"] == son_ay].set_index("Mağaza")["Aylık Ciro"]
         nominal_oran = (son / ilk) - 1
+        # Girilen oran karşılaştırılan dönemin kümülatif enflasyonudur
+        # (ör. Ocak–Haziran 2026: %32,11); gelecek aylarla yıllıklaştırılmaz.
         enflasyon_carpani = 1 + (enflasyon_orani / 100.0)
         reel_oran = ((1 + nominal_oran) / enflasyon_carpani) - 1
         buyume_df = pd.DataFrame({
@@ -145,13 +147,13 @@ def render(ctx: PageContext) -> None:
         }).replace([float("inf"), float("-inf")], pd.NA).dropna().reset_index().sort_values("Reel Büyüme %", ascending=False)
         pozitif_sayisi = int((buyume_df["Reel Büyüme %"] > 0).sum())
         c2.info(
-            f"{ilk_ay} → {son_ay} dönemi | Enflasyon %{tr_number(enflasyon_orani,1)} | "
+            f"{ilk_ay} → {son_ay} | Dönem enflasyonu %{tr_number(enflasyon_orani,1)} | "
             f"{tr_number(pozitif_sayisi)} / {tr_number(len(buyume_df))} mağaza enflasyonun üzerinde (reel) büyüdü. "
             "Reel büyüme bileşik formülle hesaplanır: (1+nominal)/(1+enflasyon)-1."
         )
         fig_reel = px.bar(
             buyume_df, x="Reel Büyüme %", y="Mağaza", orientation="h", text="Reel Büyüme %",
-            title=f"Mağaza Bazında Reel Büyüme ({ilk_ay} → {son_ay}, Enflasyon %{tr_number(enflasyon_orani,1)} Baz Alınarak)",
+            title=f"Mağaza Bazında Reel Büyüme ({ilk_ay} → {son_ay}, Dönem Enflasyonu %{tr_number(enflasyon_orani,1)})",
             color="Reel Büyüme %", color_continuous_scale=["#C00000", "#F2F2F2", "#70AD47"], color_continuous_midpoint=0,
             height=max(500, 22 * len(buyume_df)),
         )

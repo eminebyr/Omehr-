@@ -129,14 +129,17 @@ export function OperationsPanel({ monthly, daily, hourly, register, inflation }:
   }, [dailyRows])
   const topRevenue = sumBy(dailyRows, ['Mağaza', 'Magaza'], 'Ciro', 15)
   const registerUse = averageBy(registerRows, ['Mağaza', 'Magaza'], 'Kullanım Oranı %', 20)
-  const inflationRate = num((inflation?.rows ?? [])[0]?.['Yıllık Enflasyon %'] ?? (inflation?.rows ?? [])[0]?.['Enflasyon %'] ?? 32.11)
+  const periodInflationRate = num((inflation?.rows ?? [])[0]?.['Dönem Enflasyonu %'] ?? (inflation?.rows ?? [])[0]?.['Enflasyon %'] ?? (inflation?.rows ?? [])[0]?.['Yıllık Enflasyon %'] ?? 32.11)
+  const monthlyPeriods = useMemo(() => [...new Set(monthlyRows.map((row) => text(row, 'Ay', 'Dönem')).filter(Boolean))].sort(), [monthlyRows])
+  // Railway değeri karşılaştırılan dönemin kümülatif enflasyonudur
+  // (ör. Ocak–Haziran 2026: %32,11); gelecek aylar kullanılarak yıllıklaştırılmaz.
+  const periodInflationFactor = 1 + periodInflationRate / 100
   const realGrowth = useMemo(() => {
-    const periods = [...new Set(monthlyRows.map((row) => text(row, 'Ay', 'Dönem')).filter(Boolean))].sort()
-    if (periods.length < 2) return []
-    const first = periods[0], last = periods[periods.length - 1]
+    if (monthlyPeriods.length < 2) return []
+    const first = monthlyPeriods[0], last = monthlyPeriods[monthlyPeriods.length - 1]
     const firstMap = new Map(monthlyRows.filter((r) => text(r, 'Ay', 'Dönem') === first).map((r) => [text(r, 'Mağaza', 'Magaza'), num(r['Aylık Ciro'])]))
-    return monthlyRows.filter((r) => text(r, 'Ay', 'Dönem') === last).map((r) => { const name = text(r, 'Mağaza', 'Magaza'); const base = firstMap.get(name) ?? 0; const nominal = base ? num(r['Aylık Ciro']) / base : 0; return { name, value: base ? ((nominal / (1 + inflationRate / 100)) - 1) * 100 : 0 } }).filter((r) => r.name).sort((a, b) => b.value - a.value)
-  }, [monthlyRows, inflationRate])
+    return monthlyRows.filter((r) => text(r, 'Ay', 'Dönem') === last).map((r) => { const name = text(r, 'Mağaza', 'Magaza'); const base = firstMap.get(name) ?? 0; const nominal = base ? num(r['Aylık Ciro']) / base : 0; return { name, value: base ? ((nominal / periodInflationFactor) - 1) * 100 : 0 } }).filter((r) => r.name).sort((a, b) => b.value - a.value)
+  }, [monthlyRows, monthlyPeriods, periodInflationFactor])
   const heatRows = hourly?.rows ?? []
   const heatStores = [...new Set(heatRows.map((row) => text(row, 'Mağaza', 'Magaza')).filter(Boolean))].slice(0, 10)
   const heatHours = [...new Set(heatRows.map((row) => text(row, 'Saat')).filter(Boolean))].sort((a, b) => num(a) - num(b))
@@ -162,7 +165,7 @@ export function OperationsPanel({ monthly, daily, hourly, register, inflation }:
     <ChartCard title="Günlük Toplam Fiş Adedi Trendi"><ResponsiveContainer><LineChart data={dailyTrend}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis dataKey="date" tick={{ fill: '#a9bfd8', fontSize: 10 }} /><YAxis tick={{ fill: '#a9bfd8' }} /><Tooltip /><Line dataKey="tickets" stroke="#118b94" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></ChartCard></div>
     <div className="chart-grid"><ChartCard title="En Yüksek Ciro Yapan 15 Mağaza"><HorizontalBars data={topRevenue} color="#4472c4" /></ChartCard><ChartCard title="Ortalama Kasa Kullanım Oranı (%)"><HorizontalBars data={registerUse} color="#118b94" suffix="%" /></ChartCard></div>
     <section className="section"><div className="section-title"><div><h2>Saatlik Yoğunluk Skoru</h2><p>İlk 10 mağaza × saat; renk koyulaştıkça yoğunluk yükselir.</p></div></div>{heatRows.length ? <div className="heatmap"><div />{heatHours.map((hour) => <b key={hour}>{hour}</b>)}{heatStores.flatMap((store) => [<strong key={`${store}-name`}>{store}</strong>, ...heatHours.map((hour) => { const item = heatIndex.get(`${store}\u0000${hour}`); const value = item?.count ? item.sum / item.count : 0; return <i key={`${store}-${hour}`} title={`${store} · ${hour}: ${tr.format(value)}`} style={{ background: `rgba(214,69,69,${Math.max(.08, value / heatMax)})` }}>{tr.format(value)}</i> })])}</div> : <Empty payload={hourly} label="Saatlik yoğunluk" />}</section>
-    <ChartCard title={`Mağaza Bazında Reel Büyüme — Enflasyon %${tr.format(inflationRate)}`}><ResponsiveContainer><BarChart data={realGrowth} layout="vertical" margin={{ left: 36, right: 30 }}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis type="number" tick={{ fill: '#a9bfd8' }} /><YAxis type="category" dataKey="name" width={130} tick={{ fill: '#a9bfd8', fontSize: 11 }} /><Tooltip formatter={(v) => `%${tr.format(Number(v))}`} /><Bar dataKey="value">{realGrowth.map((item) => <Cell key={item.name} fill={item.value >= 0 ? '#70ad47' : '#c00000'} />)}</Bar></BarChart></ResponsiveContainer></ChartCard>
+    <ChartCard title={`Mağaza Bazında Reel Büyüme — dönem enflasyonu %${tr.format(periodInflationRate)}`}><ResponsiveContainer><BarChart data={realGrowth} layout="vertical" margin={{ left: 36, right: 30 }}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis type="number" tick={{ fill: '#a9bfd8' }} /><YAxis type="category" dataKey="name" width={130} tick={{ fill: '#a9bfd8', fontSize: 11 }} /><Tooltip formatter={(v) => `%${tr.format(Number(v))}`} /><Bar dataKey="value">{realGrowth.map((item) => <Cell key={item.name} fill={item.value >= 0 ? '#70ad47' : '#c00000'} />)}</Bar></BarChart></ResponsiveContainer></ChartCard>
   </>
 }
 
