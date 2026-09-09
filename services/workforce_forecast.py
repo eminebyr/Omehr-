@@ -479,11 +479,56 @@ def run(sheets: dict[str, pd.DataFrame], outdir: Path) -> dict[str, Any]:
         if target not in result.columns:
             result[target] = mapped
             return
+        result[target] = result[target].astype(object)
         missing = result[target].isna() | result[target].astype(str).str.strip().str.lower().isin(["", "none", "nan"])
-        result.loc[missing, target] = mapped.loc[missing]
+        available = mapped.notna() & ~mapped.astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        # Boyut tablosundaki kanonik açıklama varsa yanlış/eksik birleşme
+        # etiketinden daha güvenilir kaynak kabul edilir.
+        result.loc[available, target] = mapped.loc[available]
+        result.loc[missing & ~available, target] = mapped.loc[missing & ~available]
 
     _fill_name_from_dimension("Mağaza", "MağazaID", ("Dim_Magaza", "Dim Magaza"), ("magaza", "id"), "MAGAZA")
     _fill_name_from_dimension("Unvan", "UnvanID", ("Dim_Unvan", "Dim Unvan"), ("unvan", "id"), "UNVAN")
+
+    # Boyut tablosunda karşılığı bulunmayan geçerli kimlikleri Fact_Mevcut'taki
+    # kendi açıklama alanlarından tamamla. Personelin adı-soyadı dolu olsa bile
+    # tahmin eşleşmesi mağaza/unvan kimliğiyle yapılır; açıklama eksikliği aktif
+    # çalışanı tahmin kapsamından düşürmemelidir.
+    def _fill_name_from_staff(target: str, staff_id: str, result_id: str, token: str) -> None:
+        if result_id not in result.columns or staff_id not in active.columns:
+            return
+        staff_name = next((c for c in active.columns if token in _norm(c) and "ID" not in _norm(c)), None)
+        if not staff_name:
+            return
+        mapping = (
+            active[[staff_id, staff_name]]
+            .dropna(subset=[staff_id, staff_name])
+            .assign(_key=lambda frame: frame[staff_id].astype(str).str.strip())
+            .drop_duplicates(subset=["_key"], keep="last")
+            .set_index("_key")[staff_name]
+            .to_dict()
+        )
+        mapped = result[result_id].astype(str).str.strip().map(mapping)
+        if target not in result.columns:
+            result[target] = mapped
+            return
+        result[target] = result[target].astype(object)
+        missing = result[target].isna() | result[target].astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        available = mapped.notna() & ~mapped.astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        result.loc[available, target] = mapped.loc[available]
+        result.loc[missing & ~available, target] = mapped.loc[missing & ~available]
+
+    _fill_name_from_staff("Mağaza", s_sid, "MağazaID", "MAGAZA")
+    _fill_name_from_staff("Unvan", s_tid, "UnvanID", "UNVAN")
+
+    # Açıklama kaynaklarının ikisinde de ad yoksa geçerli ID'yi görünür etiket
+    # olarak koru. Böylece veri kalitesi eksikliği aktif mevcut toplamını bozmaz.
+    for target, identity, prefix in (("Mağaza", "MağazaID", "Mağaza"), ("Unvan", "UnvanID", "Unvan")):
+        if target not in result.columns:
+            result[target] = pd.NA
+        missing = result[target].isna() | result[target].astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        valid_id = ~result[identity].isna() & ~result[identity].astype(str).str.strip().str.lower().isin(["", "none", "nan"])
+        result.loc[missing & valid_id, target] = prefix + " " + result.loc[missing & valid_id, identity].astype(str).str.strip()
 
     # Resmî normu ve aktifi olmayan yalnız-aktivite satırları yeni kadro
     # ihtiyacı değildir. Bunlar daha önce minimum kadro kuralı nedeniyle
@@ -522,6 +567,15 @@ def run(sheets: dict[str, pd.DataFrame], outdir: Path) -> dict[str, Any]:
     )
     invalid_rows = result.loc[invalid_identity].copy()
     result = result.loc[~invalid_identity].copy()
+
+    # Sessiz kapsam kaybına izin verme: her ufukta yayımlanan aktif toplamı,
+    # Fact_Mevcut'taki çıkış tarihi olmayan aktif kayıtların tamamına eşit olmalı.
+    expected_active = int(len(active))
+    published_active = result.groupby("Tahmin Ufku Gün")["Aktif Mevcut"].sum().astype(int)
+    mismatched_horizons = published_active[published_active.ne(expected_active)]
+    if not mismatched_horizons.empty:
+        observed = ", ".join(f"{int(h)}g={int(v)}" for h, v in mismatched_horizons.items())
+        raise ValueError(f"Aktif mevcut kapsamı tutarsız: Fact_Mevcut={expected_active}; tahmin={observed}")
 
     summary = result.groupby("Tahmin Ufku Gün",as_index=False).agg(
         **{"Tahmini Gerekli Kadro":("Tahmini Gerekli Kadro","sum"),
