@@ -93,12 +93,14 @@ export function WorkforceForecastPanel({ detail, summary, validation, staffingVa
 
   if (!rows.length) return <Empty payload={detail} label="İş gücü tahmini" />
   const toggle = (value: string, selected: string[], setSelected: (next: string[]) => void) => setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
+  const filterPanel = <section className="section"><div className="section-title"><div><h2>30 / 60 / 90 Günlük İş Gücü Tahmini</h2><p>Railway tahmin motorunun mağaza ve unvan bazlı güncel sonuçları.</p></div></div>
+    <div className="filter-chips">{[30, 60, 90].map((value) => <button className={horizon === value ? 'active' : ''} key={value} onClick={() => setHorizon(value)}>{value} gün</button>)}</div>
+    <div className="parity-filters"><label>Mağaza filtresi<select value="" onChange={(event) => event.target.value && toggle(event.target.value, stores, setStores)}><option value="">Mağaza seçin</option>{storeOptions.filter((item) => !stores.includes(item)).map((item) => <option key={item}>{item}</option>)}</select><span className="selected-chips">{stores.length ? stores.map((item) => <button key={item} onClick={() => toggle(item, stores, setStores)} title="Filtreyi kaldır">{item} ×</button>) : <small>Tümü</small>}</span></label>
+    <label>Unvan filtresi<select value="" onChange={(event) => event.target.value && toggle(event.target.value, titles, setTitles)}><option value="">Unvan seçin</option>{titleOptions.filter((item) => !titles.includes(item)).map((item) => <option key={item}>{item}</option>)}</select><span className="selected-chips">{titles.length ? titles.map((item) => <button key={item} onClick={() => toggle(item, titles, setTitles)} title="Filtreyi kaldır">{item} ×</button>) : <small>Tümü</small>}</span></label></div>
+  </section>
+  if (!horizonRows.length) return <>{filterPanel}<div className="engine-message">{horizon} günlük tahmin verisi henüz Railway motoru tarafından oluşturulmadı. Başka bir tahmin ufku seçebilirsiniz.</div></>
   return <>
-    <section className="section"><div className="section-title"><div><h2>30 / 60 / 90 Günlük İş Gücü Tahmini</h2><p>Railway tahmin motorunun mağaza ve unvan bazlı güncel sonuçları.</p></div></div>
-      <div className="filter-chips">{[30, 60, 90].map((value) => <button className={horizon === value ? 'active' : ''} key={value} onClick={() => setHorizon(value)}>{value} gün</button>)}</div>
-      <div className="parity-filters"><label>Mağaza filtresi<select value="" onChange={(event) => event.target.value && toggle(event.target.value, stores, setStores)}><option value="">Mağaza seçin</option>{storeOptions.map((item) => <option key={item}>{item}</option>)}</select><small>{stores.join(', ') || 'Tümü'}</small></label>
-      <label>Unvan filtresi<select value="" onChange={(event) => event.target.value && toggle(event.target.value, titles, setTitles)}><option value="">Unvan seçin</option>{titleOptions.map((item) => <option key={item}>{item}</option>)}</select><small>{titles.join(', ') || 'Tümü'}</small></label></div>
-    </section>
+    {filterPanel}
     <Kpis items={[
       { label: 'Ham Tahmin Adayı', value: tr.format(num(summaryRow?.['Tahmini Gerekli Kadro'])) },
       { label: 'Aktif Mevcut', value: tr.format(num(summaryRow?.['Aktif Mevcut'])) },
@@ -139,6 +141,16 @@ export function OperationsPanel({ monthly, daily, hourly, register, inflation }:
   const heatStores = [...new Set(heatRows.map((row) => text(row, 'Mağaza', 'Magaza')).filter(Boolean))].slice(0, 10)
   const heatHours = [...new Set(heatRows.map((row) => text(row, 'Saat')).filter(Boolean))].sort((a, b) => num(a) - num(b))
   const heatMax = Math.max(...heatRows.map((row) => num(row['Yoğunluk Skoru'])), 1)
+  const heatIndex = useMemo(() => {
+    const index = new Map<string, { sum: number; count: number }>()
+    for (const row of heatRows) {
+      const store = text(row, 'Mağaza', 'Magaza'), hour = text(row, 'Saat')
+      if (!store || !hour) continue
+      const key = `${store}\u0000${hour}`, current = index.get(key) ?? { sum: 0, count: 0 }
+      current.sum += num(row['Yoğunluk Skoru']); current.count += 1; index.set(key, current)
+    }
+    return index
+  }, [heatRows])
   if (!dailyRows.length && !monthlyRows.length) return <Empty payload={daily} label="Operasyon" />
   return <>
     <Kpis items={[
@@ -149,7 +161,7 @@ export function OperationsPanel({ monthly, daily, hourly, register, inflation }:
     <div className="chart-grid"><ChartCard title="Günlük Toplam Ciro Trendi"><ResponsiveContainer><LineChart data={dailyTrend}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis dataKey="date" tick={{ fill: '#a9bfd8', fontSize: 10 }} /><YAxis tick={{ fill: '#a9bfd8' }} /><Tooltip /><Line dataKey="revenue" stroke="#4472c4" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></ChartCard>
     <ChartCard title="Günlük Toplam Fiş Adedi Trendi"><ResponsiveContainer><LineChart data={dailyTrend}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis dataKey="date" tick={{ fill: '#a9bfd8', fontSize: 10 }} /><YAxis tick={{ fill: '#a9bfd8' }} /><Tooltip /><Line dataKey="tickets" stroke="#118b94" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></ChartCard></div>
     <div className="chart-grid"><ChartCard title="En Yüksek Ciro Yapan 15 Mağaza"><HorizontalBars data={topRevenue} color="#4472c4" /></ChartCard><ChartCard title="Ortalama Kasa Kullanım Oranı (%)"><HorizontalBars data={registerUse} color="#118b94" suffix="%" /></ChartCard></div>
-    <section className="section"><div className="section-title"><div><h2>Saatlik Yoğunluk Skoru</h2><p>İlk 10 mağaza × saat; renk koyulaştıkça yoğunluk yükselir.</p></div></div>{heatRows.length ? <div className="heatmap"><div />{heatHours.map((hour) => <b key={hour}>{hour}</b>)}{heatStores.flatMap((store) => [<strong key={`${store}-name`}>{store}</strong>, ...heatHours.map((hour) => { const values = heatRows.filter((r) => text(r, 'Mağaza', 'Magaza') === store && text(r, 'Saat') === hour).map((r) => num(r['Yoğunluk Skoru'])); const value = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0; return <i key={`${store}-${hour}`} title={`${store} · ${hour}: ${tr.format(value)}`} style={{ background: `rgba(214,69,69,${Math.max(.08, value / heatMax)})` }}>{tr.format(value)}</i> })])}</div> : <Empty payload={hourly} label="Saatlik yoğunluk" />}</section>
+    <section className="section"><div className="section-title"><div><h2>Saatlik Yoğunluk Skoru</h2><p>İlk 10 mağaza × saat; renk koyulaştıkça yoğunluk yükselir.</p></div></div>{heatRows.length ? <div className="heatmap"><div />{heatHours.map((hour) => <b key={hour}>{hour}</b>)}{heatStores.flatMap((store) => [<strong key={`${store}-name`}>{store}</strong>, ...heatHours.map((hour) => { const item = heatIndex.get(`${store}\u0000${hour}`); const value = item?.count ? item.sum / item.count : 0; return <i key={`${store}-${hour}`} title={`${store} · ${hour}: ${tr.format(value)}`} style={{ background: `rgba(214,69,69,${Math.max(.08, value / heatMax)})` }}>{tr.format(value)}</i> })])}</div> : <Empty payload={hourly} label="Saatlik yoğunluk" />}</section>
     <ChartCard title={`Mağaza Bazında Reel Büyüme — Enflasyon %${tr.format(inflationRate)}`}><ResponsiveContainer><BarChart data={realGrowth} layout="vertical" margin={{ left: 36, right: 30 }}><CartesianGrid strokeDasharray="3 3" stroke="#173451" /><XAxis type="number" tick={{ fill: '#a9bfd8' }} /><YAxis type="category" dataKey="name" width={130} tick={{ fill: '#a9bfd8', fontSize: 11 }} /><Tooltip formatter={(v) => `%${tr.format(Number(v))}`} /><Bar dataKey="value">{realGrowth.map((item) => <Cell key={item.name} fill={item.value >= 0 ? '#70ad47' : '#c00000'} />)}</Bar></BarChart></ResponsiveContainer></ChartCard>
   </>
 }
