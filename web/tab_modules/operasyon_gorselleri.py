@@ -137,7 +137,18 @@ def render(ctx: PageContext) -> None:
         ilk = aylik[aylik["Ay"] == ilk_ay].set_index("Mağaza")["Aylık Ciro"]
         son = aylik[aylik["Ay"] == son_ay].set_index("Mağaza")["Aylık Ciro"]
         nominal_oran = (son / ilk) - 1
-        enflasyon_carpani = 1 + (enflasyon_orani / 100.0)
+        ilk_tarih = pd.to_datetime(ilk_ay, errors="coerce")
+        son_tarih = pd.to_datetime(son_ay, errors="coerce")
+        if pd.notna(ilk_tarih) and pd.notna(son_tarih) and son_tarih > ilk_tarih:
+            donem_ay = (son_tarih.year - ilk_tarih.year) * 12 + son_tarih.month - ilk_tarih.month
+        else:
+            donem_ay = max(1, int(aylik["Ay"].nunique()) - 1)
+        # Kullanıcı yıllık enflasyon oranı girer; karşılaştırılan iki veri
+        # noktası arasındaki süre 12 aydan kısaysa/uzunsa bileşik dönem
+        # enflasyonuna çevrilir. Böylece 3 aylık ciro değişimi yanlışlıkla
+        # tam yıllık enflasyonla deflate edilmez.
+        enflasyon_carpani = (1 + (enflasyon_orani / 100.0)) ** (donem_ay / 12.0)
+        donem_enflasyon_orani = (enflasyon_carpani - 1) * 100
         reel_oran = ((1 + nominal_oran) / enflasyon_carpani) - 1
         buyume_df = pd.DataFrame({
             "Nominal Büyüme %": (nominal_oran * 100).round(1),
@@ -145,13 +156,14 @@ def render(ctx: PageContext) -> None:
         }).replace([float("inf"), float("-inf")], pd.NA).dropna().reset_index().sort_values("Reel Büyüme %", ascending=False)
         pozitif_sayisi = int((buyume_df["Reel Büyüme %"] > 0).sum())
         c2.info(
-            f"{ilk_ay} → {son_ay} dönemi | Enflasyon %{tr_number(enflasyon_orani,1)} | "
+            f"{ilk_ay} → {son_ay} ({donem_ay} ay) | Dönem enflasyonu %{tr_number(donem_enflasyon_orani,1)} "
+            f"(yıllık %{tr_number(enflasyon_orani,1)}) | "
             f"{tr_number(pozitif_sayisi)} / {tr_number(len(buyume_df))} mağaza enflasyonun üzerinde (reel) büyüdü. "
             "Reel büyüme bileşik formülle hesaplanır: (1+nominal)/(1+enflasyon)-1."
         )
         fig_reel = px.bar(
             buyume_df, x="Reel Büyüme %", y="Mağaza", orientation="h", text="Reel Büyüme %",
-            title=f"Mağaza Bazında Reel Büyüme ({ilk_ay} → {son_ay}, Enflasyon %{tr_number(enflasyon_orani,1)} Baz Alınarak)",
+            title=f"Mağaza Bazında Reel Büyüme ({ilk_ay} → {son_ay}, {donem_ay} Aylık Enflasyon %{tr_number(donem_enflasyon_orani,1)})",
             color="Reel Büyüme %", color_continuous_scale=["#C00000", "#F2F2F2", "#70AD47"], color_continuous_midpoint=0,
             height=max(500, 22 * len(buyume_df)),
         )
