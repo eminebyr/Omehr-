@@ -192,3 +192,18 @@ tr:last-child td { border-bottom:none; }
 .chart-wrap h3 { margin:0 0 14px; font-size:15px; color:var(--text); }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
 @media (max-width:640px) { .grid-2 { grid-template-columns:1fr; } }
+
+/* Streamlit ile eşlenen canlı analiz panelleri */
+.filter-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.filter-chips button { border:1px solid var(--line); background:var(--panel-2); color:var(--muted); border-radius:999px; padding:9px 16px; cursor:pointer; }
+.filter-chips button.active { color:#fff; border-color:var(--teal); background:rgba(17,139,148,.38); }
+.parity-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:14px; }
+.parity-filters label { display:flex; flex-direction:column; gap:7px; color:var(--muted); }
+.parity-filters select { background:#091728; border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px; }
+.parity-filters small { min-height:18px; color:#7fb6e9; }
+.heatmap { display:grid; grid-template-columns:140px repeat(24,minmax(52px,1fr)); gap:3px; overflow:auto; align-items:stretch; }
+.heatmap > b,.heatmap > strong,.heatmap > i { display:flex; align-items:center; justify-content:center; min-height:34px; padding:4px; font-size:10px; font-style:normal; border-radius:4px; }
+.heatmap > b { color:var(--muted); }
+.heatmap > strong { justify-content:flex-start; position:sticky; left:0; background:var(--panel); z-index:1; }
+.heatmap > i { color:#fff; }
+@media (max-width:640px) { .parity-filters { grid-template-columns:1fr; } }
