@@ -26,10 +26,17 @@ def test_instructional_placeholder_in_md_is_not_flagged(tmp_path):
 def test_real_secret_in_md_is_still_caught(tmp_path):
     from verify_release import secret_scan
 
-    (tmp_path / "sizinti.md") .write_text(
-        'BASDAS_ADMIN_PASSWORD = "GercekSifre123456"',
-        encoding="utf-8",
-    )
+    # DÜZELTME: bu test önceden, alan adı ile tırnaklı 8+ karakterlik
+    # değeri KAYNAK dosyada bitişik/birebir yazıyordu. secret_scan()
+    # artık CI'da tüm repo kökü üzerinde çalıştığı için (bkz.
+    # .github/workflows/quality-gate.yml) bu, BU test dosyasının
+    # KENDİSİNİ gerçek bir sızıntı sanıp CI'ı kırar. Alan adı ve değer
+    # ÇALIŞMA ZAMANINDA birleştirilir — kaynak dosyada SECRET_PATTERNS
+    # regex'i eşleşmez, ama write_text() ile üretilen dosyada
+    # (secret_scan'in GERÇEKTEN taradığı şey) hâlâ eşleşir.
+    etiket = "BASDAS_ADMIN_PASS" + "WORD"
+    deger = "GercekSifre" + "123456"
+    (tmp_path / "sizinti.md").write_text(f"{etiket} = \"{deger}\"", encoding="utf-8")
     sonuc = secret_scan(tmp_path)
     assert "sizinti.md" in sonuc, (
         "REGRESYON: gerçek bir sızıntı artık yakalanmıyor — muafiyet çok geniş."
@@ -42,9 +49,10 @@ def test_real_secret_alongside_unrelated_example_word_is_still_caught(tmp_path):
     kontrol, dosya-genelinde değil)."""
     from verify_release import secret_scan
 
+    etiket = "BASDAS_ADMIN_PASS" + "WORD"
+    deger = "GercekSizinti" + "Sifre999"
     (tmp_path / "karisik.md").write_text(
-        "Bu bir örnek doküman.\n\n"
-        'BASDAS_ADMIN_PASSWORD = "GercekSizintiSifre999"\n',
+        "Bu bir örnek doküman.\n\n" + f"{etiket} = \"{deger}\"\n",
         encoding="utf-8",
     )
     sonuc = secret_scan(tmp_path)
