@@ -17,7 +17,7 @@ import pytest
 def kota_ortami(tmp_path, monkeypatch):
     monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(tmp_path))
     monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
-    for mod in ("services.system_config.runtime_paths", "services.runtime_paths", "services.tenant_registry", "services.tenant_context", "services.security"):
+    for mod in ("services.system_config.runtime_paths", "services.runtime_paths", "services.multitenant.tenant_registry", "services.tenant_registry", "services.multitenant.tenant_context", "services.tenant_context", "services.security"):
         if mod in sys.modules:
             importlib.reload(sys.modules[mod])
 
@@ -27,7 +27,7 @@ def kota_ortami(tmp_path, monkeypatch):
     yield tmp_path
 
     monkeypatch.undo()
-    for mod in ("services.system_config.runtime_paths", "services.runtime_paths", "services.tenant_registry", "services.tenant_context", "services.security"):
+    for mod in ("services.system_config.runtime_paths", "services.runtime_paths", "services.multitenant.tenant_registry", "services.tenant_registry", "services.multitenant.tenant_context", "services.tenant_context", "services.security"):
         if mod in sys.modules:
             importlib.reload(sys.modules[mod])
 

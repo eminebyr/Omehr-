@@ -59,7 +59,8 @@ def isolated_root(tmp_path, monkeypatch):
     _RELOAD_MODULES = (
         "services.web_runtime", "src.feature_flags",
         "services.input_data_access", "services.input_db_schema", "services.input_excel_migration",
-        "services.tenant_context", "services.tenant_registry",
+        "services.multitenant.tenant_context", "services.tenant_context",
+        "services.multitenant.tenant_registry", "services.tenant_registry",
         "src.ai_norm", "src.engine_core", "src.excel_report", "src.pdf_report", "src.state_engine",
         "ai_operations_engine", "common_veri_okuma", "main", "model_benchmark", "report_mail_engine",
         "SECURE_USER_SETUP", "daily_branch_mail",

@@ -16,7 +16,11 @@ def _reload(*mod_names):
 def test_tam_kayit_akisi_uctan_uca(isolated_root, monkeypatch):
     """Firma kaydı -> ilk admin -> aynı bilgilerle giriş yapılabilmeli."""
     from services import onboarding, security, tenant_registry
-    _reload("services.onboarding", "services.security", "services.tenant_registry")
+    _reload(
+        "services.multitenant.onboarding", "services.onboarding",
+        "services.security",
+        "services.multitenant.tenant_registry", "services.tenant_registry",
+    )
 
     kayit = onboarding.register_tenant("YENIMARKET", "Yeni Market A.Ş.", plan="deneme")
     assert kayit["tenant_id"] == "YENIMARKET"
@@ -30,7 +34,7 @@ def test_tam_kayit_akisi_uctan_uca(isolated_root, monkeypatch):
 
 def test_zaten_alinmis_firma_kodu_reddedilir(isolated_root, monkeypatch):
     from services import onboarding
-    _reload("services.onboarding", "services.tenant_registry")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry")
 
     onboarding.register_tenant("CAKISMA", "İlk Firma")
     with pytest.raises(ValueError, match="zaten kullanılıyor"):
@@ -39,7 +43,7 @@ def test_zaten_alinmis_firma_kodu_reddedilir(isolated_root, monkeypatch):
 
 def test_zayif_sifre_reddedilir(isolated_root, monkeypatch):
     from services import onboarding
-    _reload("services.onboarding", "services.tenant_registry")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry")
 
     onboarding.register_tenant("ZAYIFSIFRE", "Test Firma")
     with pytest.raises(ValueError, match="en az"):
@@ -48,7 +52,7 @@ def test_zayif_sifre_reddedilir(isolated_root, monkeypatch):
 
 def test_gecersiz_firma_kodu_formati_reddedilir(isolated_root, monkeypatch):
     from services import onboarding
-    _reload("services.onboarding", "services.tenant_registry")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry")
 
     with pytest.raises(ValueError, match="Firma kodu"):
         onboarding.register_tenant("ab", "Test Firma")
@@ -58,7 +62,7 @@ def test_gecersiz_firma_kodu_formati_reddedilir(isolated_root, monkeypatch):
 
 def test_kayitsiz_firmaya_admin_eklenemez(isolated_root, monkeypatch):
     from services import onboarding
-    _reload("services.onboarding", "services.tenant_registry")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry")
 
     with pytest.raises(ValueError, match="bulunamadı"):
         onboarding.register_first_admin("HICOLMAYAN", "admin", "GucluBirSifre2026")
@@ -72,7 +76,7 @@ def test_kayit_sonrasi_gercek_giris_akisi_mail_listesinde_bulunur(isolated_root,
     from services import onboarding
     from services.input_data_access import read_sheet
     from web.accounts import accounts
-    _reload("services.onboarding", "services.tenant_registry", "services.input_data_access")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry", "services.input_data_access")
 
     monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
     onboarding.register_tenant("GERCEKGIRIS", "Gerçek Giriş Test A.Ş.")
@@ -88,7 +92,7 @@ def test_kayit_sonrasi_gercek_giris_akisi_mail_listesinde_bulunur(isolated_root,
 def test_iki_ayri_kayit_birbirinden_izole(isolated_root, monkeypatch):
     """İki farklı firma AYNI kullanıcı adıyla kayıt olabilmeli, birbirini etkilememeli."""
     from services import onboarding, security
-    _reload("services.onboarding", "services.security", "services.tenant_registry")
+    _reload("services.multitenant.onboarding", "services.onboarding", "services.security", "services.multitenant.tenant_registry", "services.tenant_registry")
 
     onboarding.register_tenant("FIRMAX", "Firma X")
     onboarding.register_tenant("FIRMAY", "Firma Y")
