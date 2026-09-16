@@ -17,4 +17,14 @@ from services.personnel.personnel_exit import (
     process_exits_bulk,
     undo_exit,
     update_personnel,
+    # DÜZELTME (regresyon — bizzat bulundu): services/multi_pc_sync.py
+    # bu private fonksiyonu `from services.personnel_exit import
+    # _invalidate_current_reports` ile içeri alıyor, ama çağrı bir
+    # try/except Exception içinde olduğu için (invalidate_local_
+    # reports_if_shared_input_changed), bu isim yeniden dışa
+    # aktarılmadığında ImportError SESSİZCE yutuluyordu — 3-PC'li
+    # paylaşımlı Excel kullanımında başka bir bilgisayarın işlem
+    # sonrası bu bilgisayardaki eski personel raporlarının
+    # temizlenmesi sessizce atlanıyordu, hiçbir hata görünmüyordu.
+    _invalidate_current_reports,
 )
