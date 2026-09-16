@@ -22,7 +22,7 @@ def kota_ortami(tmp_path, monkeypatch):
     monkeypatch.setenv("OMEHR_RUNTIME_ROOT", str(root))
     monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     for mod_name in (
-        "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
+        "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
         "services.tenant_registry", "services.tenant_quota", "services.tenant_context",
     ):
         if mod_name in sys.modules:
@@ -32,7 +32,7 @@ def kota_ortami(tmp_path, monkeypatch):
     finally:
         monkeypatch.undo()
         for mod_name in (
-            "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
+            "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
             "services.tenant_registry", "services.tenant_quota", "services.tenant_context",
         ):
             if mod_name in sys.modules:
