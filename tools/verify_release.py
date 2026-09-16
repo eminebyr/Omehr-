@@ -76,7 +76,8 @@ def _parse_junit(path: Path) -> dict:
 
 def _collect_nodes(root: Path, test_file: Path) -> list[str]:
     cp=subprocess.run([sys.executable,'-m','pytest','--collect-only','-q',str(test_file)], cwd=root,
-                      env={**os.environ,'PYTHONPATH':str(root)}, capture_output=True, text=True, check=True, timeout=30)
+                      env={**os.environ,'PYTHONPATH':str(root)}, capture_output=True, text=True,
+                      encoding='utf-8', check=True, timeout=30)
     return [line.strip() for line in cp.stdout.splitlines() if '::' in line and not line.startswith('<')]
 
 

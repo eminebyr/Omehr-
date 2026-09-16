@@ -41,7 +41,12 @@ def render(ctx: PageContext) -> None:
     read_input = ctx.read_input
 
     st.subheader("Bölge ve İK Onayları")
-    con=db(); all_pending=pd.read_sql_query("SELECT * FROM transfers ORDER BY id DESC",con); con.close()
+    from services.tenant_context import current_tenant_id as _current_tenant_id
+    # DÜZELTME (KRİTİK — çapraz kiracı sızıntısı): bu sekmedeki TÜM id
+    # seçimleri (selectbox'lar) aşağıdaki all_pending sorgusundan türer;
+    # burayı kiracıya sınırlamak, dosyadaki aşağı akış WHERE id=?
+    # sorgularının tamamını dolaylı olarak da güvenli hale getirir.
+    con=db(); all_pending=pd.read_sql_query("SELECT * FROM transfers WHERE tenant=? ORDER BY id DESC",con,params=(_current_tenant_id(),)); con.close()
     if not is_global: all_pending=all_pending[(all_pending["region"].astype(str).map(norm_text)==norm_text(scope))|(all_pending["target_region"].astype(str).map(norm_text)==norm_text(scope))]
     st.dataframe(all_pending,use_container_width=True,hide_index=True)
     if role=="REGION":

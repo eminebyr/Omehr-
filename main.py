@@ -1,6 +1,18 @@
 from __future__ import annotations
-import json, os, traceback
+import json, os, sys, traceback
 from datetime import datetime
+# DÜZELTME: bu betik Türkçe karakterli ilerleme/hata mesajları basar ve
+# json.dumps(...,ensure_ascii=False) ile KPI çıktısını da Unicode olarak
+# yazar. Windows konsolu UTF-8 olmayan bir kod sayfasındaysa (ör. Türkçe
+# Windows'ta varsayılan cp1254), düz print() UnicodeEncodeError ile
+# ÇÖKER — bu, RAPOR MOTORUNUN TAMAMININ (main.py = tüm sistemin kalbi)
+# yalnızca konsol kod sayfası yüzünden hiç çalışmaması demektir. Aynı
+# düzeltme system_health_check.py/GUNCELLEME_UYGULA.py'de de var.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 from services.excel_read_shim import install as _install_excel_read_shim
 _install_excel_read_shim()
 from common_veri_okuma import save_manifest

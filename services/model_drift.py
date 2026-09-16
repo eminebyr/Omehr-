@@ -21,27 +21,45 @@ from services.safe_exec import log_swallowed
 def _drift_history_file():
     from services.runtime_paths import runtime_root
     return runtime_root() / "data" / "model_drift_gecmisi.csv"
-FIELDS = ["Tarih", "Model", "CV_MAE", "CV_R2", "Egitim_Sayisi"]
+
+
+def _varsayilan_kiraci() -> str:
+    from services.tenant_context import current_tenant_id
+    return current_tenant_id()
+
+
+FIELDS = ["Kiracı", "Tarih", "Model", "CV_MAE", "CV_R2", "Egitim_Sayisi"]
 UYARI_ESIGI_ORAN = 0.25  # reviewer örneği: referansın %25 üzerine çıkarsa uyar
 
 
-def kaydet(model_adi: str, cv_mae: float, cv_r2: float, egitim_sayisi: int = 0) -> None:
+def kaydet(model_adi: str, cv_mae: float, cv_r2: float, egitim_sayisi: int = 0, tenant_id: str | None = None) -> None:
     """Bugünün model performansını geçmiş dosyasına ekler/günceller.
-    Hata durumunda ana akışı bozmadan sessizce başarısız olur."""
+    Hata durumunda ana akışı bozmadan sessizce başarısız olur.
+
+    DÜZELTME (kiracılar arası veri karışması): tek süreç birden fazla
+    kiracıya hizmet ettiğinde bu dosya TÜM kiracılar arasında
+    PAYLAŞILIYORDU — bir kiracının model performans geçmişi başka bir
+    kiracının drift referansını (ortalama MAE) BOZABİLİYORDU, yanlış
+    alarm/sessizlik üretebiliyordu. Artık her satır kiracıya damgalanır.
+    """
     try:
+        kiraci = (tenant_id or _varsayilan_kiraci()).strip().upper()
         _drift_history_file().parent.mkdir(parents=True, exist_ok=True)
         bugun = datetime.now().strftime("%Y-%m-%d")
         satirlar = []
         if _drift_history_file().is_file():
             with open(_drift_history_file(), "r", encoding="utf-8", newline="") as f:
                 satirlar = list(csv.DictReader(f))
-        satirlar = [s for s in satirlar if s.get("Tarih") != bugun]
+        for s in satirlar:
+            if not s.get("Kiracı"):
+                s["Kiracı"] = "OMEHR"
+        satirlar = [s for s in satirlar if not (s.get("Kiracı") == kiraci and s.get("Tarih") == bugun)]
         satirlar.append({
-            "Tarih": bugun, "Model": model_adi,
+            "Kiracı": kiraci, "Tarih": bugun, "Model": model_adi,
             "CV_MAE": round(float(cv_mae), 4), "CV_R2": round(float(cv_r2), 4),
             "Egitim_Sayisi": int(egitim_sayisi),
         })
-        satirlar.sort(key=lambda s: s.get("Tarih", ""))
+        satirlar.sort(key=lambda s: (s.get("Kiracı", ""), s.get("Tarih", "")))
         with open(_drift_history_file(), "w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=FIELDS)
             writer.writeheader()
@@ -52,13 +70,16 @@ def kaydet(model_adi: str, cv_mae: float, cv_r2: float, egitim_sayisi: int = 0) 
         log_swallowed("model_drift.kaydet: geçmiş dosyasına yazılamadı", sys.exc_info()[1] or Exception("bilinmeyen"))
 
 
-def gecmis() -> list[dict]:
-    """Kayıtlı tüm model performans geçmişini (eskiden yeniye) döndürür."""
+def gecmis(tenant_id: str | None = None) -> list[dict]:
+    """ÇAĞIRANIN kiracısına ait model performans geçmişini (eskiden
+    yeniye) döndürür — başka kiracıların satırları asla dönmez."""
     if not _drift_history_file().is_file():
         return []
     try:
+        kiraci = (tenant_id or _varsayilan_kiraci()).strip().upper()
         with open(_drift_history_file(), "r", encoding="utf-8", newline="") as f:
-            return list(csv.DictReader(f))
+            satirlar = list(csv.DictReader(f))
+        return [s for s in satirlar if (s.get("Kiracı") or "OMEHR") == kiraci]
     except Exception as _exc:
         log_swallowed("services.model_drift.gecmis: beklenmeyen hata", _exc)
         return []

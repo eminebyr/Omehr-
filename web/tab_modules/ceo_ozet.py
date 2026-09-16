@@ -57,11 +57,15 @@ def render(ctx: PageContext) -> None:
 
         st.markdown("#### 🔁 Transfer Bekleyenler")
         try:
+            from services.tenant_context import current_tenant_id as _current_tenant_id
+            _ceo_kiraci = _current_tenant_id()
             con_ceo = db()
             bekleyen = con_ceo.execute(
-                "SELECT COUNT(*) FROM transfers WHERE status LIKE '%Bekliyor%'"
+                "SELECT COUNT(*) FROM transfers WHERE status LIKE '%Bekliyor%' AND tenant=?", (_ceo_kiraci,)
             ).fetchone()[0]
-            toplam_transfer = con_ceo.execute("SELECT COUNT(*) FROM transfers").fetchone()[0]
+            toplam_transfer = con_ceo.execute(
+                "SELECT COUNT(*) FROM transfers WHERE tenant=?", (_ceo_kiraci,)
+            ).fetchone()[0]
             con_ceo.close()
             tc1, tc2 = st.columns(2)
             tc1.metric("Onay Bekleyen", tr_number(bekleyen))

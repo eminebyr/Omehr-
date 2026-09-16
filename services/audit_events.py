@@ -19,6 +19,11 @@ def _db_path():
     return runtime_root() / "data" / "business_audit.db"
 
 
+def _varsayilan_kiraci() -> str:
+    from services.tenant_context import current_tenant_id
+    return current_tenant_id()
+
+
 def _connect() -> sqlite3.Connection:
     path = _db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -48,6 +53,14 @@ def _connect() -> sqlite3.Connection:
         BEFORE DELETE ON business_audit
         BEGIN SELECT RAISE(ABORT, 'business_audit immutable: DELETE denied'); END;"""
     )
+    # DÜZELTME (KRİTİK — çapraz kiracı sızıntısı): tek süreç birden fazla
+    # kiracıya hizmet ettiğinde bu tablo (personel before/after JSON
+    # anlık görüntüleri DAHİL) runtime_root() üzerinden TÜM kiracılar
+    # arasında PAYLAŞILIYORDU ve tenant sütunu yoktu. security.py/
+    # job_queue.py'nin izlediği desen uygulanır.
+    mevcut_sutunlar = {row[1] for row in con.execute("PRAGMA table_info(business_audit)").fetchall()}
+    if "tenant" not in mevcut_sutunlar:
+        con.execute("ALTER TABLE business_audit ADD COLUMN tenant TEXT NOT NULL DEFAULT 'OMEHR'")
     con.commit()
     return con
 
@@ -67,13 +80,14 @@ def record(
     before: Any = None,
     after: Any = None,
     metadata: Any = None,
+    tenant: str | None = None,
 ) -> None:
     con = _connect()
     try:
         con.execute(
             """INSERT INTO business_audit
-            (created_at, actor, action, entity_type, entity_key, before_json, after_json, metadata_json)
-            VALUES (?,?,?,?,?,?,?,?)""",
+            (created_at, actor, action, entity_type, entity_key, before_json, after_json, metadata_json, tenant)
+            VALUES (?,?,?,?,?,?,?,?,?)""",
             (
                 datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 actor or "system",
@@ -83,6 +97,7 @@ def record(
                 _json(before),
                 _json(after),
                 _json(metadata),
+                (tenant or _varsayilan_kiraci()).strip().upper(),
             ),
         )
         con.commit()
@@ -90,12 +105,16 @@ def record(
         con.close()
 
 
-def recent(limit: int = 200) -> list[dict]:
+def recent(limit: int = 200, tenant: str | None = None) -> list[dict]:
+    """ÇAĞIRANIN kiracısına ait son N denetim kaydını döndürür — başka
+    kiracıların kayıtları (ve içindeki before/after kişisel veri
+    anlık görüntüleri) asla dönmez."""
     con = _connect()
     con.row_factory = sqlite3.Row
     try:
         rows = con.execute(
-            "SELECT * FROM business_audit ORDER BY id DESC LIMIT ?", (max(1, int(limit)),)
+            "SELECT * FROM business_audit WHERE tenant = ? ORDER BY id DESC LIMIT ?",
+            ((tenant or _varsayilan_kiraci()).strip().upper(), max(1, int(limit))),
         ).fetchall()
         return [dict(r) for r in rows]
     finally:

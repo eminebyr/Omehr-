@@ -53,7 +53,7 @@ def _git_commit() -> str | None:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"], cwd=runtime_root(),
-            capture_output=True, text=True, timeout=5,
+            capture_output=True, text=True, encoding="utf-8", timeout=5,
         )
         return result.stdout.strip() or None
     except Exception as _exc:

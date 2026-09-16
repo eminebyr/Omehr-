@@ -72,7 +72,7 @@ def soffice_version() -> str | None:
     if not binary:
         return None
     try:
-        result = subprocess.run([binary, "--version"], capture_output=True, text=True, timeout=15)
+        result = subprocess.run([binary, "--version"], capture_output=True, text=True, encoding="utf-8", timeout=15)
         return result.stdout.strip() or result.stderr.strip() or None
     except Exception as _exc:
         log_swallowed("services.excel_recalc.soffice_version: beklenmeyen hata", _exc)
@@ -155,6 +155,8 @@ def recalculate_workbook(path: Path, timeout: int = RECALC_TIMEOUT_SECONDS) -> b
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout,
             )
         except (subprocess.TimeoutExpired, OSError):

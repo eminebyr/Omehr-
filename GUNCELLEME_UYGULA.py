@@ -18,6 +18,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# DÜZELTME: bu betik emoji sembolleri basıyor; Windows konsolu UTF-8
+# olmayan bir kod sayfasındaysa print() UnicodeEncodeError ile çöker —
+# tam da GÜNCELLEME UYGULARKEN olması EN KÖTÜ zamandır (bkz. aynı
+# düzeltme system_health_check.py'de).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 
 def main() -> int:
     if len(sys.argv) != 3:

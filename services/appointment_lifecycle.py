@@ -18,6 +18,11 @@ import pandas as pd
 from services.web_runtime import connect_web_db
 
 
+def _varsayilan_kiraci() -> str:
+    from services.tenant_context import current_tenant_id
+    return current_tenant_id()
+
+
 def yeni_atama_no() -> str:
     """Örnek: ATM-20260810-00042 (gün içi artan sıra numarasıyla)."""
     bugun = datetime.now().strftime("%Y%m%d")
@@ -78,11 +83,12 @@ def create_appointment(*, input_path: Path, root: Path, person_name: str, staff_
         con.execute(
             """INSERT INTO appointments
                (atama_no, created_at, created_by, person_name, staff_index,
-                source_store, source_title, target_store, target_title, planned_date, status, applied_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                source_store, source_title, target_store, target_title, planned_date, status, applied_at, tenant)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (atama_no, datetime.now().isoformat(timespec="seconds"), created_by, person_name, staff_index,
              source_store, source_title, target_store, target_title, planned_date_str, durum,
-             datetime.now().isoformat(timespec="seconds") if durum == "APPLIED" else None),
+             datetime.now().isoformat(timespec="seconds") if durum == "APPLIED" else None,
+             _varsayilan_kiraci()),
         )
         con.commit()
     finally:
@@ -99,12 +105,14 @@ def apply_due_appointments(*, input_path: Path, root: Path) -> list[dict]:
     otomatik yürürlüğe girsin diye) çağrılmalıdır."""
     from services.personnel_exit import load_personnel_view, update_personnel
 
+    kiraci = _varsayilan_kiraci()
     con = connect_web_db()
     con.row_factory = sqlite3.Row
     try:
         bugun = date.today().isoformat()
         bekleyenler = con.execute(
-            "SELECT * FROM appointments WHERE status='PLANNED' AND planned_date<=?", (bugun,)
+            "SELECT * FROM appointments WHERE status='PLANNED' AND planned_date<=? AND tenant=?",
+            (bugun, kiraci),
         ).fetchall()
     finally:
         con.close()
@@ -135,8 +143,8 @@ def apply_due_appointments(*, input_path: Path, root: Path) -> list[dict]:
             con2 = connect_web_db()
             try:
                 con2.execute(
-                    "UPDATE appointments SET status='APPLIED', applied_at=? WHERE id=?",
-                    (datetime.now().isoformat(timespec="seconds"), row["id"]),
+                    "UPDATE appointments SET status='APPLIED', applied_at=? WHERE id=? AND tenant=?",
+                    (datetime.now().isoformat(timespec="seconds"), row["id"], kiraci),
                 )
                 con2.commit()
             finally:

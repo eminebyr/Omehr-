@@ -35,4 +35,5 @@ def render(ctx: PageContext) -> None:
     _enqueue_and_process = ctx.enqueue_and_process
     read_input = ctx.read_input
 
-    con=db(); logs=pd.read_sql_query("SELECT * FROM action_log ORDER BY id DESC LIMIT 500",con); con.close(); st.dataframe(logs,use_container_width=True,hide_index=True)
+    from services.tenant_context import current_tenant_id as _current_tenant_id
+    con=db(); logs=pd.read_sql_query("SELECT * FROM action_log WHERE tenant=? ORDER BY id DESC LIMIT 500",con,params=(_current_tenant_id(),)); con.close(); st.dataframe(logs,use_container_width=True,hide_index=True)

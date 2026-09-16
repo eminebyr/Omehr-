@@ -144,7 +144,22 @@ def connect() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=30000")
     conn.row_factory = sqlite3.Row
+    # DÜZELTME (KRİTİK — çapraz kiracı sızıntısı): bu fonksiyon
+    # services/web_runtime.py::connect_web_db() ile AYNI fiziksel
+    # dosyayı (v16_management.db) açar. Şema göçü normalde
+    # connect_web_db() tarafında çalışır, ama BU fonksiyon ONDAN ÖNCE
+    # çağrılırsa (ör. rotasyon_takili_kontrol.py gibi bağımsız bir
+    # script farklı bir sırayla import ederse) tenant sütunu hâlâ
+    # eksik olabilir — idempotent olduğu için burada da güvenle
+    # tekrar çalıştırılır.
+    from services.web_runtime import _ensure_tenant_columns
+    _ensure_tenant_columns(conn)
     return conn
+
+
+def _varsayilan_kiraci() -> str:
+    from services.tenant_context import current_tenant_id
+    return current_tenant_id()
 
 
 def init_db() -> None:
@@ -743,10 +758,13 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
 
     counts = {"checked": 0, "completed": 0, "waiting": 0, "mismatch": 0, "applied": 0, "failed": 0}
     now = datetime.now().isoformat(timespec="seconds")
+    kiraci = _varsayilan_kiraci()
     with connect() as conn:
         pending = conn.execute(
             "SELECT * FROM transfers WHERE status='İK Onayladı' "
-            "AND (fact_status='Fact_Mevcut Güncellemesi Bekleniyor' OR fact_status IS NULL)"
+            "AND (fact_status='Fact_Mevcut Güncellemesi Bekleniyor' OR fact_status IS NULL) "
+            "AND tenant=?",
+            (kiraci,),
         ).fetchall()
         for req in pending:
             counts["checked"] += 1
@@ -828,8 +846,9 @@ def reconcile_transfer_requests(fact_mevcut: pd.DataFrame) -> dict[str, int]:
                     log_swallowed(f"reconcile_transfer_requests: '{pname}' otomatik uygulama hatası", exc, level="ERROR")
 
             conn.execute(
-                "UPDATE transfers SET fact_status=?,completed_at=?,updated_at=? WHERE id=? AND status='İK Onayladı'",
-                (status, completed_at, now, int(req["id"])),
+                "UPDATE transfers SET fact_status=?,completed_at=?,updated_at=? "
+                "WHERE id=? AND status='İK Onayladı' AND tenant=?",
+                (status, completed_at, now, int(req["id"]), kiraci),
             )
         conn.commit()
     return counts

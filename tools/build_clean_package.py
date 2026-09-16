@@ -4,10 +4,24 @@ import argparse
 import hashlib
 import json
 import shutil
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
+
+# DÜZELTME: bu betik Türkçe/Unicode metin basar (ör. "TESLİM
+# EDİLMEMELİDİR"); Windows konsolu UTF-8 olmayan bir kod sayfasındaysa,
+# hem bu betiğin kendi print()'i hem de bu betiği subprocess olarak
+# çağırıp çıktısını yakalayan kod (ör. tools/verify_release.py,
+# tests/test_release_discipline_no_not_run.py) UnicodeDecodeError/
+# EncodeError ile bozulabilir (bkz. aynı sınıftan düzeltme
+# system_health_check.py ve GUNCELLEME_UYGULA.py'de).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 
 EXCLUDED_DIRS = {
     '__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache', '.git',
