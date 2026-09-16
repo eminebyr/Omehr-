@@ -16,6 +16,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# DÜZELTME: bu betik OMEHR_CURRENT_BASLAT.bat tarafından HER başlatmada
+# çağrılır ve ✅/❌ sembolleri basar. Windows konsolu varsayılan olarak
+# UTF-8 olmayan bir kod sayfası (ör. cp1252/cp437) kullanıyorsa, düz
+# print() bu karakterlerde UnicodeEncodeError ile ÇÖKER — yani sistem
+# başlatma, health check RAPORUNU göstermeden, anlaşılmaz bir hatayla
+# durur (tam da bu betiğin önlemeye çalıştığı "sessiz/anlaşılmaz hata"
+# senaryosu). reconfigure ile çıktı UTF-8'e zorlanır; hâlâ kodlanamayan
+# bir karakter olursa (aşırı uç durum) sessizce değiştirilir, ÇÖKMEZ.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 MIN_PYTHON = (3, 11)
 
 

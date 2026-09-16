@@ -71,8 +71,8 @@ def test_apply_update_updates_code_files(tmp_path):
 
     assert sonuc.basarili is True
     assert sonuc.yeni_surum == "1.4.0"
-    assert (root / "main.py").read_text() == "YENİ main"
-    assert (root / "services" / "m.py").read_text() == "YENİ"
+    assert (root / "main.py").read_text(encoding="utf-8") == "YENİ main"
+    assert (root / "services" / "m.py").read_text(encoding="utf-8") == "YENİ"
 
 
 def test_apply_update_never_touches_user_data(tmp_path):
@@ -85,9 +85,9 @@ def test_apply_update_never_touches_user_data(tmp_path):
 
     apply_update(paket, root, new_version="1.4.0")
 
-    assert (root / "input" / "veri.xlsx").read_text() == "MÜŞTERİ VERİSİ"
-    assert (root / "data" / "onemli.db").read_text() == "veritabanı"
-    assert (root / "config_web.json").read_text() == '{"company":{"name":"Gerçek Müşteri"}}'
+    assert (root / "input" / "veri.xlsx").read_text(encoding="utf-8") == "MÜŞTERİ VERİSİ"
+    assert (root / "data" / "onemli.db").read_text(encoding="utf-8") == "veritabanı"
+    assert (root / "config_web.json").read_text(encoding="utf-8") == '{"company":{"name":"Gerçek Müşteri"}}'
 
 
 def test_apply_update_ignores_malicious_or_accidental_user_data_in_package(tmp_path):
@@ -105,7 +105,7 @@ def test_apply_update_ignores_malicious_or_accidental_user_data_in_package(tmp_p
     apply_update(paket, root, new_version="1.4.0")
 
     assert not (root / "input" / "sizinti.xlsx").exists()
-    assert (root / "config_web.json").read_text() == '{"company":{"name":"Gerçek Müşteri"}}'
+    assert (root / "config_web.json").read_text(encoding="utf-8") == '{"company":{"name":"Gerçek Müşteri"}}'
 
 
 def test_apply_update_creates_a_pre_update_snapshot(tmp_path):
@@ -117,7 +117,7 @@ def test_apply_update_creates_a_pre_update_snapshot(tmp_path):
     sonuc = apply_update(paket, root, new_version="1.4.0")
 
     assert sonuc.yedek_yolu.is_dir()
-    assert (sonuc.yedek_yolu / "main.py").read_text() == "eski main"  # ESKİ hâli yedekte
+    assert (sonuc.yedek_yolu / "main.py").read_text(encoding="utf-8") == "eski main"  # ESKİ hâli yedekte
 
 
 def test_manual_rollback_restores_previous_code(tmp_path):
@@ -126,13 +126,13 @@ def test_manual_rollback_restores_previous_code(tmp_path):
     root = _sahte_kurulum(tmp_path)
     paket = _sahte_guncelleme_paketi(tmp_path)
     sonuc = apply_update(paket, root, new_version="1.4.0")
-    assert (root / "main.py").read_text() == "YENİ main"
+    assert (root / "main.py").read_text(encoding="utf-8") == "YENİ main"
 
     rollback(sonuc.yedek_yolu, root)
 
-    assert (root / "main.py").read_text() == "eski main"
-    assert (root / "services" / "m.py").read_text() == "eski"
-    assert (root / "input" / "veri.xlsx").read_text() == "MÜŞTERİ VERİSİ"  # hâlâ dokunulmamış
+    assert (root / "main.py").read_text(encoding="utf-8") == "eski main"
+    assert (root / "services" / "m.py").read_text(encoding="utf-8") == "eski"
+    assert (root / "input" / "veri.xlsx").read_text(encoding="utf-8") == "MÜŞTERİ VERİSİ"  # hâlâ dokunulmamış
 
 
 def test_apply_update_auto_rolls_back_on_partial_failure(tmp_path):
@@ -160,7 +160,7 @@ def test_apply_update_auto_rolls_back_on_partial_failure(tmp_path):
     # bu senaryoda "KRİTİK" (çifte başarısızlık) yolunun devreye girmesi
     # BEKLENİR — asıl kontrol edilen şey PROGRAMIN ÇÖKMEMESİ ve kullanıcı
     # verisinin (input/config) yine de dokunulmamış kalmasıdır.
-    assert (root / "input" / "veri.xlsx").read_text() == "MÜŞTERİ VERİSİ"
+    assert (root / "input" / "veri.xlsx").read_text(encoding="utf-8") == "MÜŞTERİ VERİSİ"
 
 
 def test_apply_update_cancels_cleanly_if_backup_itself_fails(tmp_path):
@@ -179,7 +179,7 @@ def test_apply_update_cancels_cleanly_if_backup_itself_fails(tmp_path):
 
     assert sonuc.basarili is False
     assert "yedek alınamadı" in sonuc.hata
-    assert (root / "main.py").read_text() == "eski main"  # HİÇBİR ŞEY değişmemiş
+    assert (root / "main.py").read_text(encoding="utf-8") == "eski main"  # HİÇBİR ŞEY değişmemiş
 
 
 def test_apply_update_rejects_missing_package_dir(tmp_path):
@@ -203,4 +203,4 @@ def test_apply_update_is_idempotent_when_run_twice_in_a_row(tmp_path):
 
     assert sonuc1.basarili is True
     assert sonuc2.basarili is True
-    assert (root / "main.py").read_text() == "YENİ main"
+    assert (root / "main.py").read_text(encoding="utf-8") == "YENİ main"

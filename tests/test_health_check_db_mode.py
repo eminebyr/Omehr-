@@ -16,7 +16,7 @@ def test_missing_input_not_critical_in_db_mode(tmp_path, monkeypatch):
 
     sonuc = subprocess.run(
         [sys.executable, "system_health_check.py"],
-        capture_output=True, text=True, cwd=".",
+        capture_output=True, text=True, encoding="utf-8", cwd=".",
         env={**__import__("os").environ, "OMEHR_RUNTIME_ROOT": str(tmp_path), "OMEHR_INPUT_SOURCE": "db"},
     )
     assert sonuc.returncode == 0, (
@@ -35,7 +35,7 @@ def test_missing_input_still_critical_in_excel_mode(tmp_path, monkeypatch):
 
     sonuc = subprocess.run(
         [sys.executable, "system_health_check.py"],
-        capture_output=True, text=True, cwd=".", env=env,
+        capture_output=True, text=True, encoding="utf-8", cwd=".", env=env,
     )
     assert sonuc.returncode != 0, (
         "REGRESYON: normal Excel modunda eksik input dosyası artık kritik "
