@@ -22,7 +22,12 @@ def test_track_page_render_writes_log_entry(tmp_path, monkeypatch):
 def test_performance_logging_never_raises_even_if_log_dir_unwritable(monkeypatch):
     """Şartname: performans loglaması hiçbir zaman gerçek işlemi bozmamalı."""
     from services.performance_log import log_performance
-    monkeypatch.setattr("services.performance_log._log_path", lambda: __import__("pathlib").Path("/kesinlikle/olmayan/bir/dizin/x.log"))
+    # DÜZELTME: log_performance() _log_path()'i KENDİ modülünün (services.
+    # ops.performance_log) global ad alanından çözer — services.
+    # performance_log (düz shim) üzerinde monkeypatch yapmak, fonksiyonun
+    # GERÇEKTEN çağırdığı ismi DEĞİŞTİRMEZ (fonksiyon nesnesinin __globals__'ı
+    # hâlâ gerçek modülü gösterir). Yama, gerçek modül yoluna uygulanmalı.
+    monkeypatch.setattr("services.ops.performance_log._log_path", lambda: __import__("pathlib").Path("/kesinlikle/olmayan/bir/dizin/x.log"))
     log_performance("HATA_TESTI", 1.0)  # istisna FIRLATMAMALI
 
 
