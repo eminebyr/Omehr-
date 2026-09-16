@@ -1,55 +1,11 @@
-from __future__ import annotations
+"""GERİYE DÖNÜK UYUMLULUK SHIM'İ — bkz. services/ops/observability.py
 
-import json
-import logging
-import os
-import platform
-from datetime import datetime
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
-from services.runtime_paths import runtime_root
-
-def _log_dir():
-    from services.runtime_paths import runtime_root
-    return runtime_root() / "logs"
-
-
-def get_logger(name: str = "omehr") -> logging.Logger:
-    _log_dir().mkdir(parents=True, exist_ok=True)
-    logger = logging.getLogger(name)
-    if logger.handlers:
-        return logger
-    logger.setLevel(os.getenv("OMEHR_LOG_LEVEL", "INFO").upper())
-    formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    handler = RotatingFileHandler(
-        _log_dir() / "OMEHR_CURRENT.log",
-        maxBytes=5 * 1024 * 1024,
-        backupCount=5,
-        encoding="utf-8",
-    )
-    handler.setFormatter(formatter)
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.addHandler(console)
-    logger.propagate = False
-    return logger
-
-
-def write_runtime_status(status: str, **details) -> Path:
-    _log_dir().mkdir(parents=True, exist_ok=True)
-    target = _log_dir() / "CURRENT_Runtime_Status.json"
-    temp = target.with_suffix(".json.tmp")
-    payload = {
-        "status": status,
-        "updated_at": datetime.now().isoformat(timespec="seconds"),
-        "platform": platform.platform(),
-        "pid": os.getpid(),
-        **details,
-    }
-    temp.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-    os.replace(temp, target)
-    return target
+services/ops/ bounded-context'ine taşındı (bkz. SERVICE_BOUNDARIES.md
+"Operasyon / İzleme / Denetim" alanı). Alt paket BİLEREK "ops" adını
+taşır, "observability" veya "monitoring" değil — aksi halde bu düz
+shim dosyaları, aynı ada sahip bir alt paket tarafından Python'un
+import çözümlemesinde SESSİZCE GÖLGELENİRDİ (bkz. services/security_auth/
+taşımasındaki aynı bulgu).
+"""
+from services.ops.observability import *  # noqa: F401,F403
+from services.ops.observability import get_logger, write_runtime_status
