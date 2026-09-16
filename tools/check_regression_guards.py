@@ -86,6 +86,14 @@ _READ_ALLOWED_FILES = {
     "report_pipeline.py",       # main.py'nin JUST-ÜRETİLMİŞ çıktı raporunu tek
                                  # seferlik doğrulaması — ana input dosyası DEĞİL,
                                  # her çalıştırmada zaten taze; önbellek değer katmaz
+    "cloud_module_snapshots.py",  # yalnız output_dir altında main.py'nin JUST-
+                                   # ÜRETTİĞİ rapor dosyalarını (AI/tahmin/analitik
+                                   # xlsx) okur — ana input dosyası DEĞİL, taze
+                                   # üretilmiş tek seferlik çıktı; önbellek değer katmaz
+    "turnover_alert.py",        # yalnız workforce_forecast.py'nin main.py içinde
+                                 # o çalıştırmada TAZE ürettiği tahmin dosyasını
+                                 # okur — ana input dosyası DEĞİL, tek seferlik
+                                 # çıktı okuması; önbellek değer katmaz
 }
 _READ_TARGET_NAMES = {"INPUT", "input_path", "hedef", "INPUT_PATH", "path"}
 

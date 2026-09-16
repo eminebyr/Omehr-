@@ -31,10 +31,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.lock.txt
 
-      - name: Compile and architecture checks
+      - name: Compile, architecture and regression-guard checks
         run: |
           python -m compileall -q .
           python tools/check_architecture.py
+          python tools/check_regression_guards.py
+
+      - name: Secret scan
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from tools.verify_release import secret_scan
+          hits = secret_scan(Path('.'))
+          if hits:
+              raise SystemExit('Potential secrets found: ' + ', '.join(hits))
+          print('Secret scan: OK')
+          PY
 
       - name: Full pytest suite (isolated files)
         run: |
