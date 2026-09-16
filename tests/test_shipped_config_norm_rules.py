@@ -63,7 +63,7 @@ def test_main_py_produces_correct_kpis_with_default_root(tmp_path, monkeypatch):
     try:
         sonuc = subprocess.run(
             [sys.executable, "main.py"], cwd=proje_kok, env=env,
-            capture_output=True, text=True, timeout=280,
+            capture_output=True, text=True, encoding="utf-8", timeout=280,
         )
         assert sonuc.returncode == 0, f"main.py başarısız: {sonuc.stderr[-2000:]}"
         assert '"Aktif Mevcut": 596' in sonuc.stdout

@@ -254,7 +254,7 @@ def test_system_health_check_detects_truncated_corrupted_xlsx(isolated_root):
     kok = Path(__file__).resolve().parents[1]
     sonuc = subprocess.run(
         [sys.executable, str(kok / "system_health_check.py")],
-        capture_output=True, text=True, env=env,
+        capture_output=True, text=True, encoding="utf-8", env=env,
     )
     assert sonuc.returncode == 1
     assert "bozuk" in sonuc.stdout or "BadZipFile" in sonuc.stdout

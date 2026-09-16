@@ -41,7 +41,7 @@ def test_cli_skip_verify_flag_produces_explicit_skipped_status(tmp_path):
 
     sonuc = subprocess.run(
         [sys.executable, "tools/build_clean_package.py", str(kaynak), str(hedef), "--skip-verify"],
-        capture_output=True, text=True, cwd=".",
+        capture_output=True, text=True, encoding="utf-8", cwd=".",
     )
     assert sonuc.returncode == 0
     assert "TESLİM EDİLMEMELİDİR" in sonuc.stdout

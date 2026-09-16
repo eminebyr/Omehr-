@@ -102,7 +102,7 @@ def test_all_root_level_scripts_import_without_error():
         modul_adi = dosya.stem
         sonuc = subprocess.run(
             [sys.executable, "-c", f"import sys; sys.path.insert(0, {str(kok)!r}); import {modul_adi}"],
-            capture_output=True, text=True, cwd=str(kok),
+            capture_output=True, text=True, encoding="utf-8", cwd=str(kok),
         )
         if sonuc.returncode != 0:
             basarisiz.append((dosya.name, sonuc.stderr.strip().splitlines()[-1] if sonuc.stderr else "?"))
