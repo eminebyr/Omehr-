@@ -67,8 +67,18 @@ def _execute_for_tenant(job: dict) -> dict:
             raise RuntimeError(result)
         transfer_id = payload.get("transfer_id")
         if transfer_id:
+            # DÜZELTME (çapraz kiracı savunma katmanı): execute() bu job'ın
+            # KENDİ tenant'ını OMEHR_TENANT'a zaten yazdı (bkz. execute()),
+            # bu yüzden current_tenant_id() burada doğru kiracıyı verir —
+            # transfer_id başka bir kiracıya aitse (ör. bozuk/gecikmiş bir
+            # job payload'ı) bu UPDATE sessizce 0 satır etkiler, YANLIŞ
+            # kiracının kaydını GÜNCELLEMEZ.
+            from services.tenant_context import current_tenant_id
             with connect_web_db() as con:
-                con.execute("UPDATE transfers SET outlook_status=? WHERE id=?", (result, int(transfer_id)))
+                con.execute(
+                    "UPDATE transfers SET outlook_status=? WHERE id=? AND tenant=?",
+                    (result, int(transfer_id), current_tenant_id()),
+                )
         return {"transport": result}
     if kind == "TRANSFER_DECISION":
         row = payload["row"]
@@ -105,14 +115,16 @@ def _execute_for_tenant(job: dict) -> dict:
         )
         if result.startswith("FAILED") and not result.startswith("FAILED_"):
             raise RuntimeError(result)
+        from services.tenant_context import current_tenant_id
         with connect_web_db() as con:
             con.execute(
                 """UPDATE transfers SET outlook_status=?,rotation_docx=?,rotation_pdf=?,
-                   rotation_status=?,rotation_recipients=?,updated_at=datetime('now') WHERE id=?""",
+                   rotation_status=?,rotation_recipients=?,updated_at=datetime('now')
+                   WHERE id=? AND tenant=?""",
                 (result, documents.get("docx", ""), documents.get("pdf", ""),
                  "CREATED" if documents else "NOT_APPLICABLE",
                  ", ".join(recipients),
-                 int(payload["transfer_id"])),
+                 int(payload["transfer_id"]), current_tenant_id()),
             )
         return {"transport": result, "documents": documents}
     if kind == "RECALCULATE_FORMULAS":

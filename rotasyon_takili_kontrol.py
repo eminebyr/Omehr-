@@ -86,6 +86,8 @@ def main() -> None:
     # Temiz/ilk kurulumda transfers tablosu henüz oluşmamış olabilir.
     # Panelin kullandığı ortak başlangıç yolu tabloyu ve migrations'ı güvenle
     # hazırlar; mevcut kayıtları değiştirmez.
+    from services.tenant_context import current_tenant_id
+    kiraci = current_tenant_id()
     con = connect_web_db()
     con.row_factory = sqlite3.Row
     stuck = con.execute(
@@ -93,7 +95,9 @@ def main() -> None:
         "target_title, status, fact_status, updated_at "
         "FROM transfers WHERE status='İK Onayladı' "
         "AND (fact_status='Fact_Mevcut Güncellemesi Bekleniyor' OR fact_status IS NULL) "
-        "ORDER BY id"
+        "AND tenant=? "
+        "ORDER BY id",
+        (kiraci,),
     ).fetchall()
     con.close()
 

@@ -180,17 +180,19 @@ def render(ctx: PageContext) -> None:
                 status, fact_status = "Bölge Müdürleri Onayı Bekliyor", "Bekliyor"
             try:
                 from services.web_runtime import yeni_transfer_no
+                from services.tenant_context import current_tenant_id as _current_tenant_id
                 transfer_no = yeni_transfer_no()
+                _kiraci = _current_tenant_id()
                 con = db()
                 cur = con.execute(
-                    """INSERT INTO transfers(created_at,created_by,region,source_store,target_store,person_id,person_name,current_title,target_title,target_region,planned_date,reason,status,fact_status,outlook_status,updated_at,decision_by,decision_note,decision_at,source_home_km,source_home_route,target_home_km,target_home_route,transfer_no) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (now, username, r.get("Bölge Sorumlusu", ""), r.get("Mağaza", ""), target, r.get("PersonelID", ""), r.get("İsim Soyisim", ""), r.get("Unvan", ""), target_title, tr.get("Bölge Sorumlusu", ""), str(planned), str(reason).strip(), status, fact_status, "PENDING", now, (username if hr_direct and can_approve else None), ("İK doğrudan yetkisiyle, bölge müdürü onayı alınmadan oluşturuldu." if hr_direct and can_approve else None), (now if hr_direct and can_approve else None), source_home_km, source_home_route, preview_km, preview_route, transfer_no),
+                    """INSERT INTO transfers(created_at,created_by,region,source_store,target_store,person_id,person_name,current_title,target_title,target_region,planned_date,reason,status,fact_status,outlook_status,updated_at,decision_by,decision_note,decision_at,source_home_km,source_home_route,target_home_km,target_home_route,transfer_no,tenant) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (now, username, r.get("Bölge Sorumlusu", ""), r.get("Mağaza", ""), target, r.get("PersonelID", ""), r.get("İsim Soyisim", ""), r.get("Unvan", ""), target_title, tr.get("Bölge Sorumlusu", ""), str(planned), str(reason).strip(), status, fact_status, "PENDING", now, (username if hr_direct and can_approve else None), ("İK doğrudan yetkisiyle, bölge müdürü onayı alınmadan oluşturuldu." if hr_direct and can_approve else None), (now if hr_direct and can_approve else None), source_home_km, source_home_route, preview_km, preview_route, transfer_no, _kiraci),
                 )
                 tid = cur.lastrowid
                 con.commit()
                 con.close()
                 con = db(); con.row_factory = __import__("sqlite3").Row
-                row = dict(con.execute("SELECT * FROM transfers WHERE id=?", (int(tid),)).fetchone())
+                row = dict(con.execute("SELECT * FROM transfers WHERE id=? AND tenant=?", (int(tid), _kiraci)).fetchone())
                 con.close()
                 recipients = transfer_recipients(acc, row, sheets)
                 extra_note = "\n(İK doğrudan yetkisiyle oluşturuldu; bölge müdürü onayı gerekmedi.)" if hr_direct and can_approve else ""
@@ -238,7 +240,7 @@ def render(ctx: PageContext) -> None:
                         },
                         tenant_code(),
                     )
-                    con = db(); con.execute("UPDATE transfers SET outlook_status=? WHERE id=?", (f"QUEUED:{mail_job}", tid)); con.commit(); con.close()
+                    con = db(); con.execute("UPDATE transfers SET outlook_status=? WHERE id=? AND tenant=?", (f"QUEUED:{mail_job}", tid, _kiraci)); con.commit(); con.close()
                     log(username, "TRANSFER_CREATE", str(tid))
                     st.success(f"Transfer talebi #{tid} oluşturuldu. Durum: {status}. Bildirim kuyruğa alındı.")
                 st.rerun()
@@ -247,4 +249,14 @@ def render(ctx: PageContext) -> None:
 
     st.divider()
     st.subheader("Transfer Talebi Geçmişi")
-    con=db(); q="SELECT * FROM transfers" if is_global else "SELECT * FROM transfers WHERE region=? OR target_region=?"; params=() if is_global else (scope,scope); tf=pd.read_sql_query(q+" ORDER BY id DESC",con,params=params); con.close(); st.dataframe(tf,use_container_width=True,hide_index=True)
+    from services.tenant_context import current_tenant_id as _current_tenant_id
+    _gecmis_kiraci = _current_tenant_id()
+    # DÜZELTME (KRİTİK — çapraz kiracı sızıntısı): is_global "bu kiracının
+    # TÜM bölgelerini gör" demektir, "TÜM kiracıları gör" değil — her iki
+    # dalda da tenant filtresi ZORUNLUDUR.
+    con=db()
+    if is_global:
+        q="SELECT * FROM transfers WHERE tenant=?"; params=(_gecmis_kiraci,)
+    else:
+        q="SELECT * FROM transfers WHERE tenant=? AND (region=? OR target_region=?)"; params=(_gecmis_kiraci,scope,scope)
+    tf=pd.read_sql_query(q+" ORDER BY id DESC",con,params=params); con.close(); st.dataframe(tf,use_container_width=True,hide_index=True)

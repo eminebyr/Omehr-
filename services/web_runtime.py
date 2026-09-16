@@ -12,6 +12,30 @@ def db_path():
     return runtime_root() / "data" / "v16_management.db"
 
 
+def _varsayilan_kiraci() -> str:
+    from services.tenant_context import current_tenant_id
+    return current_tenant_id()
+
+
+def _ensure_tenant_columns(con: sqlite3.Connection) -> None:
+    """DÜZELTME (KRİTİK — çapraz kiracı sızıntısı): tek süreç birden fazla
+    kiracıya hizmet ettiğinde (web girişinde firma seçimi / self-servis
+    kayıt), bu veritabanı (transfers/appointments/action_log — GERÇEK
+    personel adı, mağaza, transfer gerekçesi, karar notu içerir) TÜM
+    kiracılar arasında PAYLAŞILIYORDU ve hiçbir tabloda tenant sütunu
+    yoktu. services/security.py ve services/job_queue.py'nin izlediği
+    desen (ALTER TABLE ... DEFAULT 'OMEHR' + sorgularda WHERE tenant=?)
+    burada da uygulanır. Hem connect_web_db() hem de
+    services/management_center.py::connect() AYNI fiziksel dosyayı
+    açtığı için bu göç HER İKİSİNDEN de (hangisi önce çağrılırsa)
+    güvenle çalışacak şekilde idempotenttir."""
+    for tablo in ("transfers", "appointments", "action_log"):
+        mevcut = {row[1] for row in con.execute(f"PRAGMA table_info({tablo})").fetchall()}
+        if mevcut and "tenant" not in mevcut:
+            con.execute(f"ALTER TABLE {tablo} ADD COLUMN tenant TEXT NOT NULL DEFAULT 'OMEHR'")
+    con.commit()
+
+
 def connect_web_db() -> sqlite3.Connection:
     DB = db_path()
     DB.parent.mkdir(parents=True, exist_ok=True)
@@ -77,6 +101,7 @@ def connect_web_db() -> sqlite3.Connection:
         if column not in existing:
             con.execute(f"ALTER TABLE transfers ADD COLUMN {column} {ctype}")
     con.commit()
+    _ensure_tenant_columns(con)
     return con
 
 
@@ -111,11 +136,17 @@ def optimistic_update_transfer(transfer_id: int, beklenen_status: str, beklenen_
     guncellemeler["version"] = beklenen_version + 1
     guncellemeler["previous_status"] = beklenen_status
     kolonlar = ", ".join(f"{k}=?" for k in guncellemeler)
-    degerler = list(guncellemeler.values()) + [int(transfer_id), beklenen_status, int(beklenen_version)]
+    # DÜZELTME (çapraz kiracı savunma katmanı): id zaten tek başına
+    # benzersizdir, ama arka plan işleri (worker.py) gibi süreçler
+    # arası taşınan id'lerin YANLIŞLIKLA başka bir kiracının satırına
+    # denk gelmesi ihtimaline karşı tenant=? koşulu da eklenir.
+    degerler = list(guncellemeler.values()) + [
+        int(transfer_id), beklenen_status, int(beklenen_version), _varsayilan_kiraci(),
+    ]
     con = connect_web_db()
     try:
         cur = con.execute(
-            f"UPDATE transfers SET {kolonlar} WHERE id=? AND status=? AND version=?",
+            f"UPDATE transfers SET {kolonlar} WHERE id=? AND status=? AND version=? AND tenant=?",
             degerler,
         )
         con.commit()
@@ -127,8 +158,8 @@ def optimistic_update_transfer(transfer_id: int, beklenen_status: str, beklenen_
 def log_web_action(username: str, action: str, detail: str = "") -> None:
     con = connect_web_db()
     con.execute(
-        "INSERT INTO action_log(created_at,username,action,detail) VALUES(?,?,?,?)",
-        (datetime.now().isoformat(timespec="seconds"), username, action, detail),
+        "INSERT INTO action_log(created_at,username,action,detail,tenant) VALUES(?,?,?,?,?)",
+        (datetime.now().isoformat(timespec="seconds"), username, action, detail, _varsayilan_kiraci()),
     )
     con.commit()
     con.close()
