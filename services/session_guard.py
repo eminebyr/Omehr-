@@ -1,31 +1,13 @@
-from __future__ import annotations
+"""GERİYE DÖNÜK UYUMLULUK SHIM'İ — bkz. services/security_auth/session_guard.py
 
-"""Oturum işlemsizlik (idle) zaman aşımı — saf, test edilebilir mantık.
-
-web/app.py bu modülü çağırır; Streamlit'e bağımlı DEĞİLDİR, bu yüzden
-gerçek bir Streamlit oturumu başlatmadan doğrudan test edilebilir.
+services/security_auth/ bounded-context'ine taşındı (bkz.
+SERVICE_BOUNDARIES.md "Güvenlik / Kimlik Doğrulama" alanı). Bu dosya,
+mevcut `from services.session_guard import X` şeklindeki tüm
+çağıranların (bkz. tests/test_session_idle_timeout.py::
+test_web_app_actually_wires_idle_timeout_into_authenticated_flow —
+web/app.py'nin KAYNAK METNİNDEKİ bu tam import satırını doğrular)
+hiçbir değişiklik gerektirmeden çalışmaya devam etmesi için
+bırakılmıştır.
 """
-
-import os
-from datetime import datetime
-
-
-def idle_timeout_dakika() -> int:
-    return int(os.getenv("OMEHR_SESSION_IDLE_TIMEOUT_MIN", "480"))
-
-
-def oturum_suresi_doldu_mu(son_aktivite_iso: str | None, simdi: datetime | None = None) -> tuple[bool, float]:
-    """(süresi_doldu_mu, geçen_dakika) döner.
-
-    son_aktivite_iso None/boş ise (ör. henüz hiç aktivite kaydı yoksa)
-    süresi DOLMAMIŞ sayılır — yeni giriş yapan bir kullanıcıyı anında
-    dışarı atmamak için."""
-    if not son_aktivite_iso:
-        return False, 0.0
-    simdi = simdi or datetime.now()
-    try:
-        son_aktivite = datetime.fromisoformat(son_aktivite_iso)
-    except (ValueError, TypeError):
-        return False, 0.0
-    gecen_dakika = (simdi - son_aktivite).total_seconds() / 60
-    return gecen_dakika > idle_timeout_dakika(), gecen_dakika
+from services.security_auth.session_guard import *  # noqa: F401,F403
+from services.security_auth.session_guard import idle_timeout_dakika, oturum_suresi_doldu_mu
