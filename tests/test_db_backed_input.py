@@ -35,7 +35,7 @@ def db_root(tmp_path, monkeypatch):
     monkeypatch.setenv("OMEHR_INPUT_SOURCE", "db")
 
     for mod_name in (
-        "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
+        "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
         "services.input_excel_migration", "common_veri_okuma", "src.data_loading",
         "src.state_engine", "src.kpi_engine",
     ):
@@ -50,7 +50,7 @@ def db_root(tmp_path, monkeypatch):
     finally:
         monkeypatch.undo()
         for mod_name in (
-            "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
+            "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
             "services.input_excel_migration", "common_veri_okuma", "src.data_loading",
             "src.state_engine", "src.kpi_engine",
         ):

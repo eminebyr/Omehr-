@@ -138,7 +138,9 @@ _VERSION_FILES = ["00_OKU_CURRENT.txt", "SURUM_NOTLARI.md", "DOGRULAMA_RAPORU.md
 
 def _surum_uyumsuzluklari(root: Path) -> list[str]:
     problems: list[str] = []
-    version_py = root / "services" / "version.py"
+    version_py = root / "services" / "system_config" / "version.py"
+    if not version_py.exists():
+        version_py = root / "services" / "version.py"
     if not version_py.exists():
         return problems
     match = re.search(r'APP_VERSION\s*=\s*"([^"]+)"', version_py.read_text(encoding="utf-8"))

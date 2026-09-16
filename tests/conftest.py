@@ -44,6 +44,16 @@ def isolated_root(tmp_path, monkeypatch):
     monkeypatch.delenv("OMEHR_BOOTSTRAP_RUNTIME", raising=False)
 
     from services import runtime_paths
+    # DÜZELTME (kritik test-izolasyon — bounded-context taşıması): bu
+    # modül services/system_config/'e taşındıktan sonra `services.
+    # runtime_paths` artık gerçek kodu değil, ince bir shim'i işaret
+    # ediyor. Shim'i reload etmek GERÇEK modülü (ve onun _ENSURED_ROOTS/
+    # _RESOLVED_PATH_CACHE önbelleklerini) YENİDEN YÜKLEMEZ — Python'un
+    # import mekanizması, zaten sys.modules'ta olan bir modülü `import`
+    # ifadesiyle tekrar yürütmez. Önbelleği gerçekten sıfırlamak için
+    # GERÇEK modül reload edilmeli.
+    import services.system_config.runtime_paths as _runtime_paths_real
+    importlib.reload(_runtime_paths_real)
     importlib.reload(runtime_paths)
 
     _RELOAD_MODULES = (
@@ -100,6 +110,8 @@ def isolated_root(tmp_path, monkeypatch):
         for mod_name in _RELOAD_MODULES:
             if mod_name in sys.modules:
                 importlib.reload(sys.modules[mod_name])
+        if "services.system_config.runtime_paths" in sys.modules:
+            importlib.reload(sys.modules["services.system_config.runtime_paths"])
         if "services.runtime_paths" in sys.modules:
             importlib.reload(sys.modules["services.runtime_paths"])
 
