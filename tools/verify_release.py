@@ -100,8 +100,14 @@ def run_pytest_isolated(root: Path, per_file_timeout: int = 75, start_index: int
     # bu dosyada HER ZAMAN başarısız olurdu. Artık bilinen yavaş
     # dosyalar için ayrı, yeterli bir zaman aşımı tanımlanır.
     SLOW_FILE_TIMEOUTS = {
-        'test_shipped_config_norm_rules.py': 280,
-        'test_packaging_excludes_lo_profile_and_control_files.py': 280,
+        # DÜZELTME: bu dosyalardaki testler main.py'yi tam bir subprocess
+        # olarak, KENDİ 400s iç zaman aşımıyla çalıştırıyor (bkz. o test
+        # dosyaları) — dış (bu) zaman aşımı en azından o kadar cömert
+        # olmalı, aksi halde pytest'in kendisi testin İÇ zaman aşımından
+        # ÖNCE devreye girip yanıltıcı bir "dosya zaman aşımına uğradı,
+        # node moduna geçiliyor" durumuna yol açar.
+        'test_shipped_config_norm_rules.py': 450,
+        'test_packaging_excludes_lo_profile_and_control_files.py': 450,
     }
     with tempfile.TemporaryDirectory(prefix='omehr-junit-') as td:
         td=Path(td)

@@ -73,8 +73,13 @@ def test_main_py_works_without_optional_control_files(tmp_path, monkeypatch):
     env["OMEHR_MAIL_DRY_RUN"] = "1"
 
     sonuc = subprocess.run(
+        # DÜZELTME: 280s bazı ortamlarda (daha yavaş CI/sandbox donanımı)
+        # gerçek bir main.py çalıştırması için YETERSİZ kalabiliyordu —
+        # main.py başarıyla tamamlanıyordu, sadece sınırı hafifçe
+        # aşıyordu. 400s'e çıkarıldı (bkz. tools/verify_release.py'deki
+        # eşleşen SLOW_FILE_TIMEOUTS girdisi).
         [sys.executable, "main.py"], cwd=proje_kok, env=env,
-        capture_output=True, text=True, encoding="utf-8", timeout=280,
+        capture_output=True, text=True, encoding="utf-8", timeout=400,
     )
     assert sonuc.returncode == 0, f"main.py başarısız: {sonuc.stderr[-2000:]}"
     assert '"Aktif Mevcut": 596' in sonuc.stdout
