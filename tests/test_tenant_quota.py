@@ -23,7 +23,7 @@ def kota_ortami(tmp_path, monkeypatch):
     monkeypatch.setenv("OMEHR_DB_BACKEND", "sqlite")
     for mod_name in (
         "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
-        "services.tenant_registry", "services.tenant_quota", "services.tenant_context",
+        "services.multitenant.tenant_registry", "services.tenant_registry", "services.multitenant.tenant_quota", "services.tenant_quota", "services.multitenant.tenant_context", "services.tenant_context",
     ):
         if mod_name in sys.modules:
             importlib.reload(sys.modules[mod_name])
@@ -33,7 +33,7 @@ def kota_ortami(tmp_path, monkeypatch):
         monkeypatch.undo()
         for mod_name in (
             "services.system_config.runtime_paths", "services.runtime_paths", "services.input_db_schema", "services.input_data_access",
-            "services.tenant_registry", "services.tenant_quota", "services.tenant_context",
+            "services.multitenant.tenant_registry", "services.tenant_registry", "services.multitenant.tenant_quota", "services.tenant_quota", "services.multitenant.tenant_context", "services.tenant_context",
         ):
             if mod_name in sys.modules:
                 importlib.reload(sys.modules[mod_name])
