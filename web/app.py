@@ -675,10 +675,46 @@ if "user" not in st.session_state:
                             tf.write(k_excel.getvalue())
                             gecici_yol = tf.name
                         onboarding.import_initial_data(k_tenant_id.strip().upper(), gecici_yol)
-                    st.success(
-                        f"'{k_firma_adi}' kaydedildi. Yukarıdan 'Giriş Yap' sekmesine geçip "
-                        f"Firma: {k_tenant_id.strip().upper()}, Kullanıcı: {k_kullanici} ile giriş yapabilirsiniz."
-                    )
+                    _tenant_id_buyuk = k_tenant_id.strip().upper()
+                    if k_plan == "deneme":
+                        st.success(
+                            f"'{k_firma_adi}' kaydedildi. Yukarıdan 'Giriş Yap' sekmesine geçip "
+                            f"Firma: {_tenant_id_buyuk}, Kullanıcı: {k_kullanici} ile giriş yapabilirsiniz."
+                        )
+                    else:
+                        # DÜZELTME (Stripe fatura entegrasyonu): ücretli planlar
+                        # artık ANINDA aktif olmuyor — kiracı 'beklemede'
+                        # durumunda kaydedildi (bkz. onboarding.register_tenant),
+                        # ödeme Stripe Checkout'tan geçip webhook onaylayana
+                        # kadar giriş kapalı kalır.
+                        from services.multitenant import billing
+
+                        _taban_url = os.getenv("OMEHR_APP_BASE_URL", "").strip().rstrip("/")
+                        if not _taban_url:
+                            st.warning(
+                                "Firma kaydedildi ama OMEHR_APP_BASE_URL ayarlanmadığı için "
+                                "ödeme sayfası bağlantısı oluşturulamadı. Sunucu yöneticinize "
+                                "başvurun."
+                            )
+                        else:
+                            try:
+                                _checkout_url = billing.create_checkout_session(
+                                    _tenant_id_buyuk, k_plan,
+                                    success_url=f"{_taban_url}/?odeme=basarili&tenant_id={_tenant_id_buyuk}",
+                                    cancel_url=f"{_taban_url}/?odeme=iptal&tenant_id={_tenant_id_buyuk}",
+                                    customer_email=k_eposta.strip() or None,
+                                )
+                                st.success(f"'{k_firma_adi}' kaydedildi — son adım ödeme.")
+                                st.link_button("Ödemeyi Tamamla (Stripe)", _checkout_url, type="primary")
+                                st.caption(
+                                    "Ödeme onaylanana kadar giriş yapamazsınız. Onay genellikle "
+                                    "birkaç saniye içinde otomatik webhook ile gelir."
+                                )
+                            except ValueError as _stripe_hata:
+                                st.error(
+                                    f"Firma kaydedildi ama ödeme sayfası oluşturulamadı: "
+                                    f"{_stripe_hata}"
+                                )
                 except ValueError as _kayit_hata:
                     st.error(str(_kayit_hata))
         st.stop()

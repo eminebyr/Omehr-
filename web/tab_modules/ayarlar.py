@@ -3,9 +3,12 @@
 Kapsam ve bilinçli sınırlar için bkz. services/app_settings.py modül
 docstring'i. Özetle: burada JSON dosyalarını elle düzenlemek yerine
 şirket bilgisi, mail sunucusu, AI özellik anahtarları ve yedekleme
-sıklığı web panelinden değiştirilebilir. Parola/güvenlik ayarları,
-AI güvenlik tavanları ve "lisans" gibi henüz var olmayan kavramlar
-BİLEREK bu ekranın dışında tutuldu.
+sıklığı web panelinden değiştirilebilir. Parola/güvenlik ayarları ve
+AI güvenlik tavanları BİLEREK bu ekranın dışında tutuldu.
+
+Plan/faturalama (Stripe) durumu ARTIK burada gösterilir — bkz.
+services/multitenant/billing.py (create_checkout_session/
+create_portal_session) ve services/multitenant/tenant_registry.py.
 """
 from __future__ import annotations
 
@@ -206,10 +209,55 @@ def render(ctx: PageContext) -> None:
     except Exception:
         st.caption("Kiracı kaydı okunamadı.")
 
-    st.caption(
-        "Lisans/abonelik bilgisi bu sürümde henüz bir kavram olarak "
-        "yok — bu ekrana eklenmesi önce bir ürün kararı gerektirir."
-    )
+    st.divider()
+    st.subheader("Plan ve Faturalama")
+    try:
+        from services.tenant_context import current_tenant_id
+        from services.tenant_registry import get_tenant
+
+        _kiraci_kaydi = get_tenant(current_tenant_id())
+    except Exception:
+        _kiraci_kaydi = None
+
+    if _kiraci_kaydi is None:
+        st.caption(
+            "Bu kurulum çok kiracılı faturalama kaydı kullanmıyor (tek kiracılı/eski "
+            "kurulum) — plan/kota sınırsızdır."
+        )
+    else:
+        _DURUM_ETIKETI = {
+            "aktif": "Aktif", "beklemede": "Ödeme bekleniyor",
+            "askida": "Askıya alındı (ödeme başarısız)", "iptal": "İptal edildi",
+        }
+        st.caption(
+            f"**Plan:** {_kiraci_kaydi['plan']}  \n"
+            f"**Durum:** {_DURUM_ETIKETI.get(_kiraci_kaydi['durum'], _kiraci_kaydi['durum'])}  \n"
+            f"**Kota:** {_kiraci_kaydi['sube_kotasi']} şube / {_kiraci_kaydi['kullanici_kotasi']} kullanıcı"
+        )
+        if _kiraci_kaydi["durum"] == "beklemede":
+            st.warning(
+                "Ödemeniz henüz onaylanmadı — kayıt sırasında gösterilen Stripe ödeme "
+                "bağlantısını tamamlamadıysanız sistem yöneticinize başvurun."
+            )
+        if _kiraci_kaydi.get("stripe_customer_id"):
+            if st.button("Faturalarımı Yönet (Stripe)", key="stripe_portal_dugmesi"):
+                import os
+
+                from services.multitenant import billing
+
+                _taban_url = os.getenv("OMEHR_APP_BASE_URL", "").strip().rstrip("/")
+                if not _taban_url:
+                    st.error("OMEHR_APP_BASE_URL ayarlanmamış — portal bağlantısı oluşturulamıyor.")
+                else:
+                    try:
+                        _portal_url = billing.create_portal_session(
+                            _kiraci_kaydi["tenant_id"], return_url=_taban_url + "/",
+                        )
+                        st.link_button("Stripe Portalına Git", _portal_url, type="primary")
+                    except ValueError as _portal_hata:
+                        st.error(str(_portal_hata))
+        elif _kiraci_kaydi["plan"] != "deneme":
+            st.caption("Bu kiracı için henüz bir Stripe Customer kaydı yok.")
 
     st.divider()
     st.subheader("Excel Verisi Yükle")

@@ -1,5 +1,37 @@
 # Servis Sınırları (Bounded Context) Haritası
 
+## SONUÇ (18 Eylül 2026) — Stripe fatura entegrasyonu tamamlandı
+
+`services/multitenant/billing.py`'ye ÇIKIŞ (outbound) yönü eklendi:
+`create_checkout_session()` (yeni ücretli abonelik) ve
+`create_portal_session()` (kiracının kendi faturasını/kartını
+yönetmesi). Önceden yalnız GİRİŞ (webhook alma) yönü vardı — kod
+Stripe'tan gelen olayları işleyebiliyordu ama Stripe'a HİÇBİR istek
+atmıyordu, yani gerçek bir ödeme akışı BAŞLATILAMIYORDU.
+
+Değişen davranış: self-servis kayıtta (`web/app.py` "Yeni Firma
+Kaydı") 'deneme' dışındaki her plan artık ANINDA aktif olmuyor —
+`tenant_registry.create_tenant(durum='beklemede')` ile kaydedilip
+kullanıcı Stripe Checkout'a yönlendiriliyor; webhook
+(`customer.subscription.created`) ödemeyi doğrulayınca 'aktif'e
+geçiyor. `tenants` tablosuna `stripe_customer_id`/
+`stripe_subscription_id` kolonları eklendi (mevcut kurulumlarda
+`ensure_schema()` içinde ALTER TABLE ile sonradan eklenir).
+
+Ayrıca `docker-compose.yml`/`docker-compose.production.yml` +
+`deploy/nginx*.conf`'a `/webhook/` yolu ve `OMEHR_RUN_WEBHOOK_SERVER=1`
+eklendi — `webhook_server.py` önceden koddaydı ama hiçbir self-hosted
+dağıtım dosyasında GERÇEKTEN internete açık DEĞİLDİ (yalnız Railway'in
+tek-servis kurulumunda çalışıyordu, bkz. container_entrypoint.py).
+
+Bilerek YAPILMAYAN (operatörün kendi Stripe hesabıyla tamamlaması
+gereken): gerçek Stripe Price ID'leri (`OMEHR_STRIPE_PRICE_*` env
+var'ları hâlâ boş placeholder), `OMEHR_STRIPE_SECRET_KEY`/
+`OMEHR_STRIPE_WEBHOOK_SECRET`'ın gerçek değerleri, Stripe Dashboard'da
+webhook endpoint'inin (`https://<domain>/webhook/stripe`) kayıtlı
+olması gerektiği ve gerçek bir müşteri/ikinci bir zincirle uçtan uca
+canlı bir satış denemesi.
+
 ## SONUÇ (29 Ağustos 2026) — Çok Kiracılılık/Faturalama taşıma planından vazgeçildi
 
 Aşağıdaki "Durum güncellemesi" bölümünde anlatılan taşıma planı

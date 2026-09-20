@@ -27,7 +27,23 @@ testin başarısız olmasına neden oluyordu (aile kuralları, KPI
 doğrulaması, Ana Veri Yönetimi round-trip). Sağlam kopyayla değiştirdim
 — tüm 7 test artık geçiyor.
 
-## Hâlâ GERÇEKTEN eksik olan tek büyük madde
+## GÜNCELLEME (18 Eylül 2026) — Stripe entegrasyonu tamamlandı
+Aşağıdaki "hâlâ eksik" bölümü artık TARİHSEL — bkz.
+SERVICE_BOUNDARIES.md üstteki "SONUÇ (18 Eylül 2026)" girdisi. Özetle:
+Checkout (yeni ücretli abonelik) + Customer Portal (fatura/kart
+yönetimi) + webhook senkronizasyonu (`subscription_created/renewed/
+payment_failed/canceled` VE self-servis `subscription.updated`)
+kodlandı ve test edildi (`tests/test_billing_skeleton.py`).
+
+Kalan iş kod DEĞİL, operatör/hesap tarafı: gerçek Stripe Price ID'leri,
+gerçek `OMEHR_STRIPE_SECRET_KEY`/webhook secret'ı, Stripe Dashboard'da
+webhook URL kaydı, ve gerçek bir müşteri/ikinci bir zincirle (şu ana
+kadar yalnız Başdaş verisiyle test edildi) canlı bir uçtan uca satış
+denemesi. Ayrıca üretim topolojisi hâlâ `docker-compose.yml` (tek "app"
+servisi) kullanılıyorsa yedeklilik yoktur — gerçek yedeklilik için
+`docker-compose.production.yml` (web1+web2+worker+monitor) dağıtılmalı.
+
+## Hâlâ GERÇEKTEN eksik olan tek büyük madde (TARİHSEL — yukarıya bkz.)
 **Faturalama/ödeme entegrasyonu (Stripe/iyzico)** — kod tabanında hiç
 yok. `tenants` tablosunda `plan` alanı var ve kota buna göre uygulanıyor,
 ama ödeme alma/plan yükseltme/fatura kesme mekanizması inşa edilmemiş.
@@ -38,7 +54,7 @@ Bu, roadmap'inizdeki "2-4 hafta" tahmini süren, gerçekten ayrı bir iş.
 uçtan uca çalıştı (exit 0, 596/607/49/23/-26), kota uygulaması gerçek
 bir senaryoyla (2 şubelik kotada 3. şube reddi) bizzat doğrulandı.
 
-## Önerilen bir sonraki adım
+## Önerilen bir sonraki adım (TARİHSEL — Stripe artık kodlandı, bkz. üst)
 Faturalama entegrasyonu (Stripe önerilir — iyzico'dan daha iyi
 belgelenmiş API, Türkiye'de de kullanılabiliyor) tek başına bir
 sonraki aşama olarak ele alınabilir: webhook tabanlı plan

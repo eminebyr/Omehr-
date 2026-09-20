@@ -184,6 +184,13 @@ def authenticate(username: str, password: str, tenant_id: str | None = None) -> 
         if kayit is not None and kayit.get("durum") != "aktif":
             with _connect() as con:
                 _audit(con, username, "LOGIN_DENIED", f"Kiracı durumu: {kayit.get('durum')}", tenant_id=tenant_id)
+            # DÜZELTME (Stripe fatura entegrasyonu): 'beklemede' (ödeme
+            # Stripe Checkout'tan henüz doğrulanmadı) durumu, gerçekten
+            # askıya alınmış/iptal edilmiş bir hesaptan FARKLI bir mesajı
+            # hak ediyor — aksi halde ödeme yapmış ama webhook'u henüz
+            # işlenmemiş bir müşteri "hesabınız kapatıldı" sanabilir.
+            if kayit.get("durum") == "beklemede":
+                return False, "Ödemeniz henüz onaylanmadı. Lütfen ödeme işlemini tamamlayın.", False
             return False, "Bu firma hesabı şu an askıya alınmış veya kapatılmış.", False
     except ImportError:
         pass

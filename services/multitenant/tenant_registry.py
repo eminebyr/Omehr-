@@ -14,11 +14,27 @@ from services.db_backend import connect, backend_name
 from services.runtime_paths import runtime_root
 
 _GECERLI_PLANLAR = {"deneme", "temel", "standart", "kurumsal"}
-_GECERLI_DURUMLAR = {"aktif", "askida", "iptal"}
+# 'beklemede': ücretli planla kayıt olundu ama Stripe Checkout ödemesi
+# henüz webhook ile doğrulanmadı — tenant kaydı var, giriş kapalı (bkz.
+# services/security_auth/security.py::authenticate, yalnız 'aktif'
+# durumdaki kiracılara giriş izni verir).
+_GECERLI_DURUMLAR = {"aktif", "beklemede", "askida", "iptal"}
+
+_STRIPE_KOLONLARI = ("stripe_customer_id", "stripe_subscription_id")
 
 
 def _sqlite_path():
     return runtime_root() / "data" / "input_data.db"
+
+
+def _mevcut_kolonlar(con, backend: str) -> set[str]:
+    if backend == "postgres":
+        rows = con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name=?",
+            ("tenants",),
+        ).fetchall()
+        return {row[0] for row in rows}
+    return {row[1] for row in con.execute("PRAGMA table_info(tenants)").fetchall()}
 
 
 def ensure_schema() -> None:
@@ -41,18 +57,34 @@ def ensure_schema() -> None:
                 olusturulma_zamani TEXT NOT NULL
             )'''
         )
+        # DÜZELTME (Stripe fatura entegrasyonu): tenants tablosu ilk
+        # kurulduğunda bu iki kolon yoktu. Var olan kurulumlarda
+        # CREATE TABLE IF NOT EXISTS bunları eklemez — eksikse burada
+        # ALTER TABLE ile sonradan eklenir (mevcut satırlar NULL kalır,
+        # yalnız Stripe Checkout'tan geçen kiracılarda doldurulur).
+        mevcut = _mevcut_kolonlar(con, backend)
+        for kolon in _STRIPE_KOLONLARI:
+            if kolon not in mevcut:
+                con.execute(f"ALTER TABLE tenants ADD COLUMN {kolon} TEXT")
         con.commit()
     finally:
         con.close()
 
 
 def create_tenant(tenant_id: str, ad: str, plan: str = "deneme",
-                   sube_kotasi: int = 10, kullanici_kotasi: int = 5) -> dict:
+                   sube_kotasi: int = 10, kullanici_kotasi: int = 5,
+                   durum: str = "aktif") -> dict:
+    """durum='beklemede': ücretli plan seçildiğinde, Stripe Checkout
+    ödemesi webhook ile doğrulanana kadar kiracı bu durumda kalır —
+    kayıt vardır ama giriş kapalıdır (bkz. services/multitenant/billing.py
+    ::create_checkout_session ve process_billing_event)."""
     tenant_id = tenant_id.strip().upper()
     if not tenant_id:
         raise ValueError("tenant_id boş olamaz.")
     if plan not in _GECERLI_PLANLAR:
         raise ValueError(f"Geçersiz plan: {plan}. Geçerli: {sorted(_GECERLI_PLANLAR)}")
+    if durum not in _GECERLI_DURUMLAR:
+        raise ValueError(f"Geçersiz durum: {durum}. Geçerli: {sorted(_GECERLI_DURUMLAR)}")
     ensure_schema()
     con = connect(_sqlite_path())
     try:
@@ -63,13 +95,23 @@ def create_tenant(tenant_id: str, ad: str, plan: str = "deneme",
         con.execute(
             "INSERT INTO tenants(tenant_id, ad, plan, durum, sube_kotasi, kullanici_kotasi, olusturulma_zamani) "
             "VALUES (?,?,?,?,?,?,?)",
-            (tenant_id, ad, plan, "aktif", sube_kotasi, kullanici_kotasi, zaman),
+            (tenant_id, ad, plan, durum, sube_kotasi, kullanici_kotasi, zaman),
         )
         con.commit()
-        return {"tenant_id": tenant_id, "ad": ad, "plan": plan, "durum": "aktif",
+        return {"tenant_id": tenant_id, "ad": ad, "plan": plan, "durum": durum,
                 "sube_kotasi": sube_kotasi, "kullanici_kotasi": kullanici_kotasi}
     finally:
         con.close()
+
+
+_KOLON_LISTESI = (
+    "tenant_id", "ad", "plan", "durum", "sube_kotasi", "kullanici_kotasi",
+    "olusturulma_zamani", "stripe_customer_id", "stripe_subscription_id",
+)
+
+
+def _satir_to_dict(row) -> dict:
+    return dict(row) if hasattr(row, "keys") else dict(zip(_KOLON_LISTESI, row))
 
 
 def get_tenant(tenant_id: str) -> dict | None:
@@ -77,16 +119,10 @@ def get_tenant(tenant_id: str) -> dict | None:
     con = connect(_sqlite_path())
     try:
         row = con.execute(
-            "SELECT tenant_id, ad, plan, durum, sube_kotasi, kullanici_kotasi, olusturulma_zamani "
-            "FROM tenants WHERE tenant_id=?",
+            f"SELECT {', '.join(_KOLON_LISTESI)} FROM tenants WHERE tenant_id=?",
             (tenant_id.strip().upper(),),
         ).fetchone()
-        if row is None:
-            return None
-        return dict(row) if hasattr(row, "keys") else {
-            "tenant_id": row[0], "ad": row[1], "plan": row[2], "durum": row[3],
-            "sube_kotasi": row[4], "kullanici_kotasi": row[5], "olusturulma_zamani": row[6],
-        }
+        return None if row is None else _satir_to_dict(row)
     finally:
         con.close()
 
@@ -96,16 +132,31 @@ def list_tenants() -> list[dict]:
     con = connect(_sqlite_path())
     try:
         rows = con.execute(
-            "SELECT tenant_id, ad, plan, durum, sube_kotasi, kullanici_kotasi, olusturulma_zamani "
-            "FROM tenants ORDER BY olusturulma_zamani"
+            f"SELECT {', '.join(_KOLON_LISTESI)} FROM tenants ORDER BY olusturulma_zamani"
         ).fetchall()
-        sonuc = []
-        for row in rows:
-            sonuc.append(dict(row) if hasattr(row, "keys") else {
-                "tenant_id": row[0], "ad": row[1], "plan": row[2], "durum": row[3],
-                "sube_kotasi": row[4], "kullanici_kotasi": row[5], "olusturulma_zamani": row[6],
-            })
-        return sonuc
+        return [_satir_to_dict(row) for row in rows]
+    finally:
+        con.close()
+
+
+def set_stripe_ids(tenant_id: str, *, stripe_customer_id: str | None = None,
+                    stripe_subscription_id: str | None = None) -> None:
+    """Stripe webhook olaylarından öğrenilen customer/subscription ID'lerini
+    kaydeder. COALESCE kullanılır — bir olay yalnız customer_id, başka biri
+    yalnız subscription_id taşıyabilir; taşımayan alan mevcut değeri korur."""
+    if stripe_customer_id is None and stripe_subscription_id is None:
+        return
+    ensure_schema()
+    con = connect(_sqlite_path())
+    try:
+        con.execute(
+            "UPDATE tenants SET "
+            "stripe_customer_id=COALESCE(?, stripe_customer_id), "
+            "stripe_subscription_id=COALESCE(?, stripe_subscription_id) "
+            "WHERE tenant_id=?",
+            (stripe_customer_id, stripe_subscription_id, tenant_id.strip().upper()),
+        )
+        con.commit()
     finally:
         con.close()
 

@@ -15,4 +15,5 @@ from services.multitenant.tenant_registry import (
     is_active,
     list_tenants,
     set_status,
+    set_stripe_ids,
 )

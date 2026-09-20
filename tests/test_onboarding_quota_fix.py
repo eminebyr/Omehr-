@@ -35,12 +35,32 @@ def test_full_self_service_onboarding_chain_end_to_end(tmp_path, monkeypatch):
 
     from services.onboarding import register_tenant, register_first_admin, import_initial_data
     from services.security import authenticate
+    from services.billing import process_billing_event
+    from services.tenant_registry import get_tenant
 
-    register_tenant("TAMZINCIR", "Tam Zincir Test A.Ş.", plan="kurumsal")
+    kayit = register_tenant("TAMZINCIR", "Tam Zincir Test A.Ş.", plan="kurumsal")
+    assert kayit["durum"] == "beklemede", (
+        "REGRESYON (Stripe fatura entegrasyonu): ücretli plan artık ödeme "
+        "Checkout'tan geçip webhook ile doğrulanana kadar 'beklemede' kalmalı "
+        "— eskisi gibi anında 'aktif' olmamalı."
+    )
     register_first_admin("TAMZINCIR", "admin1", "GucluSifre2026!", "admin@test.com")
 
+    giris_odeme_oncesi = authenticate("admin1", "GucluSifre2026!", tenant_id="TAMZINCIR")
+    assert giris_odeme_oncesi[0] is False, (
+        "REGRESYON: ödeme onaylanmadan (Stripe webhook gelmeden) giriş açık kalmamalı."
+    )
+
+    # Stripe'ın gerçek webhook'unun (customer.subscription.created) yapacağı
+    # şeyi simüle eder — bkz. webhook_server.py::_stripe_olay_cevir.
+    process_billing_event(
+        "TAMZINCIR", "subscription_created", plan="kurumsal",
+        stripe_customer_id="cus_test123", stripe_subscription_id="sub_test123",
+    )
+    assert get_tenant("TAMZINCIR")["durum"] == "aktif"
+
     giris_sonucu = authenticate("admin1", "GucluSifre2026!", tenant_id="TAMZINCIR")
-    assert giris_sonucu[0] is True, "REGRESYON: yeni oluşturulan admin hesabıyla giriş başarısız."
+    assert giris_sonucu[0] is True, "REGRESYON: ödeme onaylandıktan sonra admin hesabıyla giriş başarısız."
 
     sonuc = import_initial_data("TAMZINCIR", "input/OMEHR_AI_NORM_TRANSFER_INPUT.xlsx")
     basarili = sum(1 for v in sonuc.values() if v.get("durum") == "OK")

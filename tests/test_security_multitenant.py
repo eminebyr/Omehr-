@@ -81,6 +81,26 @@ def test_askidaki_kiraci_dogru_sifreyle_bile_giremez(isolated_root, monkeypatch)
     assert "askı" in msg.lower() or "kapat" in msg.lower()
 
 
+def test_odeme_bekleyen_kiraci_farkli_mesajla_engellenir(isolated_root, monkeypatch):
+    """DÜZELTME (Stripe fatura entegrasyonu): Checkout ödemesi henüz
+    webhook ile doğrulanmamış ('beklemede') bir kiracı da giremez ama
+    mesajı 'askıya alındı/kapatıldı' OLMAMALI — ödeme yapmış ama webhook'u
+    henüz işlenmemiş bir müşteri hesabının kapatıldığını sanmamalı."""
+    from services import security
+    from services import tenant_registry
+    import importlib
+    importlib.reload(security)
+    importlib.reload(tenant_registry)
+
+    tenant_registry.create_tenant("BEKLEYENFIRMA", "Bekleyen Firma A.Ş.", durum="beklemede")
+    security.set_password("kullanici1", "DogruSifre123456", tenant_id="BEKLEYENFIRMA")
+
+    ok, msg, _ = security.authenticate("kullanici1", "DogruSifre123456", tenant_id="BEKLEYENFIRMA")
+    assert ok is False
+    assert "ödeme" in msg.lower()
+    assert "askı" not in msg.lower() and "kapat" not in msg.lower()
+
+
 def test_hic_kayitli_olmayan_kiraci_engellenmez(isolated_root, monkeypatch):
     """DÜZELTME DOĞRULAMASI: tenants tablosunda HİÇ kaydı olmayan bir
     kiracı (eski/tek-kiracılı kurulumlarda normal durum), 'askıda'
