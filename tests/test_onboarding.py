@@ -32,6 +32,26 @@ def test_tam_kayit_akisi_uctan_uca(isolated_root, monkeypatch):
     assert must_change is False, "Kayıt sırasında kendi belirlediği şifre için değişim ZORUNLU olmamalı"
 
 
+def test_ucretli_plan_beklemede_durumunda_kaydedilir(isolated_root, monkeypatch):
+    """DÜZELTME (Stripe fatura entegrasyonu): 'deneme' dışındaki her plan
+    artık ANINDA aktif olmuyor — ödeme Stripe Checkout'tan geçip webhook
+    ile doğrulanana kadar 'beklemede' kalmalı (bkz. services/multitenant/
+    billing.py::create_checkout_session)."""
+    from services import onboarding, tenant_registry
+    _reload(
+        "services.multitenant.onboarding", "services.onboarding",
+        "services.multitenant.tenant_registry", "services.tenant_registry",
+    )
+
+    deneme = onboarding.register_tenant("DENEMEPLANI", "Deneme Plan A.Ş.", plan="deneme")
+    assert deneme["durum"] == "aktif"
+    assert tenant_registry.is_active("DENEMEPLANI")
+
+    ucretli = onboarding.register_tenant("UCRETLIPLAN", "Ücretli Plan A.Ş.", plan="temel")
+    assert ucretli["durum"] == "beklemede"
+    assert tenant_registry.is_active("UCRETLIPLAN") is False
+
+
 def test_zaten_alinmis_firma_kodu_reddedilir(isolated_root, monkeypatch):
     from services import onboarding
     _reload("services.multitenant.onboarding", "services.onboarding", "services.multitenant.tenant_registry", "services.tenant_registry")

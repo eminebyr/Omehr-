@@ -13,6 +13,14 @@ services:
       OMEHR_INPUT_SOURCE: "db"
       OMEHR_DB_BACKEND: "postgres"
       OMEHR_POSTGRES_DSN: "postgresql://omehr:${POSTGRES_PASSWORD}@postgres:5432/omehr"
+      # DÜZELTME (Stripe fatura entegrasyonu): webhook_server.py'yi Streamlit
+      # ile AYNI container'da, ikinci bir arka plan süreci olarak başlatır
+      # (bkz. container_entrypoint.py — Railway'deki tek-servis/Volume
+      # kısıtı için tasarlandı ama docker-compose'da da aynı gerekçeyle
+      # işe yarar: ayrı bir servis yerine ayrı bir PORT, nginx altında
+      # /webhook/ yolu bu porta proxy'lenir, bkz. deploy/nginx.conf).
+      OMEHR_RUN_WEBHOOK_SERVER: "1"
+      OMEHR_WEBHOOK_PORT: "8502"
     volumes:
       - ./input:/app/input
       - ./output:/app/output

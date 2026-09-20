@@ -32,13 +32,14 @@ LOGGER = get_logger("omehr.webhook")
 app = Flask(__name__)
 
 
-def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
+def _stripe_olay_cevir(stripe_olay) -> dict | None:
     """Stripe'ın KENDİ olay isimlerini (customer.subscription.created
     gibi) bizim iç modelimize (subscription_created gibi) çevirir.
-    (tenant_id, olay_turu, plan) döner — tenant_id, Stripe abonelik/
-    müşteri kaydının 'metadata' alanına YAZILMIŞ olmalıdır (Stripe
-    Dashboard'da müşteri oluştururken ya da Checkout Session'da
-    metadata={'tenant_id': '...'} ile ayarlanır).
+    {tenant_id, olay_turu, plan, stripe_customer_id, stripe_subscription_id}
+    döner — tenant_id, Stripe abonelik/müşteri kaydının 'metadata' alanına
+    YAZILMIŞ olmalıdır (services/multitenant/billing.py::create_checkout_session
+    bunu Checkout Session oluştururken hem session hem subscription_data
+    metadata'sına yazar).
 
     StripeObject ve düz test sözlükleri Mapping arayüzünü (.get) destekler.
     Eski ``to_dict()`` çağrısı Stripe 14'te deprecated olduğu için doğrudan
@@ -51,15 +52,37 @@ def _stripe_olay_cevir(stripe_olay) -> tuple[str, str, str | None] | None:
         LOGGER.warning(f"Stripe olayında tenant_id metadata'sı yok: {tur}")
         return None
 
+    temel = {
+        "tenant_id": tenant_id,
+        "stripe_customer_id": veri.get("customer") or None,
+        "stripe_subscription_id": None,
+    }
+
     if tur == "customer.subscription.created":
         plan = metadata.get("plan", "temel")
-        return tenant_id, "subscription_created", plan
+        return {**temel, "olay_turu": "subscription_created", "plan": plan,
+                "stripe_subscription_id": veri.get("id")}
+    if tur == "customer.subscription.updated":
+        # Portal üzerinden kendi kendine plan değişikliği: yeni price ID'yi
+        # bizim plan adımıza çevirebiliyorsak (bkz. plan_for_price_id)
+        # kota/plan alanını da güncelle; çeviremiyorsak (bilinmeyen price)
+        # yalnız durumu senkronize et, plan alanına DOKUNMA.
+        from services.multitenant.billing import plan_for_price_id
+
+        kalemler = (veri.get("items") or {}).get("data") or []
+        price_id = (kalemler[0].get("price") or {}).get("id") if kalemler else None
+        plan = plan_for_price_id(price_id) if price_id else None
+        return {**temel, "olay_turu": "subscription_renewed", "plan": plan,
+                "stripe_subscription_id": veri.get("id")}
     if tur == "invoice.paid":
-        return tenant_id, "subscription_renewed", None
+        return {**temel, "olay_turu": "subscription_renewed", "plan": None,
+                "stripe_subscription_id": veri.get("subscription") or None}
     if tur == "invoice.payment_failed":
-        return tenant_id, "subscription_payment_failed", None
+        return {**temel, "olay_turu": "subscription_payment_failed", "plan": None,
+                "stripe_subscription_id": veri.get("subscription") or None}
     if tur == "customer.subscription.deleted":
-        return tenant_id, "subscription_canceled", None
+        return {**temel, "olay_turu": "subscription_canceled", "plan": None,
+                "stripe_subscription_id": veri.get("id")}
     return None
 
 
@@ -89,9 +112,14 @@ def stripe_webhook():
     if cevrilen is None:
         return jsonify({"islendi": False, "sebep": "ilgisiz/eşleşmeyen olay türü"}), 200
 
-    tenant_id, olay_turu, plan = cevrilen
+    tenant_id = cevrilen["tenant_id"]
+    olay_turu = cevrilen["olay_turu"]
     try:
-        sonuc = process_billing_event(tenant_id, olay_turu, plan=plan)
+        sonuc = process_billing_event(
+            tenant_id, olay_turu, plan=cevrilen["plan"],
+            stripe_customer_id=cevrilen["stripe_customer_id"],
+            stripe_subscription_id=cevrilen["stripe_subscription_id"],
+        )
         return jsonify(sonuc), 200
     except Exception as exc:
         LOGGER.error(f"billing olayı işlenemedi: {tenant_id}/{olay_turu}: {exc}")

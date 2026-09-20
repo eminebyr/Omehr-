@@ -9,6 +9,15 @@ x-app: &app
     # Bu kurulumda ayrı alert-watcher servisi bulunduğu için web süreçleri
     # ikinci/üçüncü watcher thread'i başlatmaz.
     OMEHR_EMBEDDED_ALERT_WATCHER: "0"
+    # DÜZELTME (Stripe fatura entegrasyonu): web1 VE web2'nin ikisi de
+    # webhook_server.py'yi 8502'de arka planda başlatır (bkz.
+    # container_entrypoint.py). İki kopyanın aynı anda çalışması ZARARSIZDIR
+    # — Stripe olayları idempotent işlenir (process_billing_event aynı
+    # durumu tekrar yazmak no-op'tur) ve nginx least_conn ile ikisine de
+    # dağıtır (bkz. deploy/nginx.production.conf), bu da webhook alımını
+    # tek bir replikaya bağımlı olmaktan kurtarır.
+    OMEHR_RUN_WEBHOOK_SERVER: "1"
+    OMEHR_WEBHOOK_PORT: "8502"
   volumes:
     - ${OMEHR_TENANT_DATA:-./tenant_data/OMEHR}:/runtime
   restart: unless-stopped

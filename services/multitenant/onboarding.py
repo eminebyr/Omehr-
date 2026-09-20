@@ -44,9 +44,21 @@ def validate_password(password: str) -> tuple[bool, str]:
     return True, ""
 
 
+# Kartsız/anında aktif tek plan. Diğer tüm planlar Stripe Checkout
+# ödemesi doğrulanana kadar 'beklemede' durumunda kayıt edilir (bkz.
+# services/multitenant/billing.py::create_checkout_session).
+_KARTSIZ_PLAN = "deneme"
+
+
 def register_tenant(tenant_id: str, firma_adi: str, plan: str = "deneme") -> dict:
     """1. adım: firma kaydı. Zaten alınmış kod veya geçersiz plan durumunda
-    ValueError fırlatır (tenant_registry.create_tenant'ın davranışı)."""
+    ValueError fırlatır (tenant_registry.create_tenant'ın davranışı).
+
+    'deneme' dışındaki her plan 'beklemede' durumuyla kaydedilir — çağıran
+    (web/app.py), bu fonksiyondan sonra ücretli planlar için AYRICA
+    billing.create_checkout_session() ile kullanıcıyı ödemeye
+    yönlendirmelidir; aksi halde kiracı süresiz 'beklemede' kalır ve giriş
+    yapamaz (bkz. services/security_auth/security.py::authenticate)."""
     tenant_id = tenant_id.strip().upper()
     ok, hata = validate_tenant_id(tenant_id)
     if not ok:
@@ -59,8 +71,9 @@ def register_tenant(tenant_id: str, firma_adi: str, plan: str = "deneme") -> dic
     from services.multitenant.billing import PLAN_KOTALARI
     if plan not in PLAN_KOTALARI:
         raise ValueError(f"Geçersiz plan: {plan}. Geçerli: {sorted(PLAN_KOTALARI)}")
+    durum = "aktif" if plan == _KARTSIZ_PLAN else "beklemede"
     return tenant_registry.create_tenant(
-        tenant_id, firma_adi.strip(), plan=plan, **PLAN_KOTALARI[plan]
+        tenant_id, firma_adi.strip(), plan=plan, durum=durum, **PLAN_KOTALARI[plan]
     )
 
 
